@@ -5,10 +5,29 @@ const LEVELS_EN = ['Shark pup', 'Blue shark', 'Hammerhead', 'Great white', 'Mega
 const lvName = lv => (LANG === 'en' ? LEVELS_EN[lv.i] : lv.name);
 const XP_BY_HINTS = [10, 8, 6, 5];
 const BONUS_MODULE = 20;
+/* Perfil: lo pone quien usa el laboratorio y solo vive en su navegador. Tipos y roles se guardan como claves
+   (no como texto) para que cambien de idioma; el texto libre se recorta y se escapa siempre al pintarse. */
+const PROFILE_KINDS = ['student', 'pro', 'teacher', 'self', 'switch'];
+const PROFILE_ROLES = ['pentester', 'soc', 'sysadmin', 'network', 'dev', 'auditor', 'grc', 'student', 'other'];
+const PROFILE_COLORS = ['azul', 'turquesa', 'verde', 'ambar', 'coral', 'violeta'];
+const PROFILE_MAX = { name: 60, roleOther: 40 };
+const cleanText = (v, n) => String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim().slice(0, n);
+const cleanProfile = o => {
+  o = o && typeof o === 'object' ? o : {};
+  return {
+    name: cleanText(o.name, PROFILE_MAX.name),
+    kind: PROFILE_KINDS.includes(o.kind) ? o.kind : '',
+    role: PROFILE_ROLES.includes(o.role) ? o.role : '',
+    roleOther: cleanText(o.roleOther, PROFILE_MAX.roleOther),
+    color: PROFILE_COLORS.includes(o.color) ? o.color : 'azul',
+  };
+};
+const RECENT_MAX = 6;
+const cleanRecent = a => (Array.isArray(a) ? [...new Set(a.filter(x => typeof x === 'string' && x.length < 300))].slice(0, RECENT_MAX) : []);
 const S = (() => {
-  const base = () => ({ v: 1, done: {}, hints: {}, badges: {}, settings: { theme: 'system', lang: 'es', relative: true, colorize: true } });
+  const base = () => ({ v: 1, done: {}, hints: {}, badges: {}, profile: cleanProfile(), recent: [], settings: { theme: 'system', lang: 'es', relative: true, colorize: true, themeFx: 'drop' } });
   let st = base();
-  try { const raw = localStorage.getItem(STORE_KEY); if (raw) { const o = JSON.parse(raw); if (o && o.v === 1) st = { ...base(), ...o, settings: { ...base().settings, ...(o.settings || {}) } }; } } catch { /* almacenamiento no disponible: se trabaja en memoria */ }
+  try { const raw = localStorage.getItem(STORE_KEY); if (raw) { const o = JSON.parse(raw); if (o && o.v === 1) st = { ...base(), ...o, profile: cleanProfile(o.profile), recent: cleanRecent(o.recent), settings: { ...base().settings, ...(o.settings || {}) } }; } } catch { /* almacenamiento no disponible: se trabaja en memoria */ }
   const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch { /* sin persistencia */ } };
   const listeners = new Set();
   const emit = () => listeners.forEach(f => f());
@@ -16,6 +35,13 @@ const S = (() => {
     get: () => st,
     on: f => { listeners.add(f); return () => listeners.delete(f); },
     set(k, v) { st.settings[k] = v; save(); emit(); },
+    clearProfile() { st.profile = cleanProfile(); save(); emit(); },
+    /* Búsquedas recientes: identificadores estables del índice, la última primero, como mucho RECENT_MAX */
+    recent: () => st.recent.slice(),
+    addRecent(id) { st.recent = cleanRecent([id, ...st.recent.filter(x => x !== id)]); save(); },
+    removeRecent(id) { st.recent = st.recent.filter(x => x !== id); save(); },
+    setRecent(list) { st.recent = cleanRecent(list); save(); },
+    setProfile(k, v) { st.profile = cleanProfile({ ...st.profile, [k]: v }); save(); emit(); return st.profile; },
     hintsUsed: id => st.hints[id] || 0,
     useHint(id) { st.hints[id] = (st.hints[id] || 0) + 1; save(); },
     isDone: id => !!st.done[id],
@@ -27,7 +53,7 @@ const S = (() => {
     earnBadge(mid) { if (st.badges[mid]) return false; st.badges[mid] = Date.now(); save(); emit(); return true; },
     xp() { return Object.values(st.done).reduce((s, d) => s + d.xp, 0) + Object.keys(st.badges).length * BONUS_MODULE; },
     level() { const x = this.xp(); let i = 0; LEVELS.forEach(([min], j) => { if (x >= min) i = j; }); return { i, name: LEVELS[i][1], next: LEVELS[i + 1] ? LEVELS[i + 1][0] : null, min: LEVELS[i][0] }; },
-    reset() { const keep = st.settings; st = base(); st.settings = keep; save(); emit(); },
+    reset() { const keep = st.settings, me = st.profile; st = base(); st.settings = keep; st.profile = me; save(); emit(); },
   };
 })();
 const modProgress = m => { const done = m.tasks.filter(x => S.isDone(x.id)).length; return { done, total: m.tasks.length, pct: Math.round(100 * done / m.tasks.length) }; };

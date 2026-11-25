@@ -116,11 +116,65 @@ await t('módulo 1: el filtro se valida y un reto resuelto suma XP', async () =>
   await p.close2();
 });
 
-await t('búsqueda Ctrl K encuentra una lección', async () => {
-  const p = await page(browser);
+await t('buscador: la píldora se abre en tarjeta, guarda recientes, los quita y filtra por categorías', async () => {
+  const p = await page(browser, { hash: '#/modulos' });
   await p.keyboard.press('Control+k');
+  await p.waitForFunction(() => document.querySelector('#sdlg')?.open && document.activeElement?.id === 's-q');
+  assert(/Sugerencias/.test(await p.textContent('#s-lab')), 'sin recientes: sugerencias');
+  assert(await p.evaluate(() => getComputedStyle(document.querySelector('.top .search-btn')).visibility) === 'hidden', 'la píldora se convierte en la tarjeta');
+  // la tarjeta nace donde está la píldora (mismo borde izquierdo, recortado a la pantalla)
+  const pos = await p.evaluate(() => [document.querySelector('.sc-card').getBoundingClientRect().left, document.querySelector('.top .search-btn').getBoundingClientRect().left]);
+  assert(Math.abs(pos[0] - (pos[1] - 6)) < 2, `posición ${pos}`);
   await p.keyboard.type('Kerberos');
-  await p.waitForFunction(() => /Kerberos/i.test(document.querySelector('#dlg')?.textContent || ''));
+  await p.waitForFunction(() => /Kerberos/i.test(document.querySelector('#s-r')?.textContent || ''));
+  assert(/resultado/.test(await p.textContent('#s-lab')), 'contador de resultados');
+  assert(await p.getAttribute('#s-q', 'aria-activedescendant') === 's-o0', 'opción activa');
+  // Esc primero borra, luego cierra
+  await p.keyboard.press('Escape');
+  assert(await p.inputValue('#s-q') === '', 'Esc borra la búsqueda');
+  assert(await p.evaluate(() => document.querySelector('#sdlg').open), 'sigue abierta');
+  await p.keyboard.type('Kerberos'); await p.waitForTimeout(100);
+  const first = await p.evaluate(() => searchIndex().find(x => /Kerberos/i.test(x.title)) && document.querySelector('#s-o0 .sc-title').textContent);
+  await p.keyboard.press('Enter');
+  await p.waitForFunction(() => location.hash !== '#/modulos');
+  assert(first, 'primer resultado');
+  await p.waitForFunction(() => !document.querySelector('#sdlg').open);
+  // reciente guardado; también se guarda un filtro
+  await p.click('[data-search]'); await p.waitForSelector('#sdlg[open]');
+  await p.waitForFunction(() => /Recientes/.test(document.querySelector('#s-lab').textContent));
+  assert((await p.$$('#s-r .sc-row')).length === 1, 'un reciente');
+  await p.keyboard.type('ip.addr'); await p.waitForTimeout(80); await p.keyboard.press('Enter');
+  await p.waitForFunction(() => location.hash.startsWith('#/lab'));
+  await p.reload(); await p.waitForSelector('#main h1');
+  await p.keyboard.press('Control+k'); await p.waitForSelector('#sdlg[open] .sc-row');
+  assert((await p.$$('#s-r .sc-row')).length === 2, 'dos recientes tras recargar');
+  assert(/ip\.addr/.test(await p.textContent('#s-o0')), 'el último va primero');
+  // la papelera de la fila activa lo quita; Supr quita el activo
+  await p.hover('#s-o0'); await p.click('#s-o0 [data-rm]');
+  await p.waitForFunction(() => document.querySelectorAll('#s-r .sc-row').length === 1);
+  // «Borrar todo» y «Restaurar»
+  await p.click('#sdlg [data-sclear]');
+  await p.waitForFunction(() => /Sugerencias/.test(document.querySelector('#s-lab').textContent));
+  assert(await p.isVisible('#sdlg [data-srestore]'), 'se puede restaurar');
+  await p.click('#sdlg [data-srestore]');
+  await p.waitForFunction(() => /Recientes/.test(document.querySelector('#s-lab').textContent) && document.querySelectorAll('#s-r .sc-row').length === 1);
+  await p.keyboard.press('Delete');
+  await p.waitForFunction(() => /Sugerencias/.test(document.querySelector('#s-lab').textContent));
+  assert(await p.evaluate(() => JSON.parse(localStorage.getItem('megalodon.v1')).recent.length) === 0, 'recientes vacíos en el almacenamiento');
+  // fichas: quitar «Lecciones» deja 6 categorías y excluye lecciones de los resultados
+  await p.fill('#s-q', 'kerberos');
+  await p.waitForFunction(() => /LECCI|Lecci/i.test(document.querySelector('#s-r').textContent));
+  await p.click('[data-cx="les"]');
+  await p.waitForFunction(() => document.querySelector('.sc-count span').textContent === '6');
+  assert(!(await p.$('.sc-row .t-les')), 'sin lecciones');
+  assert(/6 de 7/.test(await p.getAttribute('[data-call]', 'aria-label')), 'etiqueta accesible del contador');
+  await p.click('[data-call]');
+  await p.waitForFunction(() => document.querySelector('.sc-count span').textContent === '7' && document.querySelector('.sc-row .t-les'));
+  // fuera de la tarjeta cierra y el foco vuelve a la píldora
+  await p.mouse.click(1200, 760);
+  await p.waitForFunction(() => !document.querySelector('#sdlg').open);
+  assert(await p.evaluate(() => document.activeElement?.matches('[data-search]')), 'foco de vuelta a la píldora');
+  assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();
 });
 
@@ -237,13 +291,127 @@ await t('tema: el interruptor claro|oscuro es un role=switch y cambia data-theme
   await p.click(sw);
   await p.waitForFunction(() => document.documentElement.dataset.theme === 'light');
   assert(await p.getAttribute(sw, 'aria-checked') === 'false', 'claro desmarcado');
-  await p.keyboard.press('Shift+T');
+  await p.keyboard.press('Shift+T');                       // a mitad de la gota: se interrumpe y manda lo último
   await p.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
+  await p.waitForTimeout(200);
+  assert(await p.locator('.fx-layer').count() === 0, 'sin capas huérfanas tras interrumpir');
+  assert(!(await p.evaluate(() => document.documentElement.classList.contains('fx-vt'))), 'sin clase de efecto pegada');
   assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();
 });
 
-await t('móvil: sin lateral, barra de pestañas abajo y hoja «Más» con glosario, ajustes, ayuda y atajos', async () => {
+await t('efectos de tema: la gota cae sobre el botón y la lluvia cubre la pantalla; con movimiento reducido, directo', async () => {
+  for (const fx of ['drop', 'rain']) {
+    const p = await page(browser, { theme: 'light', hash: '#/modulos' });
+    await p.evaluate(f => { const o = JSON.parse(localStorage.getItem('megalodon.v1') || '{"v":1}'); o.settings = { ...(o.settings || {}), themeFx: f }; localStorage.setItem('megalodon.v1', JSON.stringify(o)); }, fx);
+    await p.reload(); await p.waitForSelector('#main h1');
+    await p.click('[data-theme-btn]');
+    await p.waitForSelector(fx === 'drop' ? '.fx-layer .fx-drop' : '.fx-layer .fx-canvas', { timeout: 2000 });
+    if (fx === 'drop') {                                   // la gota cae hacia el centro del botón
+      const d = await p.evaluate(() => { const b = document.querySelector('[data-theme-btn]').getBoundingClientRect(), g = document.querySelector('.fx-drop'); return Math.abs(parseFloat(g.style.left) + 11 - (b.left + b.width / 2)); });
+      assert(d < 1, `gota centrada (${d})`);
+    }
+    assert(await p.evaluate(() => document.documentElement.dataset.theme) === 'dark', 'el tema cambia al empezar');
+    await p.waitForFunction(() => !document.querySelector('.fx-layer'), null, { timeout: 5000 });
+    assert(!p.errors.length, `${fx}: ${p.errors.join(' | ')}`);
+    await p.close2();
+  }
+  const r = await page(browser, { theme: 'dark', hash: '#/modulos', reduced: true });
+  await r.click('[data-theme-btn]');
+  assert(await r.evaluate(() => document.documentElement.dataset.theme) === 'light', 'directo');
+  assert(await r.locator('.fx-layer').count() === 0, 'sin efecto con movimiento reducido');
+  await r.close2();
+  // el efecto se elige en Ajustes
+  const s2 = await page(browser, { hash: '#/modulos' });
+  await s2.click('[data-settings]'); await s2.waitForSelector('[data-set="themeFx"]');
+  await s2.click('[data-set="themeFx"] [data-v="rain"]');
+  assert(await s2.evaluate(() => JSON.parse(localStorage.getItem('megalodon.v1')).settings.themeFx) === 'rain', 'se guarda Lluvia');
+  await s2.close2();
+});
+
+await t('portada sin barra: los controles flotan sobre la ilustración; el resto de páginas conserva la barra', async () => {
+  const p = await page(browser, { theme: 'light' });
+  const bar = () => p.evaluate(() => { const s = getComputedStyle(document.querySelector('.top-in')); return s.backgroundColor + '|' + s.boxShadow; });
+  assert(/rgba\(0, 0, 0, 0\)\|none/.test(await bar()), `sin barra en la portada: ${await bar()}`);
+  const g = await p.evaluate(() => { const h = document.querySelector('.hero').getBoundingClientRect(), s = document.querySelector('.top .search-btn').getBoundingClientRect(), t = document.querySelector('[data-theme-btn]').getBoundingClientRect(), side = document.querySelector('[data-side]').getBoundingClientRect(); return { inside: s.top > h.top && t.top > h.top && s.bottom < h.top + 120, leftOfSearch: side.right <= s.left, searchLeft: s.left < h.left + h.width / 3, themeRight: t.left > h.left + h.width / 2 }; });
+  assert(g.inside && g.leftOfSearch && g.searchLeft && g.themeRight, `controles sobre el hero ${JSON.stringify(g)}`);
+  // la píldora sigue siendo legible sobre la ilustración oscura en modo claro
+  const fg = await p.$eval('.top .search-btn .sb-t', e => getComputedStyle(e).color);
+  assert(fg === 'rgb(232, 238, 247)', `texto claro sobre el hero: ${fg}`);
+  await p.click('.side-nav [data-nav="cheat"]'); await p.waitForSelector('.cgrid');
+  assert(!/rgba\(0, 0, 0, 0\)\|none/.test(await bar()), 'barra en las demás páginas');
+  await p.close2();
+});
+
+await t('perfil: nombre, tipo, rol propio y color se guardan, se ven en el lateral y el texto nunca es HTML', async () => {
+  const p = await page(browser, { hash: '#/perfil' });
+  assert(/Configura tu perfil/.test(await p.textContent('.acct')), 'invitación en el lateral');
+  assert(await p.getAttribute('.acct', 'aria-current') === 'page', 'el lateral marca el perfil');
+  await p.fill('#pf-name', '<img src=x onerror=alert(1)> Ana López');
+  await p.check('[name="pf-kind"][value="switch"]');
+  await p.selectOption('#pf-role', 'other');
+  await p.waitForSelector('#pf-other', { state: 'visible' });
+  assert(await p.evaluate(() => document.activeElement.id) === 'pf-other', 'foco al campo del rol propio');
+  await p.fill('#pf-other', 'Red Team');
+  await p.check('[name="pf-color"][value="coral"]', { force: true });
+  await p.waitForFunction(() => /Guardado/.test(document.querySelector('[data-saved]').textContent));
+  assert(await p.locator('.pf-hero img, .acct img').count() === 0, 'el nombre no se interpreta como HTML');
+  assert(/<img src=x/.test(await p.textContent('.pf-name')), 'el nombre se ve como texto');
+  assert(/Red Team · Cambio de carrera/.test(await p.textContent('.acct')), 'rol y tipo en el lateral');
+  assert(await p.$eval('.acct .av', e => e.className).then(c => /av-coral/.test(c)), 'color del avatar');
+  await p.reload(); await p.waitForSelector('#pf-name');
+  assert(await p.inputValue('#pf-name') === '<img src=x onerror=alert(1)> Ana López', 'persiste el nombre');
+  assert(await p.inputValue('#pf-other') === 'Red Team' && await p.isChecked('[name="pf-kind"][value="switch"]'), 'persisten rol y tipo');
+  // inglés: el tipo y el rol cambian de idioma (se guardan como claves)
+  await p.click('[data-lang="en"]'); await p.waitForFunction(() => document.documentElement.lang === 'en');
+  assert(/Career switcher/.test(await p.textContent('.acct')), 'tipo en inglés');
+  await p.click('[data-lang="es"]'); await p.waitForFunction(() => document.documentElement.lang === 'es');
+  // vaciar el perfil no toca el progreso
+  await p.evaluate(() => { const o = JSON.parse(localStorage.getItem('megalodon.v1')); o.done = { 'm1-syn': { xp: 10, at: Date.now() } }; localStorage.setItem('megalodon.v1', JSON.stringify(o)); });
+  await p.reload(); await p.waitForSelector('#pf-name');
+  assert(/1 reto/.test(await p.getAttribute('.hm', 'aria-label')), 'la actividad cuenta el reto de hoy');
+  await p.click('[data-clear]'); await p.click('[data-yes]');
+  await p.waitForFunction(() => document.querySelector('#pf-name') && document.querySelector('#pf-name').value === '');
+  assert(/Configura tu perfil/.test(await p.textContent('.acct')), 'perfil vaciado');
+  assert(await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('megalodon.v1')).done).length) === 1, 'el progreso se mantiene');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('perfil en el peor caso: nombre de 60 caracteres sin espacios y rol largo, sin desbordar en 1280 ni en 390 px', async () => {
+  for (const vp of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+    const p = await page(browser, { viewport: vp, hash: '#/perfil' });
+    await p.fill('#pf-name', 'W'.repeat(80));
+    assert((await p.inputValue('#pf-name')).length === 60, 'máximo 60');
+    await p.selectOption('#pf-role', 'other'); await p.fill('#pf-other', 'M'.repeat(60));
+    assert((await p.inputValue('#pf-other')).length === 40, 'máximo 40');
+    await p.waitForTimeout(150);
+    assert(await p.evaluate(() => document.documentElement.scrollWidth) <= vp.width, `sin desbordar a ${vp.width}`);
+    assert(await p.evaluate(() => { const c = document.querySelector('.pf-id').getBoundingClientRect(), n = document.querySelector('.pf-name').getBoundingClientRect(); return n.right <= c.right + 0.5; }), 'el nombre se parte dentro de la tarjeta');
+    if (vp.width > 900) assert(await p.evaluate(() => { const a = document.querySelector('.acct'), b = a.querySelector('.acct-txt b'); return b.scrollWidth > b.clientWidth && a.getBoundingClientRect().right <= document.querySelector('#side').getBoundingClientRect().right; }), 'en el lateral se recorta con puntos suspensivos');
+    await p.close2();
+  }
+});
+
+await t('acerca de: autor, ecosistema con enlaces seguros, «Estás aquí» en Megalodon y versión', async () => {
+  const p = await page(browser, { hash: '#/acerca' });
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert((await p.textContent('h1')).includes(`v${pkg.version}`), 'versión del package.json');
+  assert(/Yoandy Ramírez Delgado/.test(await p.textContent('.author')), 'autor');
+  const ext = await p.$$eval('a[target="_blank"]', as => as.map(a => [a.href, a.rel]));
+  assert(ext.length >= 20, `enlaces externos: ${ext.length}`);
+  assert(ext.every(([h, r]) => /^https:\/\//.test(h) && /noopener/.test(r) && /noreferrer/.test(r)), 'https y rel=noopener noreferrer');
+  const names = await p.$$eval('.eco h3', hs => hs.map(h => h.textContent));
+  for (const n of ['Megalodon', 'Blue-Jr', 'WhiteFox', 'Atlas GRC', 'Astrolabio', 'ARGOS', 'Rosetta', 'ENS Compliance Studio', 'KAIROS', 'CTEM-Nexus', 'ENS AD Auditor', 'MCP-Shield', 'Norvik']) assert(names.includes(n), `falta ${n}`);
+  assert(await p.locator('.eco-here').count() === 1 && /Megalodon/.test(await p.textContent('.eco.here h3')), '«Estás aquí» solo en Megalodon');
+  assert(await p.getAttribute('.side-nav [data-nav="about"]', 'aria-current') === 'page', 'lateral');
+  await p.click('[data-lang="en"]'); await p.waitForFunction(() => document.documentElement.lang === 'en');
+  assert(/You are here/.test(await p.textContent('.eco.here')) && /GRC and security tools/.test(await p.textContent('#main')), 'en inglés');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('móvil: sin lateral, barra de pestañas abajo y hoja «Más» con perfil, glosario, acerca de, ajustes, ayuda y atajos; se cierra arrastrando', async () => {
   const p = await page(browser, { viewport: { width: 390, height: 844 }, hash: '#/m/m1' });
   assert(await p.$eval('#side', el => getComputedStyle(el).display) === 'none', 'lateral oculto');
   const tb = await p.$eval('#tabbar', el => { const r = el.getBoundingClientRect(); return { d: getComputedStyle(el).display, b: Math.round(r.bottom), n: el.children.length }; });
@@ -253,13 +421,24 @@ await t('móvil: sin lateral, barra de pestañas abajo y hoja «Más» con glosa
   await p.click('#tabbar [data-nav="lab"]'); await p.waitForSelector('.lab');
   assert(await p.getAttribute('#tabbar [data-nav="lab"]', 'aria-current') === 'page', 'Lab activo');
   await p.click('[data-more]'); await p.waitForSelector('.more-list');
-  assert((await p.$$('.more-list > *')).length === 4, 'cuatro entradas');
+  assert((await p.$$('.more-list > *')).length === 6, 'seis entradas');
+  assert(/Configura tu perfil/.test(await p.textContent('.more-acct')), 'entrada del perfil');
   await p.click('.more-list [data-a="settings"]');
   await p.waitForFunction(() => /Ajustes/.test(document.querySelector('#dlg h2')?.textContent || ''));
   await p.keyboard.press('Escape'); await p.waitForTimeout(300);
   await p.click('[data-more]'); await p.waitForSelector('.more-list');
-  await p.click('.more-list [data-go]'); await p.waitForSelector('.gl');
+  await p.click('.more-list [href="#/glosario"]'); await p.waitForSelector('.gl');
   assert(!(await p.evaluate(() => document.querySelector('#dlg').open)), 'la hoja se cierra al navegar');
+  // arrastrar hacia abajo cierra la hoja (por distancia); un arrastre corto la devuelve a su sitio
+  await p.click('[data-more]'); await p.waitForSelector('.more-list'); await p.waitForTimeout(500);
+  const box = await p.$eval('#dlg .dlg-in', e => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + 20, h: r.height }; });
+  await p.mouse.move(box.x, box.y); await p.mouse.down();
+  for (let i = 1; i <= 6; i++) { await p.mouse.move(box.x, box.y + i * 5); await p.waitForTimeout(40); }   // lento: ni distancia ni velocidad
+  await p.waitForTimeout(80); await p.mouse.up();
+  await p.waitForTimeout(350);
+  assert(await p.evaluate(() => document.querySelector('#dlg').open), 'arrastre corto: sigue abierta');
+  await p.mouse.move(box.x, box.y); await p.mouse.down(); await p.mouse.move(box.x, box.y + box.h * 0.6, { steps: 12 }); await p.mouse.up();
+  await p.waitForFunction(() => !document.querySelector('#dlg').open, null, { timeout: 2000 });
   assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();
 });
@@ -311,7 +490,7 @@ await t('axe 0 infracciones · lateral plegado, inglés y hoja «Más»', async 
   try {
     await p.keyboard.press('['); await p.waitForTimeout(450); await axe(p, 'lateral plegado');
     await p.click('[data-lang="en"]'); await p.waitForTimeout(300); await axe(p, 'inglés');
-    await p.click('[data-theme-btn]'); await p.waitForTimeout(400); await axe(p, 'inglés claro');
+    await p.click('[data-theme-btn]'); await p.waitForFunction(() => !document.querySelector('.fx-layer')); await axe(p, 'inglés claro');
   } finally { await p.close2(); }
   const m = await page(browser, { viewport: { width: 390, height: 844 }, theme: 'light', hash: '#/lab', axe: true });
   try { await m.click('[data-more]'); await m.waitForSelector('.more-list'); await m.waitForTimeout(350); await axe(m, 'hoja Más'); } finally { await m.close2(); }
@@ -319,11 +498,12 @@ await t('axe 0 infracciones · lateral plegado, inglés y hoja «Más»', async 
 
 for (const [w, h] of [[1280, 800], [390, 844]]) for (const theme of ['dark', 'light']) {
   await t(`axe 0 infracciones · ${w} px · ${theme === 'dark' ? 'oscuro' : 'claro'}`, async () => {
-    for (const hash of ['', '#/modulos', '#/m/m1', '#/lab', '#/chuleta', '#/glosario']) {
+    for (const hash of ['', '#/modulos', '#/m/m1', '#/lab', '#/chuleta', '#/glosario', '#/perfil', '#/acerca']) {
       const p = await page(browser, { viewport: { width: w, height: h }, theme, hash, axe: true });
       try {
         await p.waitForTimeout(300);
         await axe(p, `${hash || 'inicio'}`);
+        if (!hash) { await p.keyboard.press('Control+k'); await p.waitForSelector('#sdlg[open]'); await p.waitForTimeout(700); await axe(p, 'buscador abierto'); await p.keyboard.type('syn'); await p.waitForTimeout(200); await axe(p, 'buscador con resultados'); }
       } finally { await p.close2(); }
     }
   });

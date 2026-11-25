@@ -2,6 +2,57 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [1.4.0] - 2026-11-25
+
+### Añadido
+- **Perfil configurable** (`#/perfil`), con guardado al instante y solo en el navegador:
+  - nombre (hasta 60 caracteres; sus iniciales forman el avatar);
+  - tipo de perfil: estudiante, profesional, docente, autodidacta o cambio de carrera;
+  - rol: pentester, analista SOC, sistemas, redes, desarrollo, auditoría, GRC, estudiante u otro escrito por ti (hasta 40 caracteres);
+  - color del avatar, entre seis.
+
+  La tarjeta muestra XP, nivel, retos e insignias, un mapa de actividad de 15 semanas con la racha y las ocho insignias. «Vaciar perfil» no toca el progreso.
+- **Tarjeta de cuenta en la barra lateral**, encima del nivel: avatar, nombre o «Configura tu perfil», y rol y tipo. También aparece en la hoja «Más» del móvil.
+- **«Acerca de»** (`#/acerca`), como en Rosetta:
+  - autor con LinkedIn, GitHub, portafolio, HackTheBox y correo;
+  - laboratorios: Megalodon («Estás aquí»), Blue-Jr, WhiteFox, Atlas GRC y Astrolabio;
+  - herramientas GRC y de seguridad: ARGOS, Rosetta, ENS Compliance Studio, KAIROS, CTEM-Nexus, ENS AD Auditor, MCP-Shield y Norvik;
+  - privacidad, licencias, avisos de independencia y la versión, que se toma del `package.json` al compilar.
+- **Efecto al cambiar de tema**, adaptado del Theme Switch de Pin UI (MIT) y elegible en Ajustes:
+  - **Gota:** cae sobre el botón con física real, se aplasta, el botón cede con un muelle, salen dos ondas y el tema nuevo se abre en círculo sobre la página con View Transitions.
+  - **Lluvia:** charcos que crecen y se unen hasta cubrir la pantalla, con cobertura garantizada.
+  - **Fundido:** el de antes.
+
+  Con movimiento reducido o sin View Transitions, el cambio es directo. Una pulsación a mitad lo interrumpe y aplica al momento el último tema pedido.
+- **Buscador nuevo**, adaptado de la Search Card de Pin UI (MIT):
+  - la píldora crece hasta ser una tarjeta;
+  - **recientes** (los seis últimos, guardados), cada uno con su baldosa de color, papelera en la fila activa y `Supr` para quitarlo;
+  - «Borrar todo» y «Restaurar»;
+  - una lámina que se desliza bajo la fila activa;
+  - **fichas de categoría** (módulos, lecciones, retos, glosario, filtros, campos, páginas y acciones), con un contador que rueda;
+  - `Esc` primero borra y luego cierra.
+- **Hoja «Más» del móvil** con perfil y «Acerca de». Sale desde abajo y se cierra arrastrándola: sigue al dedo 1:1 y se cierra por distancia (40 %) o por velocidad.
+- **Skills de diseño en el repositorio** (`.claude/skills/`): impeccable, ui-ux-pro-max y las de Emil Kowalski (emil-design-eng, apple-design, gestures, animation-performance, improve-animations, review-animations, find-animation-opportunities, break-ui, pick-ui-library y prototype). Su origen queda fijado en `skills-lock.json`.
+- Doce iconos de Lucide más: papelera, restaurar, llama, calendario, paleta, brújula, mapa, balanza, monitor, código, sirena y chincheta.
+
+### Cambiado
+- **Portada sin barra superior**, como en Blue-Jr: el botón del lateral y el buscador, arriba a la izquierda; idioma, tema, ayuda, atajos y ajustes, arriba a la derecha. Todo flota sobre la ilustración con fondos de cristal oscuro legibles en los dos temas. El resto de páginas conserva la barra.
+- El buscador pasa a la izquierda de la barra, junto al botón del lateral, en todas las páginas.
+- El interruptor de tema pasa de pomo deslizante a botón cuadrado con luna y sol que giran. Sigue siendo un `role="switch"` con `aria-checked`.
+
+### Corregido
+- Pulsar el tema a mitad del efecto dejaba una capa con el mismo `view-transition-name` y el navegador rechazaba la transición. Ahora la capa anterior se retira al momento. Lo detectó la e2e del tema con `Mayús T`.
+
+### Pruebas
+- e2e: de 20 a **25**. Nuevas o ampliadas:
+  - buscador (recientes, papelera, `Supr`, «Borrar todo» y «Restaurar», categorías y foco);
+  - efectos de tema e interrupción;
+  - portada sin barra;
+  - perfil, con XSS en el nombre y su peor caso;
+  - «Acerca de»;
+  - cierre de la hoja arrastrando.
+- axe-core: 0 infracciones también en perfil, «Acerca de» y el buscador abierto, a 1280 y 390 px, en claro y oscuro.
+
 ## [1.3.2] - 2026-11-25
 
 ### Cambiado

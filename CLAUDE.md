@@ -15,5 +15,10 @@
 - Solo iconos Lucide; sin CDN, fuentes externas ni analítica; CSP por hashes.
 - Datos del usuario o de la captura: siempre escapados (`esc()`), nunca `innerHTML` sin escapar.
 
+## Diseño
+- Para cualquier trabajo de interfaz usa siempre las skills de `.claude/skills/`. Para auditar y pulir: `impeccable` y `ui-ux-pro-max`. Para el movimiento y la sensación: `emil-design-eng`, `apple-design`, `gestures`, `animation-performance`, `improve-animations`, `review-animations` y `find-animation-opportunities`. Para someter la interfaz al peor caso: `break-ui`. Para prototipar: `prototype` (solo con `/prototype`).
+- La vista previa de `ui-ux-pro-max` carga Google Fonts: no copies eso a la aplicación.
+- Lo adaptado de terceros (Pin UI, MIT) se cita en el comentario del fichero, en «Acerca de» y en el README.
+
 ## Siguiente paso
 - Lee `ROADMAP.md` antes de proponer trabajo nuevo.
