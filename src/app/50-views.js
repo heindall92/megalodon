@@ -50,7 +50,6 @@ function viewHome(main) {
   ${siteFooter()}`;
   $$('.meter i', main).forEach(i => { i.style.width = `${Math.max(2, Math.min(100, +i.dataset.w))}%`; });
   $('.hero', main).style.setProperty('--hero-bg', HERO_IMG.bg);
-  return SHARK.mount($('#hero-slot', main));             // megalodón 3D sobre el póster; sin WebGL2 se queda la imagen
 }
 function modCard(m) {
   const p = modProgress(m), earned = S.get().badges[m.id];

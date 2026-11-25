@@ -16,6 +16,10 @@
 - [x] Toda la interfaz en inglés, con prueba de paridad de claves y traducción de cada error del filtro
 - [x] e2e del lateral, idioma, tema y móvil, y axe en el lateral plegado, el inglés y la hoja «Más»
 
+## 1.3.1 · Portada con la ilustración ✅
+- [x] Se retira el megalodón 3D y vuelve la ilustración, en AVIF y WebP de mejor calidad
+- [x] El tiburón queda a la derecha del título con la barra lateral, comprobado en e2e
+
 ## 1.3.x · Contenido en inglés
 - [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
 
@@ -26,4 +30,3 @@
 
 ## Después
 - Importar tu propia captura en el laboratorio libre con límites de tamaño y número de paquetes probados
-- Megalodón: modelo esculpido opcional (GLB) si se quiere dar el salto a fotorrealismo, manteniendo la versión procedural como respaldo ligero

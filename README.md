@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/LICENCIA-MIT-4169A1?style=flat"/></a>
-  <img alt="Versión 1.3.0" src="https://img.shields.io/badge/versi%C3%B3n-1.3.0-3B8BFF?style=flat"/>
+  <img alt="Versión 1.3.1" src="https://img.shields.io/badge/versi%C3%B3n-1.3.1-3B8BFF?style=flat"/>
   <img alt="Filtros de Wireshark 4.x" src="https://img.shields.io/badge/filtros-Wireshark%204.x-1679A7?style=flat"/>
   <img alt="Ruta eWPT" src="https://img.shields.io/badge/ruta-eWPT-E07B39?style=flat"/>
   <img alt="8 módulos y 58 retos" src="https://img.shields.io/badge/8%20m%C3%B3dulos-58%20retos-7B4FD1?style=flat"/>
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/capturas/inicio-oscuro.webp" alt="Portada de Megalodon: un megalodón 3D nada entre rayos de luz detrás del título; a la izquierda, la barra lateral con los ocho módulos y su progreso; arriba, el buscador y los interruptores de idioma y tema" width="880"/>
+  <img src="docs/capturas/inicio-oscuro.webp" alt="Portada de Megalodon: un megalodón dibujado como un plano técnico azul a la derecha del título; a la izquierda, la barra lateral con los ocho módulos y su progreso; arriba, el buscador y los interruptores de idioma y tema" width="880"/>
 </p>
 
 Para leer tráfico con soltura hay que haber mirado muchas capturas, y las de verdad no explican nada ni dicen si lo has entendido. Megalodon reúne **8 capturas sintéticas (578 paquetes)** de un pentest de laboratorio sobre **tienda.ewpt.local** y la red de **MEGACORP** (inventadas) y te sienta delante de un espacio que se comporta como Wireshark. Con él practicas:
@@ -67,10 +67,9 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
         <img src="docs/assets/stack/javascript.svg" height="48" alt="JavaScript">
         <img src="docs/assets/stack/html.svg" height="48" alt="HTML">
         <img src="docs/assets/stack/css.svg" height="48" alt="CSS">
-        <img src="docs/assets/stack/webgl.svg" height="48" alt="WebGL2">
         <img src="docs/assets/stack/idiomas.svg" height="48" alt="ES / EN">
         <img src="docs/assets/stack/lucide.svg" height="48" alt="Lucide"><br>
-        <sub><code>JavaScript · HTML · CSS · WebGL2 · ES/EN · Lucide</code></sub>
+        <sub><code>JavaScript · HTML · CSS · ES/EN · Lucide</code></sub>
       </td>
       <td valign="top"><code>├─ ⚙ build_ci_cd:</code><br><br>
         <img src="docs/assets/stack/nodejs.svg" height="48" alt="Node.js">
@@ -85,7 +84,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
         <img src="docs/assets/stack/pruebas.svg" height="48" alt="node:test">
         <img src="docs/assets/stack/navegador.svg" height="48" alt="Playwright">
         <img src="docs/assets/stack/accesibilidad.svg" height="48" alt="axe-core"><br>
-        <sub><code>node:test 18 · Playwright 22 · axe-core 0 violaciones</code></sub>
+        <sub><code>node:test 18 · Playwright 20 · axe-core 0 violaciones</code></sub>
       </td>
       <td valign="top"><code>╰─ ⌁ seguridad:</code><br><br>
         <img src="docs/assets/stack/csp.svg" height="48" alt="CSP">
@@ -96,7 +95,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="2"><code>version: 1.3.0&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 40 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
+      <td colspan="2"><code>version: 1.3.1&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 38 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
     </tr>
   </tfoot>
 </table>
@@ -106,6 +105,11 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 ---
 
 ## <img src="docs/assets/icons/sparkles.svg" width="20" height="20" valign="middle"/> Novedades
+
+### 1.3.1 · noviembre de 2026 · Portada con la ilustración
+
+- **Fuera el megalodón 3D.** La portada vuelve a la ilustración del megalodón como plano técnico azul, en mejor calidad (AVIF y WebP de 1983 px, unos 70 KB cada uno). La página pesa unos 100 KB menos y ya no necesita WebGL.
+- **Encuadre.** Con la barra lateral, la portada es más estrecha: el tiburón queda a la derecha del título a 1280, 1440 y 1920 px, también con la barra plegada, y una prueba lo comprueba.
 
 ### 1.3.0 · noviembre de 2026 · Armazón nuevo y todo en inglés
 
@@ -138,7 +142,6 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 - [Cómo se corrige](#-cómo-se-corrige)
 - [Herramientas de analista](#-herramientas-de-analista)
 - [Capturas](#-capturas)
-- [El megalodón 3D](#-el-megalodón-3d)
 - [Movimiento y diseño](#-movimiento-y-diseño)
 - [Arranque rápido](#-arranque-rápido)
 - [Arquitectura](#-arquitectura)
@@ -211,7 +214,7 @@ mindmap
 
 | | Vista | Contenido |
 |---|---|---|
-| <img src="docs/assets/icons/house.svg" width="18"/> | **Inicio** | Megalodón 3D, siguiente módulo recomendado, XP, nivel, retos resueltos, insignias, los ocho módulos y cómo funciona. |
+| <img src="docs/assets/icons/house.svg" width="18"/> | **Inicio** | Ilustración del megalodón, siguiente módulo recomendado, XP, nivel, retos resueltos, insignias, los ocho módulos y cómo funciona. |
 | <img src="docs/assets/icons/layers.svg" width="18"/> | **Módulo** | Lección con «Pruébalo» y retos a la izquierda; captura del módulo a la derecha. En el móvil, pestañas Lección, Retos y Wireshark. |
 | <img src="docs/assets/icons/flask-conical.svg" width="18"/> | **Laboratorio libre** | Cualquiera de las ocho capturas, o la tuya en `.pcap` o `.pcapng` (arrastrándola o con «Abrir captura»). |
 | <img src="docs/assets/icons/book-open.svg" width="18"/> | **Chuleta** | Los filtros de uso diario, con copiar y probar en el laboratorio, y la tabla de los 136 campos. |
@@ -281,26 +284,6 @@ Una prueba resuelve cada reto con su solución de referencia contra su captura. 
   <br/><sub><b>Móvil</b> · barra de pestañas abajo y hoja «Más» con glosario, ajustes, ayuda y atajos</sub>
 </p>
 
-## <img src="docs/assets/icons/award.svg" width="20" height="20" valign="middle"/> El megalodón 3D
-
-La portada es un megalodón en tiempo real hecho con **WebGL2 puro**, sin librerías ni modelos externos: toda la malla (≈ 60 000 vértices) se genera con código.
-
-<table>
-<tr>
-<td width="50%"><img src="docs/capturas/mordisco.webp" alt="Boca abierta en herradura"/><br/><sub><b>Boca abierta</b> · arcos en herradura con encía</sub></td>
-<td width="50%"><img src="docs/capturas/protrusion.webp" alt="Palatocuadrado protruido"/><br/><sub><b>Protrusión</b> · la mandíbula superior avanza al cerrar</sub></td>
-</tr>
-<tr>
-<td colspan="2"><img src="docs/capturas/plano-tecnico.webp" alt="Vista de plano técnico con cotas"/><br/><sub><b>Plano técnico</b> · escaneo con cotas anatómicas que siguen al animal</sub></td>
-</tr>
-</table>
-
-- **Boca documentada:** 13 dientes superiores anchos y 12 inferiores estrechos por lado, el intermedio superior más pequeño, inclinación distal creciente y una fila de reemplazo detrás.
-- **Mordisco:** elevación del hocico, descenso de la mandíbula, protrusión del palatocuadrado y sacudida lateral, con los tiempos de Tricas (1985).
-- **Piel y agua:** contrasombreado, dentículos, branquias, ampollas de Lorenzini, cáusticas, rayos de luz, nieve marina y bloom.
-
-Las fuentes y las decisiones de modelado están en [docs/megalodon-3d.md](docs/megalodon-3d.md).
-
 ## <img src="docs/assets/icons/wand-sparkles.svg" width="20" height="20" valign="middle"/> Movimiento y diseño
 
 Siguiendo los principios de Emil Kowalski y el diseño de Apple:
@@ -313,8 +296,8 @@ Siguiendo los principios de Emil Kowalski y el diseño de Apple:
 | Botones | Se hunden al pulsarlos, entre el 94 % y el 98,5 % de su tamaño según la pieza (los pequeños, más). |
 | Cambio de vista | El contenido entra en 240 ms con `ease-out`. |
 | Nivel y XP | El nivel da un pequeño salto con muelle (450 ms) cada vez que sumas XP. |
-| Megalodón | Se pausa si la pestaña no está visible o la portada sale de la pantalla. |
-| Movimiento reducido | Sin desplazamientos ni bucles. Las transiciones del lateral y del tema son instantáneas, y el megalodón queda en un fotograma fijo con un botón para animarlo. |
+| Portada | La ilustración se acerca muy despacio (36 s, ida y vuelta) para dar profundidad. |
+| Movimiento reducido | Sin desplazamientos ni bucles. Las transiciones del lateral y del tema son instantáneas, y la ilustración de la portada queda quieta. |
 
 Oscuro casi negro frío (`#0b0d11` / `#12151b`) o claro gris perla (`#f3f5f8` / `#ffffff`), con un solo acento azul (`#6cb2ff` en oscuro y `#143f94` en claro). Tipografía del sistema (SF Pro en Apple) y monoespaciada del sistema para paquetes, bytes y filtros. Iconos solo de **Lucide**.
 
@@ -352,7 +335,7 @@ flowchart LR
       C[styles.css<br/>tokens, claro y oscuro]
       E[engine/*.js<br/>paquetes, escenarios,<br/>disector, filtros, análisis]
       K[(content/*.js<br/>módulos, lecciones,<br/>retos, glosario)]
-      A[app/00…90-*.js<br/>interfaz, ES/EN,<br/>megalodón 3D]
+      A[app/00…90-*.js<br/>interfaz y ES/EN]
       I[assets/<br/>póster AVIF y WebP]
     end
     T & C & E & K & A & I --> B[scripts/build.mjs<br/>un ámbito compartido,<br/>CSP con hashes]
@@ -384,7 +367,7 @@ flowchart LR
 |---|---|---|
 | Motor (`engine.test.mjs`) | 13 | Las 8 capturas se generan, se disecan y son deterministas. Exportar a pcap/pcapng y releer conserva cada byte. **Los 58 retos tienen solución comprobable** contra su captura, y las respuestas derivadas (avisos, intervalo del beacon, Base64 exfiltrado, firma ZIP) se recalculan desde los paquetes. Los 60 «Pruébalo» compilan y muestran paquetes. También comprueba la sintaxis de filtros de Wireshark 4.x, la información experta, los objetos HTTP, las credenciales, el flujo UDP y el checksum RFC 1071. |
 | Idioma (`i18n.test.mjs`) | 5 | Español e inglés tienen las mismas claves. Los ocho módulos tienen título, subtítulo e insignia en inglés. **Cada error del motor de filtros** y **cada etiqueta del árbol de detalle de los 578 paquetes** están traducidos, sin restos en español. |
-| E2E (`e2e.mjs`) | 22 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>búsqueda `Ctrl K`;</li><li>megalodón 3D: pausa, plano técnico, desmontaje, movimiento reducido y sin WebGL2;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más»;</li><li>CSP estricta y red bloqueada.</li></ul> |
+| E2E (`e2e.mjs`) | 20 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>búsqueda `Ctrl K`;</li><li>portada: la ilustración carga, el tiburón queda a la derecha del título a 1280, 1440 y 1920 px (también con la barra plegada) y se queda quieta con movimiento reducido;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más»;</li><li>CSP estricta y red bloqueada.</li></ul> |
 | Accesibilidad (dentro de `e2e.mjs`) | — | axe-core (WCAG 2.2 A/AA) da **cero violaciones** en: <ul><li>6 vistas, a 1280 y 390 px, en claro y oscuro;</li><li>los diálogos de análisis;</li><li>la barra lateral plegada;</li><li>la interfaz en inglés;</li><li>la hoja «Más».</li></ul> |
 
 La [integración continua](.github/workflows/tests.yml) ejecuta todo en cada *push* y *pull request* y comprueba que los HTML están al día.
@@ -397,6 +380,7 @@ Detalle en [ROADMAP.md](ROADMAP.md).
 - [x] 1.1.0 · Megalodón 3D, pruebas, CI y GitHub Pages
 - [x] 1.2.0 · Herramientas de analista y recorrido del curso completo
 - [x] 1.3.0 · Barra lateral plegable, barra de pestañas en el móvil, interruptores e interfaz en inglés
+- [x] 1.3.1 · Portada con la ilustración del megalodón y sin el 3D
 - [ ] 1.3.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
 - [ ] 1.4.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
 
@@ -432,15 +416,14 @@ megalodon/
 │   │   ├── 30-workspace.js     Espacio tipo Wireshark y árbol en inglés
 │   │   ├── 40-dialogs.js       Seguir flujo, estadísticas y herramientas de analista
 │   │   ├── 45-ladder.js        Diagrama de escalera del saludo TCP
-│   │   ├── 48-shark.js         Megalodón 3D en WebGL2
 │   │   ├── 50-views.js         Inicio, módulos, laboratorio, chuleta y glosario
 │   │   └── 90-shell.js         Barra lateral, barra superior, pestañas, búsqueda y ajustes
-│   └── assets/                 Póster de la portada (AVIF y WebP)
+│   └── assets/                 Ilustración de la portada (AVIF y WebP)
 │
 ├── 📦 dist/index.html          La aplicación generada (igual que megalodon.html)
 ├── 🛠️ scripts/                  build.mjs · capturas.mjs
 ├── 🧪 tests/                    engine · i18n · e2e · load
-├── 📄 docs/                     Capturas, cabecera e iconos del README y notas del megalodón 3D
+├── 📄 docs/                     Capturas, cabecera e iconos del README
 └── ⚙️ .github/workflows/        tests.yml · pages.yml
 ```
 

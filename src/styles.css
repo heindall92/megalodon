@@ -161,7 +161,7 @@ button:disabled { cursor: not-allowed; }
 }
 .hero-art { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
 .hero-art picture, .hero-img { display: block; width: 100%; height: 100%; }
-.hero-img { object-fit: cover; object-position: 78% 50%; transform-origin: 72% 46%; animation: hero-drift 36s var(--ease-in-out) infinite alternate; will-change: transform; }
+.hero-img { object-fit: cover; object-position: 62% 50%; transform-origin: 74% 46%; animation: hero-drift 36s var(--ease-in-out) infinite alternate; will-change: transform; }
 @keyframes hero-drift { from { transform: scale(1.001); } to { transform: scale(1.06) translate3d(-0.8%, -0.6%, 0); } }
 .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(90deg, var(--hero-bg) 0%, color-mix(in srgb, var(--hero-bg) 92%, transparent) 34%, color-mix(in srgb, var(--hero-bg) 55%, transparent) 50%, transparent 68%),
@@ -600,25 +600,6 @@ li[aria-level='1'] > .tn .tl { font-weight: 650; font-family: var(--font-sans); 
   .toast { transform: none !important; }
 }
 @media (forced-colors: active) { .fbar, .card, .btn, .tinput, .pane { border: 1px solid CanvasText; } .pbody .prow[aria-selected='true'] { forced-color-adjust: none; background: Highlight; color: HighlightText; } }
-/* ---------- Megalodón 3D del hero (src/app/48-shark.js) ---------- */
-.shark-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 0.6s var(--ease-out); }
-.hero-art.live .shark-cv { opacity: 1; }
-.hero-art.live picture { visibility: hidden; }
-.hero-art.live .hero-img { animation: none; }
-.shark-callouts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 0.5s var(--ease-out); }
-.hero.blue .shark-callouts { opacity: 1; }
-.shark-callouts text { font: 500 11.5px var(--font-mono); letter-spacing: 0.03em; fill: #cfe9ff; }
-.shark-callouts text.k { font-weight: 600; fill: #fff; }
-.shark-callouts .ld { stroke: rgb(150 205 255 / 0.75); stroke-width: 1; fill: none; }
-.shark-callouts .dot { fill: #57dc98; }
-.shark-callouts .plate { fill: rgb(2 14 32 / 0.78); stroke: rgb(150 205 255 / 0.3); }
-.shark-hud { position: absolute; right: max(16px, calc((100% - 1160px) / 2)); bottom: 20px; display: flex; gap: 6px; align-items: center; padding: 4px; border-radius: 12px; background: rgb(4 14 37 / 0.62); box-shadow: var(--sh-raise); backdrop-filter: blur(12px) saturate(150%); -webkit-backdrop-filter: blur(12px) saturate(150%); }
-.shark-hud .btn.ghost[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
-.shark-hud .ibtn { color: var(--ink); }
-@media (hover: hover) and (pointer: fine) { .shark-hud .ibtn:hover, .shark-hud .btn.ghost:hover:not([aria-pressed="true"]) { background: rgb(255 255 255 / 0.1); color: var(--ink); } }
-@media (max-width: 760px) { .shark-hud { top: 12px; bottom: auto; right: 12px; } .shark-callouts { height: clamp(240px, 62vw, 420px); } }
-@media (prefers-reduced-motion: reduce) { .shark-cv, .shark-callouts { transition: none; } }
-
 /* ---------- Herramientas de análisis (src/app/40-dialogs.js) ---------- */
 .tfmt { display: inline-flex; align-items: center; gap: 6px; }
 .tfmt select { height: 26px; padding: 0 6px; border: 0; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font: inherit; }
