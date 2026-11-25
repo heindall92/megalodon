@@ -56,6 +56,12 @@ await t('inicio: carga sin errores con la ilustración de la portada', async () 
   assert(/plano técnico/.test(im.alt), 'texto alternativo');
   assert(await p.locator('canvas').count() === 0, 'sin lienzo 3D');
   assert(!(await p.evaluate(() => typeof SHARK !== 'undefined')), 'sin el módulo 3D');
+  // logo de la marca (barra lateral) y favicon: el tiburón sobre baldosa azul marino, incrustados
+  const logo = await p.$eval('.side-brand .logo', i => ({ tag: i.tagName, w: i.naturalWidth, alt: i.getAttribute('alt'), src: i.src.slice(0, 22), box: i.getBoundingClientRect().width }));
+  assert(logo.tag === 'IMG' && logo.w === 128 && logo.alt === '' && logo.src === 'data:image/webp;base64' && logo.box === 38, `logo ${JSON.stringify(logo)}`);
+  const fav = await p.$eval('link[rel="icon"]', l => ({ type: l.type, href: l.href.slice(0, 22) }));
+  assert(fav.type === 'image/png' && fav.href === 'data:image/png;base64,', `favicon ${JSON.stringify(fav)}`);
+  assert(await p.locator('.side-brand .i, .brand-m .i').count() === 0, 'sin el pececito de antes');
   assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();
 });

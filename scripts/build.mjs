@@ -23,7 +23,8 @@ function heroChunk() {
   const meta = JSON.parse(rd('src/assets/hero.json'));
   const b64 = f => readFileSync(join(ROOT, 'src/assets', f)).toString('base64');
   const obj = { avif: `data:image/avif;base64,${b64('hero.avif')}`, webp: `data:image/webp;base64,${b64('hero.webp')}`, ...meta };
-  return `/* hero: assets/hero.avif + hero.webp */\nconst HERO_IMG = ${JSON.stringify(obj)};\n`;
+  const logo = `data:image/webp;base64,${b64('logo.webp')}`;
+  return `/* hero: assets/hero.avif + hero.webp · logo: assets/logo.webp */\nconst HERO_IMG = ${JSON.stringify(obj)};\nconst LOGO_IMG = ${JSON.stringify(logo)};\n`;
 }
 
 export function build() {
@@ -32,6 +33,7 @@ export function build() {
   const style = rd('src/styles.css');
   const sha = s => `'sha256-${createHash('sha256').update(s, 'utf8').digest('base64')}'`;
   const html = rd('src/index.html')
+    .replace('{{FAVICON}}', `data:image/png;base64,${readFileSync(join(ROOT, 'src/assets/favicon.png')).toString('base64')}`)
     .replace('{{SCRIPT_HASH}}', sha(script)).replace('{{STYLE_HASH}}', sha(style))
     .replace('{{STYLE}}', () => style).replace('{{SCRIPT}}', () => script);
   if (/<(script|link|img|iframe)[^>]+(src|href)=["']https?:/i.test(html)) throw new Error('El HTML carga recursos externos');

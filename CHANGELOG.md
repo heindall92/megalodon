@@ -2,6 +2,16 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [1.3.2] - 2026-11-25
+
+### Cambiado
+- **Logo nuevo:** el megalodón de plano técnico con su aro de radar, sobre una baldosa azul marino, en la barra lateral, en la cabecera del móvil y como **icono de la pestaña** (PNG de 64 px; el tiburón se amplía para que se distinga a 16 px). Sustituye al pez de Lucide. El fondo blanco del original se retiró sin dejar halo.
+- **Más aire en la portada:** 32 px entre la ilustración y las tarjetas de progreso (antes 8), 80 px antes de cada sección (antes 56) y 48 px en las subsecciones; en el móvil, 24 y 56 px.
+- **README:** la captura principal es ahora la portada en modo claro; la oscura pasa a la galería.
+
+### Pruebas
+- La e2e de inicio comprueba el logo (imagen incrustada de 128 px a 38 px, sin texto alternativo porque el enlace ya se llama «Megalodon · Inicio»), el favicon PNG y que ya no queda el pez.
+
 ## [1.3.1] - 2026-11-25
 
 ### Cambiado

@@ -8,7 +8,7 @@ const URL0 = 'file://' + fileURLToPath(new URL('../dist/index.html', import.meta
 const OUT = fileURLToPath(new URL('../docs/capturas/', import.meta.url));
 const SHOTS = [
   { f: 'inicio-oscuro', w: 1280, h: 800, t: 0 },
-  { f: 'inicio-claro', w: 1280, h: 800, t: 3, theme: 'light', full: true },
+  { f: 'inicio-claro', w: 1280, h: 800, t: 0, theme: 'light' },
   { f: 'movil', w: 390, h: 844, t: 7.45 },
   { f: 'modulo-1', w: 1280, h: 800, t: 0, hash: '#/m/m1' },
   { f: 'experto', w: 1280, h: 800, t: 0, hash: '#/lab?cap=m6', act: async p => { await p.click('[data-expert]'); } },

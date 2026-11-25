@@ -20,6 +20,10 @@
 - [x] Se retira el megalodón 3D y vuelve la ilustración, en AVIF y WebP de mejor calidad
 - [x] El tiburón queda a la derecha del título con la barra lateral, comprobado en e2e
 
+## 1.3.2 · Logo y espaciado ✅
+- [x] Logo del megalodón en la barra lateral, el móvil y el favicon
+- [x] Ritmo vertical de la portada (32 / 80 / 48 px) y captura principal del README en claro
+
 ## 1.3.x · Contenido en inglés
 - [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
 
