@@ -8,7 +8,6 @@ const pick = (...ids) => { for (const id of ids) { try { return require.resolve(
 const { chromium } = require(pick('playwright', '/opt/node-tools/node_modules/playwright'));
 const AXE = readFileSync(pick('axe-core/axe.min.js', '/home/user/bluejr/node_modules/axe-core/axe.min.js'), 'utf8');
 const URL0 = 'file://' + fileURLToPath(new URL('../dist/index.html', import.meta.url));
-const GL = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 
 let pass = 0, fail = 0;
 const results = [];
@@ -38,7 +37,7 @@ const axe = async (p, label) => {
   assert(!v.length, `${label}: ${v.join(' · ')}`);
 };
 
-const browser = await chromium.launch({ args: GL });
+const browser = await chromium.launch();
 
 await t('la CSP es estricta y no hay recursos externos', async () => {
   const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
@@ -48,99 +47,44 @@ await t('la CSP es estricta y no hay recursos externos', async () => {
   assert(!/unsafe-inline|unsafe-eval/.test(csp), 'sin unsafe-*');
 });
 
-await t('inicio: carga sin errores y monta el megalodón 3D', async () => {
+await t('inicio: carga sin errores con la ilustración de la portada', async () => {
   const p = await page(browser);
-  await p.waitForSelector('.hero-art.live canvas.shark-cv');
-  const s = await p.evaluate(() => SHARK.stats());
-  assert(s.vertices > 40000 && s.triangles > 60000, `malla: ${JSON.stringify(s)}`);
-  assert(s.running, 'la animación corre');
-  assert(await p.isHidden('.hero-art picture'), 'el póster queda oculto bajo el 3D');
+  await p.waitForFunction(() => { const i = document.querySelector('.hero-img'); return i && i.complete && i.naturalWidth > 0; });
+  const im = await p.$eval('.hero-img', i => ({ w: i.naturalWidth, h: i.naturalHeight, src: i.currentSrc.slice(0, 22), alt: i.alt }));
+  assert(im.w === 1983 && im.h === 793, `tamaño ${im.w}×${im.h}`);
+  assert(/^data:image\/(avif|webp)/.test(im.src), `formato ${im.src}`);
+  assert(/plano técnico/.test(im.alt), 'texto alternativo');
+  assert(await p.locator('canvas').count() === 0, 'sin lienzo 3D');
+  assert(!(await p.evaluate(() => typeof SHARK !== 'undefined')), 'sin el módulo 3D');
   assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();
 });
 
-await t('megalodón: pausa accesible y vista de plano técnico con cotas', async () => {
-  const p = await page(browser);
-  await p.waitForSelector('[data-shark-pause]');
-  const pb = p.locator('[data-shark-pause]');
-  assert(/Pausar/.test(await pb.getAttribute('aria-label')), 'etiqueta inicial');
-  await pb.focus(); await p.keyboard.press('Enter');
-  assert(/Reanudar/.test(await pb.getAttribute('aria-label')), 'etiqueta tras pausar');
-  assert(!(await p.evaluate(() => SHARK.stats().running)), 'se detiene');
-  await p.click('[data-shark-mode]');
-  assert(await p.getAttribute('[data-shark-mode]', 'aria-pressed') === 'true', 'aria-pressed');
-  await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 9);
-  const labels = await p.$$eval('.shark-callouts text.k', ns => ns.map(n => n.textContent));
-  assert(['Dientes aserrados', 'Hendiduras branquiales', 'Narina', 'Ojo'].every(l => labels.includes(l)), labels.join(', '));
-  assert(!p.errors.length, p.errors.join(' | '));
-  await p.close2();
-});
-
-await t('megalodón: el plano técnico en inglés rotula todas las cotas sin errores', async () => {
-  const p = await page(browser);
-  await p.waitForSelector('[data-shark-pause]');
-  await p.click('[data-lang="en"]');
-  await p.waitForSelector('[data-shark-mode]');
-  await p.evaluate(() => SHARK.pause());
-  await p.click('[data-shark-mode]');
-  await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 9);
-  const labels = await p.$$eval('.shark-callouts text', ns => ns.map(n => n.textContent));
-  assert(['Snout', 'Eye', 'Nostril', 'Serrated teeth', 'Gill slits'].every(l => labels.includes(l)), labels.join(', '));
-  assert(labels.every(l => l && !/[áéíóúñ]/.test(l)), `restos en español: ${labels.join(', ')}`);
-  assert(!p.errors.length, p.errors.join(' | '));
-  await p.close2();
-});
-
-await t('megalodón: la cabeza queda a la derecha del título, sin taparse', async () => {
-  for (const w of [1280, 1440, 1920]) {
+await t('portada: el tiburón de la ilustración queda a la derecha del título, sin taparse', async () => {
+  // zona del tiburón en la imagen original (1983 × 793): de la punta del hocico al borde de la aleta caudal
+  const SHARK_BOX = { x0: 1215, x1: 1760, y0: 45, y1: 760 };
+  for (const [w, side] of [[1280, false], [1440, false], [1920, false], [1280, true]]) {
     const p = await page(browser, { viewport: { width: w, height: Math.round(w * .62) } });
-    await p.waitForSelector('canvas.shark-cv');
-    await p.evaluate(() => { SHARK.pause(); SHARK.seek(7.45); });
-    // la cota del ojo da la posición real de la cabeza en pantalla
-    await p.click('[data-shark-mode]');
-    await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 9);
-    await p.waitForTimeout(200);
-    const r = await p.evaluate(() => {
-      const t = document.querySelector('#hero-t').getBoundingClientRect(), dot = [...document.querySelectorAll('.shark-callouts .dot')].map(d => d.getBoundingClientRect());
-      const svg = document.querySelector('.shark-callouts').getBoundingClientRect();
-      return { titleRight: t.right, minDot: Math.min(...dot.map(d => d.left)), svgRight: svg.right };
-    });
-    assert(r.minDot > r.titleRight - 40, `${w}px: la cabeza (${Math.round(r.minDot)}) queda bajo el título (${Math.round(r.titleRight)})`);
+    if (side) { await p.keyboard.press('['); await p.waitForTimeout(450); }
+    await p.waitForFunction(() => { const i = document.querySelector('.hero-img'); return i && i.complete && i.naturalWidth > 0; });
+    const r = await p.evaluate(B => {
+      const img = document.querySelector('.hero-img'), box = img.getBoundingClientRect(), t = document.querySelector('#hero-t').getBoundingClientRect();
+      // object-fit: cover con object-position leído del CSS
+      const [px, py] = getComputedStyle(img).objectPosition.split(' ').map(v => parseFloat(v) / 100);
+      const s = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
+      const ox = box.left + (box.width - img.naturalWidth * s) * px, oy = box.top + (box.height - img.naturalHeight * s) * py;
+      return { titleRight: t.right, sharkLeft: ox + B.x0 * s, sharkRight: ox + B.x1 * s, heroRight: box.right };
+    }, SHARK_BOX);
+    assert(r.sharkLeft > r.titleRight - 10, `${w}px${side ? ' (lateral plegado)' : ''}: el tiburón (${Math.round(r.sharkLeft)}) queda bajo el título (${Math.round(r.titleRight)})`);
+    assert(r.sharkRight < r.heroRight + 60, `${w}px: el tiburón se sale por la derecha`);
     await p.close2();
   }
 });
 
-await t('megalodón: se desmonta al salir de inicio y vuelve al regresar', async () => {
-  const p = await page(browser);
-  await p.waitForSelector('canvas.shark-cv');
-  await p.evaluate(() => { location.hash = '#/glosario'; });
-  await p.waitForSelector('#main h1');
-  assert(await p.locator('canvas.shark-cv').count() === 0, 'el lienzo sale del DOM');
-  assert(!(await p.evaluate(() => SHARK.stats().running)), 'el bucle se para');
-  await p.evaluate(() => { location.hash = '#/'; });
-  await p.waitForSelector('.hero-art.live canvas.shark-cv');
-  assert(await p.locator('.shark-hud').count() === 1, 'un único panel de control');
-  assert(!p.errors.length, p.errors.join(' | '));
-  await p.close2();
-});
-
-await t('movimiento reducido: un fotograma fijo con la boca abierta y botón para animar', async () => {
+await t('movimiento reducido: la ilustración queda quieta', async () => {
   const p = await page(browser, { reduced: true });
-  await p.waitForSelector('canvas.shark-cv');
-  assert(!(await p.evaluate(() => SHARK.stats().running)), 'quieto');
-  assert(/Reanudar/.test(await p.getAttribute('[data-shark-pause]', 'aria-label')), 'ofrece reanudar');
-  await p.click('[data-shark-pause]');
-  assert(await p.evaluate(() => SHARK.stats().running), 'anima si se pide');
+  assert(await p.$eval('.hero-img', i => getComputedStyle(i).animationName) === 'none', 'sin deriva');
   await p.close2();
-});
-
-await t('sin WebGL2 se queda el póster y nada falla', async () => {
-  const b2 = await chromium.launch({ args: ['--disable-webgl', '--disable-webgl2', '--disable-3d-apis'] });
-  const p = await page(b2);
-  assert(await p.isVisible('.hero-img'), 'póster visible');
-  assert(await p.locator('.shark-hud').count() === 0, 'sin controles del 3D');
-  assert(!p.errors.length, p.errors.join(' | '));
-  await p.close2(); await b2.close();
 });
 
 await t('módulo 1: el filtro se valida y un reto resuelto suma XP', async () => {
@@ -366,7 +310,6 @@ for (const [w, h] of [[1280, 800], [390, 844]]) for (const theme of ['dark', 'li
     for (const hash of ['', '#/modulos', '#/m/m1', '#/lab', '#/chuleta', '#/glosario']) {
       const p = await page(browser, { viewport: { width: w, height: h }, theme, hash, axe: true });
       try {
-        if (hash === '') { await p.waitForSelector('.shark-hud'); await p.evaluate(() => SHARK.pause()); await p.click('[data-shark-mode]'); }
         await p.waitForTimeout(300);
         await axe(p, `${hash || 'inicio'}`);
       } finally { await p.close2(); }

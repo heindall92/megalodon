@@ -16,7 +16,7 @@ export const ORDER = [
   'src/content/modules.js', 'src/content/reference.js',
   '@hero',
   'src/app/05-i18n.js', 'src/app/10-state.js', 'src/app/20-ui.js', 'src/app/30-workspace.js',
-  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/48-shark.js', 'src/app/50-views.js', 'src/app/90-shell.js',
+  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/50-views.js', 'src/app/90-shell.js',
 ];
 
 function heroChunk() {
