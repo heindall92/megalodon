@@ -1,12 +1,20 @@
 {
   "name": "megalodon",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Laboratorio de Wireshark sin conexión: capturas sintéticas de un pentest, filtros validados al instante y retos guiados.",
   "author": "Yoandy Ramírez Delgado",
   "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs --check",
+    "test:engine": "node --test tests/engine.test.mjs",
+    "test:e2e": "node tests/e2e.mjs",
+    "test": "./run_tests.sh"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.2",
+    "playwright": "1.63.0"
   }
 }

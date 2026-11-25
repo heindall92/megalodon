@@ -12,11 +12,11 @@ const rd = p => readFileSync(join(ROOT, p), 'utf8');
 export const ORDER = [
   'src/app/00-iconos.js',
   'src/engine/net.js', 'src/engine/scenarios.js', 'src/engine/fields.js', 'src/engine/dissect.js',
-  'src/engine/filter.js', 'src/engine/stats.js',
+  'src/engine/filter.js', 'src/engine/stats.js', 'src/engine/analyze.js',
   'src/content/modules.js', 'src/content/reference.js',
   '@hero',
   'src/app/05-i18n.js', 'src/app/10-state.js', 'src/app/20-ui.js', 'src/app/30-workspace.js',
-  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/50-views.js', 'src/app/90-shell.js',
+  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/48-shark.js', 'src/app/50-views.js', 'src/app/90-shell.js',
 ];
 
 function heroChunk() {
@@ -40,6 +40,11 @@ export function build() {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const html = build();
+  if (process.argv.includes('--check')) {               // la CI comprueba que dist/ y megalodon.html están al día
+    const stale = ['dist/index.html', 'megalodon.html'].filter(f => !existsSync(join(ROOT, f)) || readFileSync(join(ROOT, f), 'utf8') !== html);
+    if (stale.length) { console.error(`Sin compilar: ${stale.join(', ')}. Ejecuta npm run build.`); process.exit(1); }
+    console.log('dist/ al día'); process.exit(0);
+  }
   mkdirSync(join(ROOT, 'dist'), { recursive: true });
   writeFileSync(join(ROOT, 'dist/index.html'), html);
   writeFileSync(join(ROOT, 'megalodon.html'), html);

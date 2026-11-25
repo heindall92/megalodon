@@ -152,12 +152,14 @@ function openKeys() {
 function onKey(e) {
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); return; }
+  if ((e.ctrlKey || e.metaKey) && CUR_WS && !$('#dlg').open && ['f', 'g'].includes(e.key.toLowerCase())) { e.preventDefault(); openFind(CUR_WS, e.key.toLowerCase() === 'g' ? 'goto' : 'find'); return; }
   if (typing || $('#dlg').open || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === '/' && CUR_WS) { e.preventDefault(); CUR_WS.focusFilter(); }
   else if (e.key === '?') { e.preventDefault(); openKeys(); }
   else if (e.key === 'T' && e.shiftKey) toggleTheme();
   else if ((e.key === 'f' || e.key === 'F') && !e.shiftKey && CUR_WS) CUR_WS.follow();
   else if ((e.key === 's' || e.key === 'S') && !e.shiftKey && CUR_WS) openStats(CUR_WS);
+  else if ((e.key === 'e' || e.key === 'E') && !e.shiftKey && CUR_WS) openExpert(CUR_WS);
 }
 
 function boot() {

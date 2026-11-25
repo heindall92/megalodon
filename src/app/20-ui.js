@@ -22,8 +22,10 @@ function toast(msg, kind = 'info', icon) {
 
 /* Un único <dialog> reutilizable. openDialog devuelve el elemento del cuerpo; onClose se llama al cerrar. */
 let dlgClose = null, dlgReturn = null;
+let dlgTimer = 0;                                            // cierre animado pendiente: no debe cerrar un diálogo abierto después
 function openDialog({ title, body, wide = false, cls = '', onClose, role, footer }) {
   const d = $('#dlg');
+  if (dlgTimer) { clearTimeout(dlgTimer); dlgTimer = 0; }
   if (d.open) closeDialog(true);
   dlgReturn = document.activeElement;
   const tid = nextId('dlg-t');
@@ -41,9 +43,10 @@ function openDialog({ title, body, wide = false, cls = '', onClose, role, footer
 }
 function closeDialog(instant) {
   const d = $('#dlg'); if (!d.open) return;
-  const done = () => { d.close(); d.classList.remove('closing'); const f = dlgClose; dlgClose = null; if (f) f(); if (dlgReturn && dlgReturn.isConnected) dlgReturn.focus(); };
+  if (dlgTimer) { clearTimeout(dlgTimer); dlgTimer = 0; }
+  const done = () => { dlgTimer = 0; d.close(); d.classList.remove('closing'); const f = dlgClose; dlgClose = null; if (f) f(); if (dlgReturn && dlgReturn.isConnected) dlgReturn.focus(); };
   if (instant || REDUCED.matches) return done();
-  d.classList.add('closing'); setTimeout(done, 150);
+  d.classList.add('closing'); dlgTimer = setTimeout(done, 150);
 }
 document.addEventListener('DOMContentLoaded', () => {
   const d = $('#dlg');

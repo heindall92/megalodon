@@ -50,6 +50,7 @@ function viewHome(main) {
   ${siteFooter()}`;
   $$('.meter i', main).forEach(i => { i.style.width = `${Math.max(2, Math.min(100, +i.dataset.w))}%`; });
   $('.hero', main).style.setProperty('--hero-bg', HERO_IMG.bg);
+  return SHARK.mount($('#hero-slot', main));             // megalodón 3D sobre el póster; sin WebGL2 se queda la imagen
 }
 function modCard(m) {
   const p = modProgress(m), earned = S.get().badges[m.id];
@@ -145,7 +146,7 @@ function viewModule(main, { id, q }) {
     sync();
     if (modProgress(m).done === m.tasks.length && S.earnBadge(m.id)) {
       $('[data-end]', main).classList.remove('hide'); $('[data-badge]', main).classList.add('ok');
-      setTimeout(() => celebrate(m, nextM), 500);
+      setTimeout(() => { if (location.hash.split('?')[0] === `#/m/${m.id}`) celebrate(m, nextM); }, 500);   // solo si sigues en el módulo
     }
   };
   $$('.task', main).forEach(card => {

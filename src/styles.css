@@ -456,7 +456,9 @@ li[aria-level='1'] > .tn .tl { font-weight: 650; font-family: var(--font-sans); 
 }
 
 /* ---------- Laboratorio ---------- */
-.lab { display: grid; gap: 14px; padding: 18px 0 20px; }
+.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 0 20px; }
+.lab-h .row { min-width: 0; max-width: 100%; }
+.lab-h .row .sel { min-width: 0; flex: 1 1 auto; text-overflow: ellipsis; }
 .lab-h { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
 .lab-h h1 { font-size: 28px; font-weight: 730; letter-spacing: -0.03em; }
 .lab-ws { height: calc(100dvh - var(--top-h) - 120px); min-height: 520px; }
@@ -598,3 +600,45 @@ li[aria-level='1'] > .tn .tl { font-weight: 650; font-family: var(--font-sans); 
   .toast { transform: none !important; }
 }
 @media (forced-colors: active) { .fbar, .card, .btn, .tinput, .pane { border: 1px solid CanvasText; } .pbody .prow[aria-selected='true'] { forced-color-adjust: none; background: Highlight; color: HighlightText; } }
+/* ---------- Megalodón 3D del hero (src/app/48-shark.js) ---------- */
+.shark-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 0.6s var(--ease-out); }
+.hero-art.live .shark-cv { opacity: 1; }
+.hero-art.live picture { visibility: hidden; }
+.hero-art.live .hero-img { animation: none; }
+.shark-callouts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 0.5s var(--ease-out); }
+.hero.blue .shark-callouts { opacity: 1; }
+.shark-callouts text { font: 500 11.5px var(--font-mono); letter-spacing: 0.03em; fill: #cfe9ff; }
+.shark-callouts text.k { font-weight: 600; fill: #fff; }
+.shark-callouts .ld { stroke: rgb(150 205 255 / 0.75); stroke-width: 1; fill: none; }
+.shark-callouts .dot { fill: #57dc98; }
+.shark-callouts .plate { fill: rgb(2 14 32 / 0.78); stroke: rgb(150 205 255 / 0.3); }
+.shark-hud { position: absolute; right: max(16px, calc((100% - 1160px) / 2)); bottom: 20px; display: flex; gap: 6px; align-items: center; padding: 4px; border-radius: 12px; background: rgb(4 14 37 / 0.62); box-shadow: var(--sh-raise); backdrop-filter: blur(12px) saturate(150%); -webkit-backdrop-filter: blur(12px) saturate(150%); }
+.shark-hud .btn.ghost[aria-pressed="true"] { background: var(--ink); color: var(--ground); }
+.shark-hud .ibtn { color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .shark-hud .ibtn:hover, .shark-hud .btn.ghost:hover:not([aria-pressed="true"]) { background: rgb(255 255 255 / 0.1); color: var(--ink); } }
+@media (max-width: 760px) { .shark-hud { top: 12px; bottom: auto; right: 12px; } .shark-callouts { height: clamp(240px, 62vw, 420px); } }
+@media (prefers-reduced-motion: reduce) { .shark-cv, .shark-callouts { transition: none; } }
+
+/* ---------- Herramientas de análisis (src/app/40-dialogs.js) ---------- */
+.tfmt { display: inline-flex; align-items: center; gap: 6px; }
+.tfmt select { height: 26px; padding: 0 6px; border: 0; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font: inherit; }
+.ex-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.ex-chip { display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.ex-chip strong { color: var(--ink); }
+.ex-chip small { color: var(--ink-3); }
+.ex-chip.sev-error { background: var(--bad-soft); color: var(--bad); }
+.ex-chip.sev-warn { background: color-mix(in srgb, #f5c451 16%, transparent); color: light-dark(#7a5200, #f5c451); }
+.ex-chip.sev-note { background: var(--accent-soft); color: var(--accent); }
+.ex-chip.sev-error strong, .ex-chip.sev-warn strong, .ex-chip.sev-note strong { color: inherit; }
+.ex-nos { display: flex; flex-wrap: wrap; gap: 4px; }
+.ex-nos .btn.sm, .tbl td .btn.sm.mono { height: 28px; min-width: 32px; padding: 0 7px; }
+.tbl.ex td.mono { font-size: 12.5px; word-break: break-word; }
+.ob-prev { margin-top: 14px; }
+.ob-prev pre { max-height: 260px; overflow: auto; padding: 12px 14px; border-radius: var(--r-ctl); background: var(--surface-2); font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+.fd { display: grid; gap: 10px; margin-top: 14px; }
+.fd .row.wrap { flex-wrap: wrap; gap: 10px; }
+.bad { color: var(--bad); }
+@media (max-width: 760px) {
+  .tbl.ex td.mono { word-break: normal; overflow-wrap: anywhere; min-width: 14ch; }
+  .tbl.ex th:nth-child(3), .tbl.ex td:nth-child(3) { display: none; }   /* el protocolo ya va en el mensaje */
+}
