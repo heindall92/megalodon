@@ -133,6 +133,101 @@ await t('búsqueda Ctrl K encuentra una lección', async () => {
   await p.close2();
 });
 
+await t('herramientas: información experta, objetos HTTP (texto, nunca HTML) y credenciales', async () => {
+  const p = await page(browser, { hash: '#/lab?cap=m6' });
+  await p.keyboard.press('e');
+  await p.waitForSelector('.tbl.ex');
+  assert(/20/.test(await p.textContent('.ex-chip.sev-warn')), 'contador de avisos');
+  await p.click('.tbl.ex [data-show]');
+  await p.waitForFunction(() => document.querySelector('.finput').value.startsWith('frame.number in {'));
+  await p.waitForTimeout(250);
+  await p.click('[data-objects]');
+  const rows = await p.locator('.dlg tbody tr').count();
+  assert(rows > 20, `objetos: ${rows}`);
+  await p.click('.dlg [aria-label="Ver robots.txt"]');
+  assert(/Disallow: \/backup\.zip/.test(await p.textContent('.ob-prev pre')), 'vista previa de robots.txt');
+  const viewIdx = await p.$$eval('.dlg tbody tr', trs => trs.findIndex(tr => /buscar\.html/.test(tr.textContent)));
+  await p.locator('.dlg tbody tr').nth(viewIdx).locator('[data-view]').click();
+  assert(await p.locator('.ob-prev pre *').count() === 0, 'el HTML de la captura se muestra como texto');
+  const dl = p.waitForEvent('download');
+  await p.click('.dlg [aria-label="Guardar robots.txt"]');
+  assert((await dl).suggestedFilename() === 'robots.txt', 'descarga con nombre seguro');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(250);
+  await p.evaluate(() => { location.hash = '#/lab?cap=m3'; }); await p.waitForSelector('[data-creds]');
+  await p.click('[data-creds]');
+  assert(/backup/.test(await p.textContent('.dlg tbody')), 'usuario FTP');
+  await p.click('.dlg [data-i="0"]');
+  await p.waitForFunction(() => /Credenciales: admin/.test(document.querySelector('.tree [aria-selected="true"]')?.textContent || ''));
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('buscar (Ctrl F) por hex, ir al paquete (Ctrl G), formato de tiempo y flujo UDP', async () => {
+  const p = await page(browser, { hash: '#/lab?cap=m6' });
+  await p.keyboard.press('Control+f');
+  await p.selectOption('#fd-k', 'hex'); await p.fill('#fd-q', '50 4b 03 04'); await p.press('#fd-q', 'Enter');
+  await p.waitForFunction(() => /paquete 58/.test(document.querySelector('[data-msg]').textContent));
+  await p.keyboard.press('Escape'); await p.waitForTimeout(250);
+  await p.locator('.finput').fill('http'); await p.locator('.finput').press('Enter');
+  await p.keyboard.press('Control+g'); await p.fill('#fd-n', '1'); await p.press('#fd-n', 'Enter');
+  await p.waitForFunction(() => /oculto por el filtro/.test(document.querySelector('[data-msg2]').textContent));
+  await p.fill('#fd-n', '58'); await p.press('#fd-n', 'Enter');
+  await p.waitForSelector('.prow[data-no="58"][aria-selected="true"]');
+  await p.evaluate(() => { location.hash = '#/lab?cap=m8'; }); await p.waitForSelector('[data-tfmt]');
+  await p.locator('.finput').fill('http.request && ip.dst == 203.0.113.66'); await p.locator('.finput').press('Enter');
+  await p.selectOption('[data-tfmt]', 'dview');
+  const times = await p.$$eval('.prow:not(.phead) .c-t', els => els.map(e => +e.textContent));
+  assert(times.slice(1).every(x => Math.abs(x - 60) < 1), `intervalos ${times}`);
+  await p.locator('.finput').fill('dns.qry.name contains "exfil"'); await p.locator('.finput').press('Enter');
+  await p.click('.prow:not(.phead) >> nth=0'); await p.keyboard.press('f');
+  await p.waitForFunction(() => /Seguir flujo UDP/.test(document.querySelector('#dlg h2')?.textContent || ''));
+  assert(/exfil-lab/.test(await p.textContent('.fs-body')), 'contenido del flujo UDP');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('curso completo: los 58 retos se resuelven desde la interfaz y se ganan las 8 insignias', async () => {
+  const p = await page(browser, { hash: '#/modulos' });
+  const mods = await p.evaluate(() => MODULES.map(m => ({ id: m.id, tasks: m.tasks.map(x => ({ id: x.id, type: x.type, ref: x.ref, match: x.match, ans: x.ans })) })));
+  let solved = 0;
+  for (const m of mods) {
+    await p.evaluate(([id, t0]) => { location.hash = `#/m/${id}?t=${t0}`; }, [m.id, m.tasks[0].id]);   // abre la pestaña de retos
+    await p.waitForSelector(`#task-${m.tasks[0].id}`);
+    for (const x of m.tasks) {
+      const card = `#task-${x.id}`;
+      await p.evaluate(sel => document.querySelector(sel).scrollIntoView(), card);
+      if (x.type === 'filter' || x.type === 'packet') { await p.locator('.finput').fill(x.ref || x.match); await p.locator('.finput').press('Enter'); }
+      if (x.type === 'packet') { await p.locator('.prow:not(.phead)').first().click(); }
+      if (x.type === 'text') await p.fill(`${card} input`, String(x.ans[0]));
+      if (x.type === 'choice') await p.click(`${card} [data-opt="${x.ans}"]`);
+      else await p.click(`${card} [data-check]`);
+      await p.waitForSelector(`${card}[data-state="done"]`, { timeout: 4000 }).catch(() => { throw new Error(`no se resuelve ${x.id}`); });
+      solved++;
+      if (x === m.tasks[m.tasks.length - 1]) {                     // último reto: aparece la celebración de la insignia
+        await p.waitForFunction(() => document.querySelector('#dlg').open);
+        await p.keyboard.press('Escape'); await p.waitForTimeout(250);
+      }
+    }
+  }
+  assert(solved === 58, `${solved} retos`);
+  const st = await p.evaluate(() => ({ badges: Object.keys(S.get().badges).length, xp: S.xp() }));
+  assert(st.badges === 8, `insignias ${st.badges}`);
+  assert(st.xp > 0, 'XP');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+for (const theme of ['dark', 'light']) await t(`axe 0 infracciones en los diálogos nuevos · ${theme === 'dark' ? 'oscuro' : 'claro'}`, async () => {
+  const p = await page(browser, { hash: '#/lab?cap=m6', theme, axe: true });
+  try {
+    for (const open of [() => p.click('[data-expert]'), () => p.click('[data-objects]'), async () => { await p.click('[data-objects]'); await p.click('.dlg [aria-label="Ver robots.txt"]'); }, () => p.click('[data-creds]'), () => p.click('[data-find]'), async () => { await p.keyboard.press('s'); await p.click('#st-ends'); }]) {
+      await open(); await p.waitForTimeout(350);
+      await axe(p, 'diálogo');
+      await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    }
+  } finally { await p.close2(); }
+});
+
 for (const [w, h] of [[1280, 800], [390, 844]]) for (const theme of ['dark', 'light']) {
   await t(`axe 0 infracciones · ${w} px · ${theme === 'dark' ? 'oscuro' : 'claro'}`, async () => {
     for (const hash of ['', '#/modulos', '#/m/m1', '#/lab', '#/chuleta', '#/glosario']) {

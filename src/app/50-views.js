@@ -146,7 +146,7 @@ function viewModule(main, { id, q }) {
     sync();
     if (modProgress(m).done === m.tasks.length && S.earnBadge(m.id)) {
       $('[data-end]', main).classList.remove('hide'); $('[data-badge]', main).classList.add('ok');
-      setTimeout(() => celebrate(m, nextM), 500);
+      setTimeout(() => { if (location.hash.split('?')[0] === `#/m/${m.id}`) celebrate(m, nextM); }, 500);   // solo si sigues en el módulo
     }
   };
   $$('.task', main).forEach(card => {

@@ -40,6 +40,10 @@ class Workspace {
         <div class="ws-tools" role="toolbar" aria-label="Herramientas">
           <button class="tbtn" data-follow type="button" title="${t('follow')} (F)">${ic('follow')}<span>${t('follow')}</span></button>
           <button class="tbtn" data-stats type="button" title="${t('stats')} (S)">${ic('stats')}<span>${t('stats')}</span></button>
+          <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>Experto</span></button>
+          <button class="tbtn" data-objects type="button" title="Archivo › Exportar objetos › HTTP">${ic('file')}<span>${t('objects')}</span></button>
+          <button class="tbtn" data-creds type="button" title="Herramientas › Credenciales">${ic('lock')}<span>${t('creds')}</span></button>
+          <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>Buscar</span></button>
           <button class="tbtn" data-color type="button" aria-pressed="true">${ic('sparkles')}<span>${t('colorize')}</span></button>
           ${imp ? `<button class="tbtn" data-open type="button">${ic('upload')}<span>${t('open')}</span></button><input type="file" class="vh" data-file accept=".pcap,.pcapng,.cap,application/vnd.tcpdump.pcap" tabindex="-1" aria-hidden="true">` : ''}
           <button class="tbtn" data-export type="button">${ic('download')}<span>Exportar</span></button>
@@ -56,7 +60,7 @@ class Workspace {
         <div class="pane ptree" aria-label="${t('detail')}" role="region"><ul class="tree" role="tree" aria-label="${t('detail')}" tabindex="0"></ul><p class="pane-empty">${t('noPacket')}</p></div>
         <div class="pane phex" role="region" aria-label="${t('hexView')}" tabindex="0"><div class="hex mono"></div></div>
       </div>
-      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
+      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><label class="tfmt"><span>${t('time')}:</span><select data-tfmt aria-label="${t('timeFmt')}"><option value="rel">desde el inicio</option><option value="delta">desde el anterior capturado</option><option value="dview">desde el anterior mostrado</option><option value="abs">hora UTC</option></select></label><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
       ${imp ? `<div class="drop" hidden>${ic('upload')}<span>${t('importDrop')}</span></div>` : ''}
     </section>`;
     const r = this.host;
@@ -72,6 +76,12 @@ class Workspace {
     $('[data-clear]', r).onclick = () => { inp.value = ''; this.validate(); this.apply(); inp.focus(); };
     $('[data-follow]', r).onclick = () => this.follow();
     $('[data-stats]', r).onclick = () => openStats(this);
+    $('[data-expert]', r).onclick = () => openExpert(this);
+    $('[data-objects]', r).onclick = () => openObjects(this);
+    $('[data-creds]', r).onclick = () => openCreds(this);
+    $('[data-find]', r).onclick = () => openFind(this);
+    const tf = $('[data-tfmt]', r); tf.value = this.tfmt = S.get().settings.tfmt || 'rel';
+    tf.onchange = () => { this.tfmt = tf.value; S.set('tfmt', tf.value); this.renderRows(true); };
     this.$.color.onclick = () => S.set('colorize', !S.get().settings.colorize);
     $('[data-export]', r).onclick = () => this.exportDialog();
     this.$.ac.addEventListener('mousedown', e => { const li = e.target.closest('[role=option]'); if (li) { e.preventDefault(); this.acceptAc(+li.dataset.i); } });
@@ -210,7 +220,7 @@ class Workspace {
       if (!el) {
         el = document.createElement('div');
         el.className = `prow c-${p.color || 'none'}`; el.dataset.no = p.no; el.id = `${this.id}-r${p.no}`; el.setAttribute('role', 'row');
-        el.innerHTML = `<span role="gridcell" class="c-no">${p.no}</span><span role="gridcell" class="c-t">${p.rel.toFixed(6)}</span><span role="gridcell" class="c-s">${esc(p.src)}</span><span role="gridcell" class="c-d">${esc(p.dst)}</span><span role="gridcell" class="c-p">${esc(p.proto)}</span><span role="gridcell" class="c-l">${p.len}</span><span role="gridcell" class="c-i">${esc(p.info)}</span>`;
+        el.innerHTML = `<span role="gridcell" class="c-no">${p.no}</span><span role="gridcell" class="c-t">${this.timeOf(p, i)}</span><span role="gridcell" class="c-s">${esc(p.src)}</span><span role="gridcell" class="c-d">${esc(p.dst)}</span><span role="gridcell" class="c-p">${esc(p.proto)}</span><span role="gridcell" class="c-l">${p.len}</span><span role="gridcell" class="c-i">${esc(p.info)}</span>`;
         this.$.body.append(el); this.rows.set(p.no, el);
       }
       el.style.transform = `translateY(${i * ROW_H}px)`;
@@ -218,6 +228,18 @@ class Workspace {
       el.setAttribute('aria-selected', String(p.no === this.sel));
     }
     this.rows.forEach((el, no) => { if (!want.has(no)) { el.remove(); this.rows.delete(no); } });
+  }
+  timeOf(p, i) {
+    const f = this.tfmt || 'rel';
+    if (f === 'delta') return p.delta.toFixed(6);
+    if (f === 'dview') return (i > 0 ? p.t - this.view[i - 1].t : 0).toFixed(6);
+    if (f === 'abs') { const s = Math.floor(p.t), us = Math.round((p.t - s) * 1e6) % 1e6; return `${new Date(s * 1000).toISOString().slice(11, 19)}.${String(us).padStart(6, '0')}`; }
+    return p.rel.toFixed(6);
+  }
+  revealField(no, field) {                               // selecciona el paquete y el campo del árbol (Credenciales, Información experta)
+    this.select(no, { focusList: false });
+    const f = this.flat && this.flat.find(x => x.node.field === field);
+    if (f) { let pid = f.parentId; while (pid) { const par = this.flat.find(x => x.id === pid); this.expanded.add(par.key); pid = par.parentId; } this.renderTree(this.byNo.get(no)); const g = this.flat.find(x => x.node.field === field); if (g) this.selectNode(g.node); }
   }
   scrollTo(no) {
     const i = this.view.findIndex(p => p.no === no); if (i < 0) return;
@@ -336,8 +358,9 @@ class Workspace {
 
   follow(stream) {
     const p = this.selected();
+    if (stream === undefined && p && p.tcpStream === undefined && p.f['udp.stream']) return openFollow(this, p.f['udp.stream'][0], 'udp');
     const st = stream ?? (p && p.tcpStream);
-    if (st === undefined || st === null) { toast('Selecciona un paquete TCP para seguir su flujo.', 'info', 'follow'); return; }
+    if (st === undefined || st === null) { toast('Selecciona un paquete TCP o UDP para seguir su flujo.', 'info', 'follow'); return; }
     openFollow(this, st);
   }
   destroy() { this.unsub && this.unsub(); this.host.innerHTML = ''; }

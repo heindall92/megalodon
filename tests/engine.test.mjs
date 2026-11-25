@@ -95,3 +95,69 @@ test('checksums de Internet (RFC 1071) correctos', () => {
   const hdr = [0x45, 0x00, 0x00, 0x73, 0x00, 0x00, 0x40, 0x00, 0x40, 0x11, 0x00, 0x00, 0xc0, 0xa8, 0x00, 0x01, 0xc0, 0xa8, 0x00, 0xc7];
   assert.equal(E.csum(hdr), 0xb861);
 });
+
+test('información experta con los mensajes y severidades de Wireshark', () => {
+  const m1 = E.expertInfo(cap('m1'));
+  const rst = m1.items.find(i => i.summary === 'Connection reset (RST)');
+  assert.ok(rst && rst.sev === 'warn', 'RST es Warning');
+  assert.deepEqual(rst.nos.length, 1, 'un RST en el módulo 1 (puerto 8080)');
+  assert.ok(m1.items.some(i => i.sev === 'chat' && i.summary === 'Connection establish request (SYN): server port 80'));
+  assert.ok(m1.items.some(i => i.sev === 'chat' && i.summary === 'Connection establish acknowledge (SYN+ACK): server port 80'));
+  const fin = m1.items.find(i => i.summary === 'Connection finish (FIN)');
+  assert.equal(fin.nos.length, 4, 'cuatro FIN, como dice el reto m1-fin');
+  const m2 = E.expertInfo(cap('m2'));
+  assert.equal(m2.count.note, 1, 'la retransmisión del CSS es una Note');
+  assert.ok(m2.items[0].sev === 'note', 'ordenado por severidad');
+  assert.equal(E.expertInfo(cap('m6')).count.warn, E.parseFilter('tcp.flags.reset == 1').test && cap('m6').filter(E.parseFilter('tcp.flags.reset == 1').test).length);
+});
+
+test('exportar objetos HTTP: cuerpos exactos y nombres seguros', () => {
+  const objs = E.httpObjects(cap('m2'));
+  const idx = objs.find(o => o.no === 8);
+  assert.equal(idx.name, 'index.html'); assert.equal(idx.host, 'tienda.ewpt.local');
+  assert.equal(idx.size, cap('m2').find(p => p.no === 8).f['http.content_length'][0], 'el tamaño coincide con Content-Length');
+  assert.match(new TextDecoder().decode(idx.data), /<title>Tienda ACME<\/title>/);
+  for (const k of Object.keys(E.SCENARIOS)) for (const o of E.httpObjects(cap(k))) {
+    assert.match(o.name, /^[\w.\-]+$/, `${k}: nombre seguro ${o.name}`);
+    assert.ok(!o.name.startsWith('.'), 'sin ficheros ocultos');
+  }
+  assert.ok(E.httpObjects(cap('m6')).some(o => o.name === 'robots.txt'), 'robots.txt del módulo 6');
+});
+
+test('credenciales: HTTP Basic, FTP y NTLMSSP', () => {
+  const c3 = E.credentials(cap('m3'));
+  assert.equal(JSON.stringify(c3.map(c => [c.proto, c.user])), JSON.stringify([['HTTP', 'admin'], ['FTP', 'backup']]));
+  assert.equal(JSON.stringify(E.credentials(cap('m7')).map(c => c.user)), JSON.stringify(['MEGACORP\\svc_backup']));
+  assert.equal(E.credentials(cap('m1')).length, 0);
+});
+
+test('seguir flujo UDP: la consulta DNS y su respuesta', () => {
+  const pk = cap('m4');
+  const s = pk.find(p => p.f['udp.stream']).f['udp.stream'][0];
+  const fl = E.followUdp(pk, s);
+  assert.equal(fl.filter, `udp.stream eq ${s}`);
+  assert.ok(fl.chunks.length >= 2 && fl.chunks.some(c => !c.client), 'pregunta y respuesta');
+  assert.match(fl.chunks[0].text, /ewpt/, 'el nombre consultado se lee en el flujo');
+});
+
+test('los retos que usan las herramientas tienen la respuesta que dicen', () => {
+  const task = id => E.MODULES.flatMap(m => m.tasks).find(t => t.id === id);
+  // m6-expert: los avisos de la información experta
+  assert.ok(task('m6-expert').ans.includes(String(E.expertInfo(cap('m6')).count.warn)));
+  // m6-robots: robots.txt esconde backup.zip
+  const robots = E.httpObjects(cap('m6')).find(o => o.name === 'robots.txt');
+  assert.match(new TextDecoder().decode(robots.data), /Disallow: \/backup\.zip/);
+  // m6-zip: el paquete elegido lleva la firma 50 4B 03 04 y es el único con ella
+  const zipHex = [0x50, 0x4b, 0x03, 0x04], has = b => { for (let i = 0; i + 4 <= b.length; i++) if (zipHex.every((x, j) => b[i + j] === x)) return true; return false; };
+  const withZip = cap('m6').filter(p => has(p.b));
+  assert.equal(withZip.length, 1);
+  assert.ok(E.parseFilter(task('m6-zip').match).test(withZip[0]));
+  // m8-beacon: intervalo entre peticiones al C2
+  const b = cap('m8').filter(E.parseFilter(task('m8-beacon').proof).test);
+  const d = b.slice(1).map((p, i) => p.t - b[i].t);
+  assert.ok(d.length >= 4 && d.every(x => Math.abs(x - 60) < 1), `intervalos ${d.map(x => x.toFixed(2))}`);
+  // m8-exfdata: concatenar los trozos en orden y decodificar
+  const q = cap('m8').filter(E.parseFilter('dns.qry.name contains "exfil" && dns.flags.response == 0').test).map(p => p.f['dns.qry.name'][0]);
+  const parts = q.map(n => n.split('.')).sort((x, y) => +x[1] - +y[1]).map(x => x[0]).join('');
+  assert.match(Buffer.from(parts, 'base64').toString(), new RegExp(`db:${task('m8-exfdata').ans[0].replace(/[!]/g, '\\$&')}`));
+});

@@ -14,6 +14,9 @@ const SHOTS = [
   { f: 'inicio-claro', w: 1280, h: 800, t: 3, theme: 'light', full: true },
   { f: 'movil', w: 390, h: 844, t: 7.45 },
   { f: 'modulo-1', w: 1280, h: 800, t: 0, hash: '#/m/m1' },
+  { f: 'experto', w: 1280, h: 800, t: 0, hash: '#/lab?cap=m6', act: async p => { await p.click('[data-expert]'); } },
+  { f: 'objetos-http', w: 1280, h: 800, t: 0, hash: '#/lab?cap=m6', act: async p => { await p.click('[data-objects]'); await p.click('.dlg [aria-label="Ver robots.txt"]'); } },
+  { f: 'beacon', w: 1280, h: 800, t: 0, hash: '#/lab?cap=m8', act: async p => { await p.locator('.finput').fill('http.request && ip.dst == 203.0.113.66'); await p.locator('.finput').press('Enter'); await p.selectOption('[data-tfmt]', 'dview'); } },
 ];
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 for (const s of SHOTS) {
@@ -21,6 +24,7 @@ for (const s of SHOTS) {
   const p = await ctx.newPage();
   await p.goto(URL0 + (s.hash || '')); await p.waitForSelector('#main h1');
   if (!s.hash) { await p.waitForSelector('canvas.shark-cv'); await p.evaluate(([t, m]) => { SHARK.pause(); SHARK.setMode(m || 'real'); SHARK.seek(t); }, [s.t, s.mode]); }
+  if (s.act) { await p.waitForSelector('.ws'); await s.act(p); await p.waitForTimeout(450); }
   await p.waitForTimeout(500);
   await p.screenshot({ path: `${OUT}${s.f}.png`, clip: s.clip, fullPage: !!s.full, timeout: 180000 });
   console.log(s.f);

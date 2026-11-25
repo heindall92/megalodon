@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-v4iILLoqwIVjQoA3hBTg0rjFSN1tKfA8KPEYg9MDMRI='; style-src 'sha256-qSP+yJYfdZemjEvzRvg7ImVjEwSA9sD1kIdU7QIrZpw='; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pn2vRYCetiqbn/L+xmzndCqqTk9YXQtcQKAXQiHqi8k='; style-src 'sha256-rmkrZDF7Hk+AyhUGvb2gHXy962h26YoGG4S+4cFIZVk='; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark light">
 <meta name="description" content="Megalodon: laboratorio de Wireshark sin conexión. Capturas de un pentest, filtros con validación al instante y retos guiados del saludo TCP a los ataques web.">
@@ -468,7 +468,9 @@ li[aria-level='1'] > .tn .tl { font-weight: 650; font-family: var(--font-sans); 
 }
 
 /* ---------- Laboratorio ---------- */
-.lab { display: grid; gap: 14px; padding: 18px 0 20px; }
+.lab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 0 20px; }
+.lab-h .row { min-width: 0; max-width: 100%; }
+.lab-h .row .sel { min-width: 0; flex: 1 1 auto; text-overflow: ellipsis; }
 .lab-h { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
 .lab-h h1 { font-size: 28px; font-weight: 730; letter-spacing: -0.03em; }
 .lab-ws { height: calc(100dvh - var(--top-h) - 120px); min-height: 520px; }
@@ -628,6 +630,30 @@ li[aria-level='1'] > .tn .tl { font-weight: 650; font-family: var(--font-sans); 
 @media (hover: hover) and (pointer: fine) { .shark-hud .ibtn:hover, .shark-hud .btn.ghost:hover:not([aria-pressed="true"]) { background: rgb(255 255 255 / 0.1); color: var(--ink); } }
 @media (max-width: 760px) { .shark-hud { top: 12px; bottom: auto; right: 12px; } .shark-callouts { height: clamp(240px, 62vw, 420px); } }
 @media (prefers-reduced-motion: reduce) { .shark-cv, .shark-callouts { transition: none; } }
+
+/* ---------- Herramientas de análisis (src/app/40-dialogs.js) ---------- */
+.tfmt { display: inline-flex; align-items: center; gap: 6px; }
+.tfmt select { height: 26px; padding: 0 6px; border: 0; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); font: inherit; }
+.ex-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
+.ex-chip { display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 12.5px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.ex-chip strong { color: var(--ink); }
+.ex-chip small { color: var(--ink-3); }
+.ex-chip.sev-error { background: var(--bad-soft); color: var(--bad); }
+.ex-chip.sev-warn { background: color-mix(in srgb, #f5c451 16%, transparent); color: light-dark(#7a5200, #f5c451); }
+.ex-chip.sev-note { background: var(--accent-soft); color: var(--accent); }
+.ex-chip.sev-error strong, .ex-chip.sev-warn strong, .ex-chip.sev-note strong { color: inherit; }
+.ex-nos { display: flex; flex-wrap: wrap; gap: 4px; }
+.ex-nos .btn.sm, .tbl td .btn.sm.mono { height: 28px; min-width: 32px; padding: 0 7px; }
+.tbl.ex td.mono { font-size: 12.5px; word-break: break-word; }
+.ob-prev { margin-top: 14px; }
+.ob-prev pre { max-height: 260px; overflow: auto; padding: 12px 14px; border-radius: var(--r-ctl); background: var(--surface-2); font-size: 12.5px; white-space: pre-wrap; word-break: break-word; }
+.fd { display: grid; gap: 10px; margin-top: 14px; }
+.fd .row.wrap { flex-wrap: wrap; gap: 10px; }
+.bad { color: var(--bad); }
+@media (max-width: 760px) {
+  .tbl.ex td.mono { word-break: normal; overflow-wrap: anywhere; min-width: 14ch; }
+  .tbl.ex th:nth-child(3), .tbl.ex td:nth-child(3) { display: none; }   /* el protocolo ya va en el mensaje */
+}
 </style>
 </head>
 <body>
@@ -2166,6 +2192,116 @@ function endpoints(pkts) {
   return [...m.values()].sort((x, y) => y.pkts - x.pkts);
 }
 
+/* src/engine/analyze.js */
+/* Megalodon · análisis al estilo de los menús de Wireshark, sin DOM:
+   - Analizar › Información experta: mensajes y severidades tal como los emite Wireshark
+     (packet-tcp.c: SYN y SYN+ACK son Chat con «server port», FIN es Chat, RST es Warning;
+     retransmisión sospechada es Note; las líneas de petición y respuesta HTTP son Chat).
+   - Archivo › Exportar objetos › HTTP: paquete, host, tipo, tamaño y nombre de cada cuerpo.
+   - Herramientas › Credenciales: paquete, protocolo, usuario e información (HTTP Basic, FTP, NTLMSSP).
+   - Seguir flujo UDP. */
+const EXPERT_SEV = [
+  ['error', 'Error', 'Errores'],
+  ['warn', 'Warning', 'Avisos'],
+  ['note', 'Note', 'Notas'],
+  ['chat', 'Chat', 'Conversación'],
+];
+function expertInfo(pkts) {
+  const groups = new Map();
+  const add = (sev, group, proto, summary, p) => {
+    const k = `${sev}|${proto}|${summary}`;
+    const g = groups.get(k) || groups.set(k, { sev, group, proto, summary, nos: [] }).get(k);
+    g.nos.push(p.no);
+  };
+  for (const p of pkts) {
+    const f = p.f;
+    if (f['tcp.flags.syn'] && f['tcp.flags.syn'][0]) {
+      if (f['tcp.flags.ack'][0]) add('chat', 'Sequence', 'TCP', `Connection establish acknowledge (SYN+ACK): server port ${f['tcp.srcport'][0]}`, p);
+      else add('chat', 'Sequence', 'TCP', `Connection establish request (SYN): server port ${f['tcp.dstport'][0]}`, p);
+    }
+    if (f['tcp.flags.fin'] && f['tcp.flags.fin'][0]) add('chat', 'Sequence', 'TCP', 'Connection finish (FIN)', p);
+    if (f['tcp.flags.reset'] && f['tcp.flags.reset'][0]) add('warn', 'Sequence', 'TCP', 'Connection reset (RST)', p);
+    if (f['tcp.analysis.retransmission']) add('note', 'Sequence', 'TCP', 'This frame is a (suspected) retransmission', p);
+    if (f['http.request'] && !f['tcp.analysis.retransmission']) add('chat', 'Sequence', 'HTTP', `${f['http.request.method'][0]} ${f['http.request.uri'][0]} ${f['http.request.version'] ? f['http.request.version'][0] : 'HTTP/1.1'}\\r\\n`, p);
+    if (f['http.response'] && !f['tcp.analysis.retransmission']) add('chat', 'Sequence', 'HTTP', `HTTP/1.1 ${f['http.response.code'][0]} ${f['http.response.phrase'] ? f['http.response.phrase'][0] : ''}\\r\\n`, p);
+  }
+  const order = Object.fromEntries(EXPERT_SEV.map(([k], i) => [k, i]));
+  const items = [...groups.values()].sort((a, b) => order[a.sev] - order[b.sev] || a.nos[0] - b.nos[0]);
+  const count = Object.fromEntries(EXPERT_SEV.map(([k]) => [k, items.filter(i => i.sev === k).reduce((s, i) => s + i.nos.length, 0)]));
+  return { items, count };
+}
+
+/* Cuerpo HTTP en bytes: lo que va tras la línea en blanco dentro de la capa HTTP del paquete. */
+function httpBody(p) {
+  const r = p.layers && p.layers.http; if (!r) return new Uint8Array();
+  const b = p.b.subarray(r[0], r[1]);
+  for (let i = 0; i + 3 < b.length; i++) if (b[i] === 13 && b[i + 1] === 10 && b[i + 2] === 13 && b[i + 3] === 10) return b.subarray(i + 4);
+  return new Uint8Array();
+}
+const EXT_BY_TYPE = { 'text/html': 'html', 'text/css': 'css', 'application/javascript': 'js', 'text/javascript': 'js', 'application/json': 'json', 'text/plain': 'txt', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/svg+xml': 'svg', 'application/pdf': 'pdf', 'application/zip': 'zip', 'application/octet-stream': 'bin', 'application/x-www-form-urlencoded': 'txt' };
+function safeName(uri, type, no) {
+  const path = String(uri || '/').split('?')[0];
+  let base = decodeURIComponent(path.split('/').filter(Boolean).pop() || '').replace(/[^\w.\-]+/g, '_').replace(/^\.+/, '').slice(0, 80);
+  const ext = EXT_BY_TYPE[String(type || '').split(';')[0].trim().toLowerCase()] || 'bin';
+  if (!base) base = `index.${ext}`;
+  else if (!/\.\w{1,5}$/.test(base)) base += `.${ext}`;
+  return base || `objeto-${no}.${ext}`;
+}
+function httpObjects(pkts) {
+  const byNo = new Map(pkts.map(p => [p.no, p]));
+  const out = [];
+  for (const p of pkts) {
+    const f = p.f;
+    if (!f['http'] || f['tcp.analysis.retransmission']) continue;
+    const isResp = !!f['http.response'];
+    const body = httpBody(p);
+    if (!body.length) continue;
+    const req = isResp && f['http.request_in'] ? byNo.get(f['http.request_in'][0]) : p;
+    const host = req && req.f['http.host'] ? req.f['http.host'][0] : (isResp ? p.src : p.dst);
+    const uri = isResp ? (f['http.request.uri'] ? f['http.request.uri'][0] : '/') : f['http.request.uri'][0];
+    const type = f['http.content_type'] ? f['http.content_type'][0] : (isResp ? '' : 'application/x-www-form-urlencoded');
+    out.push({ no: p.no, host, type, size: body.length, uri, name: safeName(uri, type, p.no), data: body, dir: isResp ? 'respuesta' : 'petición' });
+  }
+  return out;
+}
+
+function credentials(pkts) {
+  const out = [], ftpUser = new Map();
+  for (const p of pkts) {
+    const f = p.f;
+    if (f['http.authbasic']) {
+      const v = String(f['http.authbasic'][0]), i = v.indexOf(':');
+      out.push({ no: p.no, proto: 'HTTP', user: i < 0 ? v : v.slice(0, i), info: 'Basic', field: 'http.authbasic' });
+    }
+    if (f['ftp.request.command']) {
+      const cmd = String(f['ftp.request.command'][0]).toUpperCase(), arg = f['ftp.request.arg'] ? String(f['ftp.request.arg'][0]) : '';
+      if (cmd === 'USER') ftpUser.set(p.tcpStream, { user: arg, no: p.no });
+      if (cmd === 'PASS') { const u = ftpUser.get(p.tcpStream); out.push({ no: p.no, proto: 'FTP', user: u ? u.user : 'n.a.', info: u ? `Usuario en el paquete ${u.no}` : '', field: 'ftp.request.arg' }); }
+    }
+    if (f['ntlmssp.auth.username']) {
+      const dom = f['ntlmssp.auth.domain'] ? f['ntlmssp.auth.domain'][0] : '';
+      out.push({ no: p.no, proto: 'NTLMSSP', user: `${dom ? dom + '\\' : ''}${f['ntlmssp.auth.username'][0]}`, info: 'Autenticación NTLMSSP (AUTHENTICATE)', field: 'ntlmssp.auth.username' });
+    }
+  }
+  return out;
+}
+
+function followUdp(pkts, stream) {
+  const mine = pkts.filter(p => p.f['udp.stream'] && p.f['udp.stream'][0] === stream);
+  if (!mine.length) return null;
+  const first = mine[0], cli = first.f['ip.src'][0] + ':' + first.f['udp.srcport'][0];
+  const chunks = []; let cBytes = 0, sBytes = 0;
+  for (const p of mine) {
+    const r = p.layers.udp; if (!r) continue;
+    const ulen = p.f['udp.length'] ? p.f['udp.length'][0] : 8, data = p.b.subarray(r[1], r[0] + ulen); if (!data.length) continue;   // la capa UDP es solo la cabecera
+    const fromClient = p.f['ip.src'][0] + ':' + p.f['udp.srcport'][0] === cli;
+    const txt = TD.decode(data).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '.');
+    chunks.push({ client: fromClient, text: txt, bytes: data.length, frames: [p.no] });
+    if (fromClient) cBytes += data.length; else sBytes += data.length;
+  }
+  return { stream, client: cli, server: `${first.f['ip.dst'][0]}:${first.f['udp.dstport'][0]}`, chunks, cBytes, sBytes, filter: `udp.stream eq ${stream}`, udp: true };
+}
+
 /* src/content/modules.js */
 /* Megalodon · contenido de los módulos. Texto en español para principiantes, orientado al eWPT.
    Formato ligero en los párrafos: `código`, **negrita**. Cada reto se valida contra la captura del módulo:
@@ -2232,7 +2368,7 @@ const MODULES = [
       { h: 'FTP y la caza por texto', p: ['FTP es de los años 70 y se nota: el usuario va en `USER` y la contraseña en `PASS`, en claro. Telnet, POP3 o IMAP sin TLS tienen el mismo problema.', 'Para cazar secretos en cualquier protocolo, busca texto en los bytes de la trama: `frame contains "pass"`. Y con `matches` usas expresiones regulares sin distinguir mayúsculas: `frame matches "pass(word)?"`.'], try: [['ftp', 'Todo FTP'], ['frame matches "pass"', 'Cualquier cosa que diga pass']] },
     ],
     tasks: [
-      { id: 'm3-basic', type: 'text', q: '¿Qué **credenciales** Basic se envían al panel /admin/? Escríbelas como `usuario:contraseña`.', ans: ['admin:S3cr3t!'], exact: true, proof: 'http.authbasic == "admin:S3cr3t!"', hints: ['Filtra `http.authbasic`.', 'Abre la cabecera Authorization en el árbol: debajo verás «Credenciales».'], ok: 'admin:S3cr3t! Base64 se deshace en un segundo: Basic Auth sin HTTPS es enviar la contraseña en claro.' },
+      { id: 'm3-basic', type: 'text', q: '¿Qué **credenciales** Basic se envían al panel /admin/? Escríbelas como `usuario:contraseña`.', ans: ['admin:S3cr3t!'], exact: true, proof: 'http.authbasic == "admin:S3cr3t!"', hints: ['Filtra `http.authbasic`.', 'Abre la cabecera Authorization en el árbol: debajo verás «Credenciales».', 'O abre Credenciales en la barra de herramientas: Wireshark las lista y te lleva al campo exacto.'], ok: 'admin:S3cr3t! Base64 se deshace en un segundo: Basic Auth sin HTTPS es enviar la contraseña en claro.' },
       { id: 'm3-auth', type: 'filter', q: 'Muestra las peticiones que llevan cabecera **Authorization**.', ref: 'http.authorization', hints: ['Un campo solo, sin comparación, comprueba que existe.'], ok: 'Una sola: el segundo intento tras el 401.' },
       { id: 'm3-401', type: 'packet', q: 'Selecciona la respuesta que **pide autenticación** (401).', match: 'http.response.code == 401', hints: ['`http.response.code == 401`'], ok: 'El 401 con WWW-Authenticate: Basic es el que hace saltar la ventanita de usuario y contraseña.' },
       { id: 'm3-form', type: 'text', q: '¿Qué **contraseña** escribe lucia en el formulario de /login.php?', ans: ['Primavera2024'], exact: true, proof: 'urlencoded-form.value == "Primavera2024"', hints: ['Filtra `urlencoded-form`.', 'Busca el valor del campo «pass».'], ok: 'Primavera2024. Un formulario sin HTTPS deja la contraseña a la vista de cualquiera en la red.' },
@@ -2291,6 +2427,7 @@ const MODULES = [
       { h: 'Fuerza bruta de directorios', p: ['Herramientas como **gobuster**, dirb o ffuf piden cientos de rutas de un diccionario. En el tráfico: muchas peticiones GET seguidas, casi todas con **404**, y un User-Agent delator.', 'Interesan las que **no** son 404: `http.response.code != 404`. Un 200 en `/backup.zip` o `/.git/HEAD` es un hallazgo serio.'], try: [['http.user_agent contains "gobuster"', 'Peticiones de gobuster'], ['http.response.code != 404 && tcp.stream == 20', 'Rutas que existen']] },
       { h: 'Fuerza bruta de login', p: ['Muchos **POST al mismo formulario** en poco tiempo, cada uno con una contraseña distinta. Las respuestas fallidas se parecen (200 con «credenciales incorrectas»); la buena es **distinta**: un 302 con Set-Cookie.', 'Busca la respuesta rara: `http.response.code == 302`, y luego mira su petición.'], try: [['http.request.method == "POST"', 'Los intentos'], ['http.response.code == 302', 'La respuesta diferente']] },
       { h: 'Inyecciones en los parámetros', p: ['**SQLi**: una comilla `\'` (en la URL, `%27`) que provoca un **500** con error SQL, `\' OR \'1\'=\'1` o `UNION SELECT` para sacar datos de otras tablas.', '**XSS**: etiquetas `<script>` (en la URL, `%3Cscript%3E`) en un parámetro. Con `matches` ignoras mayúsculas: `http.request.uri matches "union|select|script|%27"`.'], try: [['http.request.uri matches "union|%27|script"', 'Parámetros sospechosos'], ['http.response.code == 500', 'Errores del servidor']] },
+      { h: 'Información experta y objetos HTTP', p: ['Con cientos de paquetes, empieza por **Experto** (Analizar › Información experta): Wireshark agrupa lo que le llama la atención por severidad. Un montón de «Connection reset (RST)» es la firma de un escaneo; las retransmisiones, de una red con problemas.', '**Objetos HTTP** (Archivo › Exportar objetos › HTTP) reconstruye cada fichero que viajó en claro: páginas, JSON, formularios y descargas. Y con **Buscar** (Ctrl F) por valor hexadecimal encuentras firmas de fichero, como `50 4b 03 04` de un ZIP, aunque el servidor diga que es otra cosa.'], try: [['tcp.flags.reset == 1', 'Lo que la información experta marca como aviso'], ['http.request.uri contains "robots"', 'El fichero robots.txt']] },
     ],
     tasks: [
       { id: 'm6-open', type: 'text', q: '¿Qué **puertos abiertos** descubre el escaneo SYN? Escríbelos de menor a mayor separados por comas.', ans: ['22,80,443,3306'], list: true, proof: 'tcp.flags.syn==1 && tcp.flags.ack==1 && tcp.srcport == 3306', hints: ['Filtra las respuestas SYN, ACK del principio de la captura.', '`tcp.flags.syn==1 && tcp.flags.ack==1 && tcp.srcport < 10000` y lee el puerto de origen.'], ok: 'SSH, HTTP, HTTPS y MySQL. MySQL expuesto a la red ya es un hallazgo.' },
@@ -2301,6 +2438,9 @@ const MODULES = [
       { id: 'm6-sqli', type: 'filter', mode: 'covers', q: 'Muestra las peticiones con **inyección SQL** (la comilla, el OR y el UNION).', ref: 'http.request && (http.request.uri contains "id=7\'" || http.request.uri contains "%27" || http.request.uri contains "UNION")', allow: 'tcp.stream == 29 && http', hints: ['Busca en `http.request.uri`.', 'Prueba `http.request.uri matches "\'|%27|union"`.'], ok: 'Tres pruebas que van de detectar el fallo (500) a extraer usuarios y claves con UNION.' },
       { id: 'm6-xss', type: 'packet', q: 'Selecciona la petición con el intento de **XSS**.', match: 'http.request.uri contains "script"', hints: ['Busca `%3Cscript%3E` en la URI.', '`http.request.uri contains "script"`'], ok: 'alert(document.cookie): la prueba clásica de que un parámetro se refleja sin escapar.' },
       { id: 'm6-500', type: 'text', q: '¿Qué **carácter** del parámetro id provoca el error 500?', ans: ["'", 'comilla', 'comilla simple', '%27'], proof: 'http.response.code == 500', hints: ['Mira la petición justo antes del 500.'], ok: 'La comilla rompe la consulta SQL: primera señal de SQLi.' },
+      { id: 'm6-expert', type: 'text', q: 'Abre **Experto** (Analizar › Información experta). ¿Cuántos **avisos** (Warning) marca Wireshark en esta captura?', ans: ['20', 'veinte'], proof: 'tcp.flags.reset == 1', hints: ['El botón Experto está en la barra de herramientas, junto a Estadísticas (atajo E).', 'Mira el contador naranja de la parte de arriba.', 'Todos los avisos son del mismo tipo: Connection reset (RST).'], ok: '20 avisos «Connection reset (RST)»: los puertos cerrados contestan RST al escaneo SYN. La información experta es la forma más rápida de ver que algo raro pasa en una captura enorme.' },
+      { id: 'm6-robots', type: 'text', q: 'Exporta los **objetos HTTP** y abre `robots.txt`. ¿Qué **fichero** intenta esconder la tienda?', ans: ['backup.zip', '/backup.zip'], proof: 'http.file_data contains "Disallow: /backup.zip"', hints: ['Botón Objetos HTTP (Archivo › Exportar objetos › HTTP en Wireshark).', 'Pulsa Ver en la fila de robots.txt.', 'Mira la línea Disallow.'], ok: 'backup.zip. robots.txt le dice a los buscadores qué no indexar, y a un atacante exactamente dónde mirar.' },
+      { id: 'm6-zip', type: 'packet', q: 'Abre **Buscar** (Ctrl F), elige «Valor hexadecimal» y busca `50 4b 03 04`, la firma de un **ZIP**. Selecciona el paquete que lo transporta.', match: 'http.response && http.request.uri == "/backup.zip"', hints: ['Los ficheros ZIP empiezan siempre por los bytes PK\\x03\\x04 (50 4B 03 04).', 'Es la respuesta a GET /backup.zip.'], ok: 'Ese es: el servidor entrega backup.zip aunque lo anuncie como text/html. Buscar firmas de fichero en hexadecimal destapa lo que el Content-Type esconde.' },
     ],
   },
   {
@@ -2317,7 +2457,7 @@ const MODULES = [
       { id: 'm7-user', type: 'text', q: '¿Qué **usuario** pide el TGT en el AS-REQ?', ans: ['jdoe'], proof: 'kerberos.CNameString == "jdoe"', hints: ['Filtra `kerberos.msg_type == 10` y busca CNameString.'], ok: 'jdoe, del dominio MEGACORP.LOCAL.' },
       { id: 'm7-rc4', type: 'packet', q: 'Selecciona la respuesta TGS-REP cuyo **ticket** va cifrado con **RC4** (etype 23).', match: 'kerberos.msg_type == 13 && kerberos.etype == 23', hints: ['`kerberos.etype == 23`', 'Mira el etype del ticket, no el de la petición.'], ok: 'Ticket RC4 para MSSQLSvc: candidato perfecto a Kerberoasting.' },
       { id: 'm7-spn', type: 'text', q: '¿Qué **servicio** (primera parte del SPN) tiene el ticket RC4?', ans: ['MSSQLSvc', 'mssqlsvc', 'MSSQLSvc/sql01.megacorp.local:1433'], proof: 'kerberos.SNameString == "MSSQLSvc"', hints: ['Abre ese TGS-REP y mira SNameString.'], ok: 'MSSQLSvc: una cuenta de servicio de SQL Server.' },
-      { id: 'm7-ntlm', type: 'text', q: '¿Con qué **cuenta** se autentica el intruso por NTLM? Escribe `DOMINIO\\usuario`.', ans: ['MEGACORP\\svc_backup', 'megacorp\\svc_backup', 'svc_backup'], proof: 'ntlmssp.auth.username == "svc_backup"', hints: ['Filtra `ntlmssp.messagetype == 3`.', 'La columna Info lo dice tras «User:».'], ok: 'MEGACORP\\svc_backup desde el equipo KALI: una cuenta de servicio usada desde donde no debería.' },
+      { id: 'm7-ntlm', type: 'text', q: '¿Con qué **cuenta** se autentica el intruso por NTLM? Escribe `DOMINIO\\usuario`.', ans: ['MEGACORP\\svc_backup', 'megacorp\\svc_backup', 'svc_backup'], proof: 'ntlmssp.auth.username == "svc_backup"', hints: ['Filtra `ntlmssp.messagetype == 3`.', 'La columna Info lo dice tras «User:».', 'Credenciales (barra de herramientas) muestra la cuenta NTLMSSP directamente.'], ok: 'MEGACORP\\svc_backup desde el equipo KALI: una cuenta de servicio usada desde donde no debería.' },
       { id: 'm7-share', type: 'filter', q: 'Muestra la petición de **conexión al recurso compartido** (Tree Connect).', ref: 'smb2.cmd == 3 && smb2.tree', hints: ['La orden SMB2 3 es Tree Connect.', '`smb2.tree` solo existe en la petición.'], ok: '\\\\DC01\\ADMIN$: el recurso administrativo del controlador de dominio. Alarma roja.' },
     ],
   },
@@ -2328,7 +2468,7 @@ const MODULES = [
     intro: 'Un analista del SOC recibe esta captura de la estación WS-0412 (192.168.56.40). Hay tres cosas raras. Encuéntralas.',
     lessons: [
       { h: 'ARP spoofing', p: ['ARP traduce IP a MAC y no tiene autenticación. Un atacante puede gritar «la puerta de enlace soy yo» con respuestas ARP no pedidas y ponerse en medio (MITM).', 'Señal: varias respuestas ARP para la **misma IP con otra MAC**. Wireshark lo marca como «duplicate IP address».'], try: [['arp.opcode == 2', 'Respuestas ARP'], ['arp.src.proto_ipv4 == 192.168.56.1', 'Quién dice ser la puerta de enlace']] },
-      { h: 'Beacons de C2', p: ['El malware llama a casa (**C2**, mando y control) a intervalos regulares para recibir órdenes. En el tráfico: la misma petición, al mismo destino, cada X segundos, a menudo con un User-Agent viejo o raro.', 'Mira la columna Tiempo o el gráfico de E/S: los picos regulares delatan el beacon.'], try: [['http.request.uri contains "check"', 'Las llamadas a casa']] },
+      { h: 'Beacons de C2', p: ['El malware llama a casa (**C2**, mando y control) a intervalos regulares para recibir órdenes. En el tráfico: la misma petición, al mismo destino, cada X segundos, a menudo con un User-Agent viejo o raro.', 'Mira la columna Tiempo o el gráfico de E/S: los picos regulares delatan el beacon. Truco de analista: filtra solo las peticiones y cambia el **formato de tiempo** (barra de estado, abajo) a «desde el anterior mostrado»; la columna pasa a medir el hueco entre llamadas.'], try: [['http.request.uri contains "check"', 'Las llamadas a casa'], ['http.request && ip.dst == 203.0.113.66', 'Solo las peticiones al C2']] },
       { h: 'Exfiltración por DNS', p: ['Si todo está bloqueado menos DNS, los datos salen **escondidos en los nombres**: trozos en Base64 como subdominios de un dominio del atacante.', 'Señales: nombres larguísimos y raros, muchas consultas TXT, siempre al mismo dominio. Filtro: `len(dns.qry.name) > 30`.'], try: [['len(dns.qry.name) > 30', 'Nombres sospechosamente largos'], ['dns.qry.type == 16', 'Consultas TXT']] },
     ],
     tasks: [
@@ -2336,6 +2476,8 @@ const MODULES = [
       { id: 'm8-c2', type: 'text', q: '¿A qué **IP** llama el beacon de C2?', ans: ['203.0.113.66', '203.0.113.66:8080'], proof: 'ip.dst == 203.0.113.66 && http.request', hints: ['Filtra `http.request.uri contains "check"`.'], ok: '203.0.113.66:8080. Bloquéala en el cortafuegos y busca otros equipos que hablen con ella.' },
       { id: 'm8-int', type: 'choice', q: '¿Cada cuánto llama el beacon?', opts: ['Cada segundo', 'Más o menos cada minuto', 'Cada hora', 'Al azar'], ans: 1, hints: ['Mira la columna Tiempo de las peticiones GET /api/v2/check.'], ok: 'Unos 60 segundos. La regularidad es la firma del beacon.' },
       { id: 'm8-exf', type: 'filter', mode: 'covers', q: 'Muestra las **consultas DNS de exfiltración**.', ref: 'dns.qry.name contains "exfil" && dns.flags.response == 0', allow: 'dns.qry.name contains "exfil"', hints: ['Todas van al mismo dominio.', '`dns.qry.name contains "exfil"` o `len(dns.qry.name) > 30`.'], ok: 'Trozos de Base64 en subdominios: los datos se están yendo por DNS.' },
+      { id: 'm8-beacon', type: 'text', q: 'Filtra las **peticiones al C2** y cambia el formato de tiempo (abajo, en la barra de estado) a «desde el anterior mostrado». ¿Cada cuántos **segundos** llama el beacon?', ans: ['60', '60s', '60 s', '60 segundos', '1 minuto', 'un minuto', 'cada minuto'], proof: 'http.request && ip.dst == 203.0.113.66', hints: ['`http.request && ip.dst == 203.0.113.66`', 'El selector Tiempo está en la barra de estado, bajo la lista de paquetes.', 'Los valores rondan siempre la misma cifra, con unas décimas de variación (jitter).'], ok: 'Cada 60 segundos, con unas décimas de jitter. Esa regularidad es la huella de un beacon: ninguna persona navega con un metrónomo.' },
+      { id: 'm8-exfdata', type: 'text', q: 'Junta en orden (0, 1, 2) los trozos de Base64 de los subdominios de `exfil-lab.net` y decodifícalos. ¿Qué **contraseña de la base de datos** (`db`) se está robando?', ans: ['Prod2026!'], exact: true, proof: 'dns.qry.name contains "IQpkYjpQcm9kMjAy"', hints: ['Selecciona una consulta y pulsa Seguir flujo (F): con UDP se abre el flujo UDP.', 'Los trozos son YWRtaW46UzNjcjN0, IQpkYjpQcm9kMjAy y NiEKdmF1bHQ6dG9r.', 'Decodifica en CyberChef o con `echo ... | base64 -d`: sale una línea por credencial.'], ok: 'Prod2026! El texto completo es admin:S3cr3t!, db:Prod2026! y el principio de un token de vault. Un solo dominio raro con subdominios largos bastaba para detectarlo.' },
     ],
   },
 ];
@@ -2443,8 +2585,11 @@ const SHORTCUTS = [
   ['/', 'Ir a la barra de filtros', 'Focus the filter bar'],
   ['↑ ↓', 'Paquete anterior o siguiente', 'Previous or next packet'],
   ['Inicio Fin', 'Primer o último paquete', 'First or last packet'],
-  ['F', 'Seguir el flujo del paquete seleccionado', 'Follow the selected stream'],
+  ['F', 'Seguir el flujo TCP o UDP del paquete seleccionado', 'Follow the selected TCP or UDP stream'],
   ['S', 'Estadísticas', 'Statistics'],
+  ['E', 'Información experta', 'Expert Information'],
+  ['Ctrl F', 'Buscar paquete por filtro, cadena o hex', 'Find packet by filter, string or hex'],
+  ['Ctrl G', 'Ir al paquete por número', 'Go to packet by number'],
   ['Mayús T', 'Cambiar tema claro u oscuro', 'Toggle light or dark theme'],
   ['?', 'Ver estos atajos', 'Show these shortcuts'],
   ['Esc', 'Cerrar el diálogo o la sugerencia', 'Close dialog or suggestion'],
@@ -2469,6 +2614,7 @@ const STRINGS = {
     tryIt: 'Pruébalo', start: 'Empezar', continue: 'Continuar', extra: 'Extra', minutes: 'min', badge: 'Insignia', level: 'Nivel', xp: 'XP',
     progress: 'Progreso', resetProgress: 'Borrar mi progreso', resetConfirm: 'Sí, borrar', theme: 'Tema', light: 'Claro', dark: 'Oscuro', system: 'Sistema',
     language: 'Idioma', copy: 'Copiar', copied: 'Copiado', lessonsInSpanish: '', importDrop: 'Suelta aquí un .pcap o .pcapng', captures: 'Captura',
+    expert: 'Información experta', objects: 'Objetos HTTP', creds: 'Credenciales', endpoints: 'Endpoints', gotoPkt: 'Ir al paquete', findPkt: 'Buscar paquete', timeFmt: 'Formato de tiempo', followUdp: 'Seguir flujo UDP',
     conv: 'Conversaciones', hier: 'Jerarquía de protocolos', io: 'Gráfico de E/S', interval: 'Intervalo', filterThis: 'Filtrar esto', filterStream: 'Filtrar este flujo',
     prevStream: 'Flujo anterior', nextStream: 'Flujo siguiente', client: 'Cliente', server: 'Servidor', allPackets: 'Todos los paquetes', matching: 'Cumplen el filtro',
     moduleDone: '¡Módulo completado!', badgeEarned: 'Has ganado la insignia', next: 'Siguiente módulo', back: 'Volver', notFound: 'Esta página no existe.',
@@ -2486,6 +2632,7 @@ const STRINGS = {
     tryIt: 'Try it', start: 'Start', continue: 'Continue', extra: 'Extra', minutes: 'min', badge: 'Badge', level: 'Level', xp: 'XP',
     progress: 'Progress', resetProgress: 'Reset my progress', resetConfirm: 'Yes, reset', theme: 'Theme', light: 'Light', dark: 'Dark', system: 'System',
     language: 'Language', copy: 'Copy', copied: 'Copied', lessonsInSpanish: 'Lessons and challenges are written in Spanish.', importDrop: 'Drop a .pcap or .pcapng here', captures: 'Capture',
+    expert: 'Expert Information', objects: 'HTTP Objects', creds: 'Credentials', endpoints: 'Endpoints', gotoPkt: 'Go to Packet', findPkt: 'Find Packet', timeFmt: 'Time Display Format', followUdp: 'Follow UDP Stream',
     conv: 'Conversations', hier: 'Protocol Hierarchy', io: 'I/O Graph', interval: 'Interval', filterThis: 'Filter this', filterStream: 'Filter this stream',
     prevStream: 'Previous stream', nextStream: 'Next stream', client: 'Client', server: 'Server', allPackets: 'All packets', matching: 'Match the filter',
     moduleDone: 'Module complete!', badgeEarned: 'You earned the badge', next: 'Next module', back: 'Back', notFound: 'This page does not exist.',
@@ -2552,8 +2699,10 @@ function toast(msg, kind = 'info', icon) {
 
 /* Un único <dialog> reutilizable. openDialog devuelve el elemento del cuerpo; onClose se llama al cerrar. */
 let dlgClose = null, dlgReturn = null;
+let dlgTimer = 0;                                            // cierre animado pendiente: no debe cerrar un diálogo abierto después
 function openDialog({ title, body, wide = false, cls = '', onClose, role, footer }) {
   const d = $('#dlg');
+  if (dlgTimer) { clearTimeout(dlgTimer); dlgTimer = 0; }
   if (d.open) closeDialog(true);
   dlgReturn = document.activeElement;
   const tid = nextId('dlg-t');
@@ -2571,9 +2720,10 @@ function openDialog({ title, body, wide = false, cls = '', onClose, role, footer
 }
 function closeDialog(instant) {
   const d = $('#dlg'); if (!d.open) return;
-  const done = () => { d.close(); d.classList.remove('closing'); const f = dlgClose; dlgClose = null; if (f) f(); if (dlgReturn && dlgReturn.isConnected) dlgReturn.focus(); };
+  if (dlgTimer) { clearTimeout(dlgTimer); dlgTimer = 0; }
+  const done = () => { dlgTimer = 0; d.close(); d.classList.remove('closing'); const f = dlgClose; dlgClose = null; if (f) f(); if (dlgReturn && dlgReturn.isConnected) dlgReturn.focus(); };
   if (instant || REDUCED.matches) return done();
-  d.classList.add('closing'); setTimeout(done, 150);
+  d.classList.add('closing'); dlgTimer = setTimeout(done, 150);
 }
 document.addEventListener('DOMContentLoaded', () => {
   const d = $('#dlg');
@@ -2650,6 +2800,10 @@ class Workspace {
         <div class="ws-tools" role="toolbar" aria-label="Herramientas">
           <button class="tbtn" data-follow type="button" title="${t('follow')} (F)">${ic('follow')}<span>${t('follow')}</span></button>
           <button class="tbtn" data-stats type="button" title="${t('stats')} (S)">${ic('stats')}<span>${t('stats')}</span></button>
+          <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>Experto</span></button>
+          <button class="tbtn" data-objects type="button" title="Archivo › Exportar objetos › HTTP">${ic('file')}<span>${t('objects')}</span></button>
+          <button class="tbtn" data-creds type="button" title="Herramientas › Credenciales">${ic('lock')}<span>${t('creds')}</span></button>
+          <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>Buscar</span></button>
           <button class="tbtn" data-color type="button" aria-pressed="true">${ic('sparkles')}<span>${t('colorize')}</span></button>
           ${imp ? `<button class="tbtn" data-open type="button">${ic('upload')}<span>${t('open')}</span></button><input type="file" class="vh" data-file accept=".pcap,.pcapng,.cap,application/vnd.tcpdump.pcap" tabindex="-1" aria-hidden="true">` : ''}
           <button class="tbtn" data-export type="button">${ic('download')}<span>Exportar</span></button>
@@ -2666,7 +2820,7 @@ class Workspace {
         <div class="pane ptree" aria-label="${t('detail')}" role="region"><ul class="tree" role="tree" aria-label="${t('detail')}" tabindex="0"></ul><p class="pane-empty">${t('noPacket')}</p></div>
         <div class="pane phex" role="region" aria-label="${t('hexView')}" tabindex="0"><div class="hex mono"></div></div>
       </div>
-      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
+      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><label class="tfmt"><span>${t('time')}:</span><select data-tfmt aria-label="${t('timeFmt')}"><option value="rel">desde el inicio</option><option value="delta">desde el anterior capturado</option><option value="dview">desde el anterior mostrado</option><option value="abs">hora UTC</option></select></label><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
       ${imp ? `<div class="drop" hidden>${ic('upload')}<span>${t('importDrop')}</span></div>` : ''}
     </section>`;
     const r = this.host;
@@ -2682,6 +2836,12 @@ class Workspace {
     $('[data-clear]', r).onclick = () => { inp.value = ''; this.validate(); this.apply(); inp.focus(); };
     $('[data-follow]', r).onclick = () => this.follow();
     $('[data-stats]', r).onclick = () => openStats(this);
+    $('[data-expert]', r).onclick = () => openExpert(this);
+    $('[data-objects]', r).onclick = () => openObjects(this);
+    $('[data-creds]', r).onclick = () => openCreds(this);
+    $('[data-find]', r).onclick = () => openFind(this);
+    const tf = $('[data-tfmt]', r); tf.value = this.tfmt = S.get().settings.tfmt || 'rel';
+    tf.onchange = () => { this.tfmt = tf.value; S.set('tfmt', tf.value); this.renderRows(true); };
     this.$.color.onclick = () => S.set('colorize', !S.get().settings.colorize);
     $('[data-export]', r).onclick = () => this.exportDialog();
     this.$.ac.addEventListener('mousedown', e => { const li = e.target.closest('[role=option]'); if (li) { e.preventDefault(); this.acceptAc(+li.dataset.i); } });
@@ -2820,7 +2980,7 @@ class Workspace {
       if (!el) {
         el = document.createElement('div');
         el.className = `prow c-${p.color || 'none'}`; el.dataset.no = p.no; el.id = `${this.id}-r${p.no}`; el.setAttribute('role', 'row');
-        el.innerHTML = `<span role="gridcell" class="c-no">${p.no}</span><span role="gridcell" class="c-t">${p.rel.toFixed(6)}</span><span role="gridcell" class="c-s">${esc(p.src)}</span><span role="gridcell" class="c-d">${esc(p.dst)}</span><span role="gridcell" class="c-p">${esc(p.proto)}</span><span role="gridcell" class="c-l">${p.len}</span><span role="gridcell" class="c-i">${esc(p.info)}</span>`;
+        el.innerHTML = `<span role="gridcell" class="c-no">${p.no}</span><span role="gridcell" class="c-t">${this.timeOf(p, i)}</span><span role="gridcell" class="c-s">${esc(p.src)}</span><span role="gridcell" class="c-d">${esc(p.dst)}</span><span role="gridcell" class="c-p">${esc(p.proto)}</span><span role="gridcell" class="c-l">${p.len}</span><span role="gridcell" class="c-i">${esc(p.info)}</span>`;
         this.$.body.append(el); this.rows.set(p.no, el);
       }
       el.style.transform = `translateY(${i * ROW_H}px)`;
@@ -2828,6 +2988,18 @@ class Workspace {
       el.setAttribute('aria-selected', String(p.no === this.sel));
     }
     this.rows.forEach((el, no) => { if (!want.has(no)) { el.remove(); this.rows.delete(no); } });
+  }
+  timeOf(p, i) {
+    const f = this.tfmt || 'rel';
+    if (f === 'delta') return p.delta.toFixed(6);
+    if (f === 'dview') return (i > 0 ? p.t - this.view[i - 1].t : 0).toFixed(6);
+    if (f === 'abs') { const s = Math.floor(p.t), us = Math.round((p.t - s) * 1e6) % 1e6; return `${new Date(s * 1000).toISOString().slice(11, 19)}.${String(us).padStart(6, '0')}`; }
+    return p.rel.toFixed(6);
+  }
+  revealField(no, field) {                               // selecciona el paquete y el campo del árbol (Credenciales, Información experta)
+    this.select(no, { focusList: false });
+    const f = this.flat && this.flat.find(x => x.node.field === field);
+    if (f) { let pid = f.parentId; while (pid) { const par = this.flat.find(x => x.id === pid); this.expanded.add(par.key); pid = par.parentId; } this.renderTree(this.byNo.get(no)); const g = this.flat.find(x => x.node.field === field); if (g) this.selectNode(g.node); }
   }
   scrollTo(no) {
     const i = this.view.findIndex(p => p.no === no); if (i < 0) return;
@@ -2946,47 +3118,50 @@ class Workspace {
 
   follow(stream) {
     const p = this.selected();
+    if (stream === undefined && p && p.tcpStream === undefined && p.f['udp.stream']) return openFollow(this, p.f['udp.stream'][0], 'udp');
     const st = stream ?? (p && p.tcpStream);
-    if (st === undefined || st === null) { toast('Selecciona un paquete TCP para seguir su flujo.', 'info', 'follow'); return; }
+    if (st === undefined || st === null) { toast('Selecciona un paquete TCP o UDP para seguir su flujo.', 'info', 'follow'); return; }
     openFollow(this, st);
   }
   destroy() { this.unsub && this.unsub(); this.host.innerHTML = ''; }
 }
 
 /* src/app/40-dialogs.js */
-/* Megalodon · diálogos del espacio de trabajo: Seguir flujo TCP y Estadísticas (conversaciones, jerarquía, E/S). */
-function openFollow(ws, stream) {
-  const streams = [...new Set(ws.pkts.filter(p => p.tcpStream !== undefined).map(p => p.tcpStream))].sort((a, b) => a - b);
+/* Megalodon · diálogos del espacio de trabajo: Seguir flujo (TCP y UDP), Estadísticas (conversaciones, endpoints, jerarquía, E/S),
+   Información experta, Exportar objetos HTTP, Credenciales, Buscar e Ir al paquete. */
+function openFollow(ws, stream, kind = 'tcp') {
+  const udp = kind === 'udp', sid = p => udp ? (p.f['udp.stream'] ? p.f['udp.stream'][0] : undefined) : p.tcpStream;
+  const streams = [...new Set(ws.pkts.map(sid).filter(x => x !== undefined))].sort((a, b) => a - b);
   let cur = stream;
   const body = document.createElement('div');
   const render = () => {
-    const fs = followTcp(ws.pkts, cur);
+    const fs = udp ? followUdp(ws.pkts, cur) : followTcp(ws.pkts, cur);
     const idx = streams.indexOf(cur);
     body.innerHTML = `<div class="fs-head">
         <div class="fs-ends"><span class="who cli">${ic('arrowR', 'sm')}${t('client')} <code>${esc(fs.client)}</code></span><span class="who srv">${ic('arrowL', 'sm')}${t('server')} <code>${esc(fs.server)}</code></span></div>
-        <div class="row"><button class="ibtn" data-prev ${idx <= 0 ? 'disabled' : ''} aria-label="${t('prevStream')}">${ic('chevL')}</button><span class="mono sm">tcp.stream eq ${cur}</span><button class="ibtn" data-next ${idx >= streams.length - 1 ? 'disabled' : ''} aria-label="${t('nextStream')}">${ic('chevR')}</button></div>
+        <div class="row"><button class="ibtn" data-prev ${idx <= 0 ? 'disabled' : ''} aria-label="${t('prevStream')}">${ic('chevL')}</button><span class="mono sm">${kind}.stream eq ${cur}</span><button class="ibtn" data-next ${idx >= streams.length - 1 ? 'disabled' : ''} aria-label="${t('nextStream')}">${ic('chevR')}</button></div>
       </div>
-      <div class="fs-body mono" tabindex="0" aria-label="Contenido del flujo">${fs.chunks.length ? fs.chunks.map(c => `<pre class="${c.client ? 'cli' : 'srv'}"><span class="vh">${c.client ? t('client') : t('server')}: </span>${esc(c.text)}</pre>`).join('') : '<p class="muted">Este flujo no lleva datos: solo saludo y cierre (o un RST).</p>'}</div>
+      <div class="fs-body mono" tabindex="0" aria-label="Contenido del flujo">${fs.chunks.length ? fs.chunks.map(c => `<pre class="${c.client ? 'cli' : 'srv'}"><span class="vh">${c.client ? t('client') : t('server')}: </span>${esc(c.text)}</pre>`).join('') : `<p class="muted">${udp ? 'Este flujo UDP no lleva datos.' : 'Este flujo no lleva datos: solo saludo y cierre (o un RST).'}</p>`}</div>
       <p class="sm muted fs-sum">${t('client')} → ${t('server')}: <strong>${fmtNum(fs.cBytes)}</strong> bytes · ${t('server')} → ${t('client')}: <strong>${fmtNum(fs.sBytes)}</strong> bytes · ${fs.chunks.length} bloques</p>`;
     $('[data-prev]', body).onclick = () => { cur = streams[idx - 1]; render(); };
     $('[data-next]', body).onclick = () => { cur = streams[idx + 1]; render(); };
   };
   render();
-  const d = openDialog({ title: `${ic('follow')} ${t('follow')}`, body, wide: true, footer: `<button class="btn ghost" data-close>${t('close')}</button><button class="btn primary" data-filt>${ic('filter')}${t('filterStream')}</button>` });
+  const d = openDialog({ title: `${ic('follow')} ${udp ? t('followUdp') : t('follow')}`, body, wide: true, footer: `<button class="btn ghost" data-close>${t('close')}</button><button class="btn primary" data-filt>${ic('filter')}${t('filterStream')}</button>` });
   $('[data-close]', d).onclick = () => closeDialog();
-  $('[data-filt]', d).onclick = () => { ws.setFilter(`tcp.stream eq ${cur}`); closeDialog(); };
+  $('[data-filt]', d).onclick = () => { ws.setFilter(`${kind}.stream eq ${cur}`); closeDialog(); };
 }
 
 function openStats(ws, tab = 'conv') {
   const body = document.createElement('div');
-  const tabs = [['conv', t('conv'), 'swap'], ['hier', t('hier'), 'layers'], ['io', t('io'), 'activity']];
+  const tabs = [['conv', t('conv'), 'swap'], ['ends', t('endpoints'), 'network'], ['hier', t('hier'), 'layers'], ['io', t('io'), 'activity']];
   body.innerHTML = `<div class="seg" role="tablist" aria-label="${t('stats')}">${tabs.map(([k, l, i]) => `<button role="tab" id="st-${k}" aria-controls="st-p" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}" data-tab="${k}">${ic(i, 'sm')}${l}</button>`).join('')}</div><div id="st-p" role="tabpanel" class="st-p" tabindex="0"></div>`;
   const panel = $('#st-p', body);
   const show = k => {
     tab = k;
     $$('[role=tab]', body).forEach(b => { const on = b.dataset.tab === k; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
     panel.setAttribute('aria-labelledby', `st-${k}`);
-    if (k === 'conv') convPanel(ws, panel); else if (k === 'hier') hierPanel(ws, panel); else ioPanel(ws, panel);
+    if (k === 'conv') convPanel(ws, panel); else if (k === 'ends') endsPanel(ws, panel); else if (k === 'hier') hierPanel(ws, panel); else ioPanel(ws, panel);
   };
   $('.seg', body).addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
   $('.seg', body).addEventListener('keydown', e => {
@@ -3047,6 +3222,119 @@ function ioPanel(ws, panel) {
     $('[data-iv]', panel).onchange = e => { iv = +e.target.value; draw(); };
   };
   draw();
+}
+
+
+/* ---------- Endpoints (Estadísticas › Endpoints › IPv4) ---------- */
+function endsPanel(ws, panel) {
+  const rows = endpoints(ws.pkts);
+  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('endpoints')}"><table class="tbl"><caption class="vh">${t('endpoints')} IPv4</caption><thead><tr><th scope="col">Dirección</th><th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">Enviados</th><th scope="col" class="n">Recibidos</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+    <tbody>${rows.map(e => `<tr><td class="mono">${esc(e.addr)}</td><td class="n">${fmtNum(e.pkts)}</td><td class="n">${fmtNum(e.bytes)}</td><td class="n">${fmtNum(e.tx)}</td><td class="n">${fmtNum(e.rx)}</td><td><button class="btn sm ghost" type="button" data-f="ip.addr == ${esc(e.addr)}">${ic('filter', 'sm')}${t('filterThis')}</button></td></tr>`).join('')}</tbody></table></div>
+    <p class="sm muted">Cada IP que aparece en la captura. Un equipo que solo recibe, o uno que habla con muchos, suele ser el primer hilo del que tirar.</p>`;
+  $$('[data-f]', panel).forEach(b => b.onclick = () => { ws.setFilter(b.dataset.f); closeDialog(); });
+}
+
+/* ---------- Analizar › Información experta ---------- */
+const SEV_LABEL = { error: 'Error', warn: 'Aviso', note: 'Nota', chat: 'Conversación' };
+function openExpert(ws) {
+  const ex = expertInfo(ws.pkts), body = document.createElement('div');
+  body.innerHTML = `<p class="muted sm">Wireshark resume aquí lo que le llama la atención de cada paquete, de más grave a más rutinario. Los mensajes se muestran en inglés, como en Wireshark, para que los reconozcas.</p>
+    <div class="ex-sum">${EXPERT_SEV.map(([k, en]) => `<span class="ex-chip sev-${k}"><strong>${fmtNum(ex.count[k])}</strong> ${SEV_LABEL[k]} <small>(${en})</small></span>`).join('')}</div>
+    ${ex.items.length ? `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('expert')}"><table class="tbl ex"><caption class="vh">${t('expert')}</caption><thead><tr><th scope="col">Severidad</th><th scope="col">Resumen</th><th scope="col">Protocolo</th><th scope="col" class="n">Cantidad</th><th scope="col">Paquetes</th></tr></thead>
+    <tbody>${ex.items.map((it, i) => `<tr><td><span class="ex-chip sev-${it.sev}">${SEV_LABEL[it.sev]}</span></td><td class="mono">${esc(it.summary)}</td><td>${esc(it.proto)}</td><td class="n">${fmtNum(it.nos.length)}</td>
+      <td><div class="ex-nos">${it.nos.slice(0, 8).map(n => `<button class="btn sm ghost mono" type="button" data-no="${n}" aria-label="Ir al paquete ${n}">${n}</button>`).join('')}${it.nos.length > 1 ? `<button class="btn sm ghost" type="button" data-show="${i}">${ic('filter', 'sm')}Mostrar</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted">No hay entradas: esta captura no tiene TCP ni HTTP que comentar.</p>'}`;
+  openDialog({ title: `${ic('alert')} ${t('expert')}`, body, wide: true });
+  $$('[data-no]', body).forEach(b => b.onclick = () => { closeDialog(); ws.select(+b.dataset.no, { focusList: true }); });
+  $$('[data-show]', body).forEach(b => b.onclick = () => { closeDialog(); ws.setFilter(`frame.number in {${ex.items[+b.dataset.show].nos.join(', ')}}`); });
+}
+
+/* ---------- Archivo › Exportar objetos › HTTP ---------- */
+function openObjects(ws) {
+  const objs = httpObjects(ws.pkts), body = document.createElement('div');
+  const isText = o => /^(text\/|application\/(json|javascript|xml|x-www-form-urlencoded))/i.test(o.type);
+  body.innerHTML = objs.length ? `<p class="muted sm">Los cuerpos HTTP reconstruidos de la captura: páginas, scripts, JSON, formularios y ficheros. Así se recupera lo que se descargó (o se robó) por HTTP sin cifrar.</p>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('objects')}"><table class="tbl"><caption class="vh">${t('objects')}</caption><thead><tr><th scope="col" class="n">Paquete</th><th scope="col">Host</th><th scope="col">Tipo de contenido</th><th scope="col" class="n">Tamaño</th><th scope="col">Nombre</th><th scope="col"><span class="vh">Acciones</span></th></tr></thead>
+    <tbody>${objs.map((o, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-no="${o.no}" aria-label="Ir al paquete ${o.no}">${o.no}</button></td><td class="mono">${esc(o.host)}</td><td class="mono sm">${esc(o.type || '—')}</td><td class="n">${fmtNum(o.size)} B</td><td class="mono">${esc(o.name)}</td>
+      <td><div class="row">${isText(o) ? `<button class="btn sm ghost" type="button" data-view="${i}" aria-label="Ver ${esc(o.name)}">${ic('eye', 'sm')}Ver</button>` : ''}<button class="btn sm ghost" type="button" data-save="${i}" aria-label="Guardar ${esc(o.name)}">${ic('download', 'sm')}Guardar</button></div></td></tr>`).join('')}</tbody></table></div>
+    <div class="ob-prev" hidden><p class="sm"><strong data-pn></strong></p><pre class="mono" tabindex="0"></pre></div>`
+    : '<p class="muted">Esta captura no lleva objetos HTTP. Prueba con los módulos 2, 3 o 6.</p>';
+  openDialog({ title: `${ic('file')} ${t('objects')}`, body, wide: true });
+  $$('[data-no]', body).forEach(b => b.onclick = () => { closeDialog(); ws.select(+b.dataset.no, { focusList: true }); });
+  $$('[data-save]', body).forEach(b => b.onclick = () => { const o = objs[+b.dataset.save]; download(o.data, o.name, 'application/octet-stream'); toast(`Guardado: <code>${esc(o.name)}</code>`, 'ok', 'download'); });
+  $$('[data-view]', body).forEach(b => b.onclick = () => {
+    const o = objs[+b.dataset.view], pv = $('.ob-prev', body);
+    pv.hidden = false; $('[data-pn]', pv).textContent = `${o.name} · paquete ${o.no}`;
+    $('pre', pv).textContent = new TextDecoder().decode(o.data);                 // texto, nunca HTML interpretado
+    $('pre', pv).focus();
+  });
+}
+
+/* ---------- Herramientas › Credenciales ---------- */
+function openCreds(ws) {
+  const cr = credentials(ws.pkts), body = document.createElement('div');
+  body.innerHTML = cr.length ? `<p class="muted sm">Usuarios que viajan por protocolos que Wireshark sabe leer (HTTP Basic, FTP, NTLMSSP). Pulsa el paquete para ir al campo exacto del árbol.</p>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('creds')}"><table class="tbl"><caption class="vh">${t('creds')}</caption><thead><tr><th scope="col" class="n">Paquete</th><th scope="col">Protocolo</th><th scope="col">Usuario</th><th scope="col">Información</th></tr></thead>
+    <tbody>${cr.map((c, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-i="${i}" aria-label="Ir al paquete ${c.no}">${c.no}</button></td><td>${esc(c.proto)}</td><td class="mono">${esc(c.user)}</td><td class="sm">${esc(c.info)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="sm muted">Wireshark no muestra aquí los formularios POST: esos los buscas tú con <code>http.request.method == "POST"</code>.</p>`
+    : '<p class="muted">No hay credenciales en esta captura. Las encontrarás en los módulos 3 (HTTP Basic y FTP) y 7 (NTLMSSP).</p>';
+  openDialog({ title: `${ic('lock')} ${t('creds')}`, body, wide: true });
+  $$('[data-i]', body).forEach(b => b.onclick = () => { const c = cr[+b.dataset.i]; closeDialog(); ws.revealField(c.no, c.field); });
+}
+
+/* ---------- Editar › Buscar paquete (Ctrl F) e Ir al paquete (Ctrl G) ---------- */
+function openFind(ws, mode = 'find') {
+  const body = document.createElement('div');
+  body.innerHTML = `<div class="seg" role="tablist" aria-label="${t('findPkt')}"><button role="tab" id="fd-find" aria-selected="${mode === 'find'}" data-m="find">${ic('search', 'sm')}${t('findPkt')}</button><button role="tab" id="fd-goto" aria-selected="${mode === 'goto'}" data-m="goto">${ic('target', 'sm')}${t('gotoPkt')}</button></div>
+    <form class="fd" data-p="find" ${mode === 'find' ? '' : 'hidden'} aria-labelledby="fd-find">
+      <div class="row wrap"><label class="sm" for="fd-k">Buscar por</label><select id="fd-k" class="sel"><option value="filter">Filtro de visualización</option><option value="str">Cadena en los bytes</option><option value="hex">Valor hexadecimal</option></select>
+      <label class="row sm"><input type="checkbox" id="fd-c"> Distinguir mayúsculas</label></div>
+      <label class="vh" for="fd-q">Qué buscar</label><input id="fd-q" class="tinput mono" type="text" autocomplete="off" spellcheck="false" placeholder="p. ej. http.cookie, password o 50 4b 03 04">
+      <div class="row"><button class="btn primary sm" type="submit">${ic('search', 'sm')}Buscar siguiente</button><span class="sm" data-msg aria-live="polite"></span></div>
+    </form>
+    <form class="fd" data-p="goto" ${mode === 'goto' ? '' : 'hidden'} aria-labelledby="fd-goto">
+      <label class="sm" for="fd-n">Número de paquete (1 a ${fmtNum(ws.pkts.length)})</label><input id="fd-n" class="tinput mono" type="number" min="1" max="${ws.pkts.length}" inputmode="numeric">
+      <div class="row"><button class="btn primary sm" type="submit">${ic('target', 'sm')}Ir</button><span class="sm" data-msg2 aria-live="polite"></span></div>
+    </form>`;
+  openDialog({ title: `${ic('search')} ${t('findPkt')}`, body, cls: 'narrow' });
+  const show = m => { $$('[role=tab]', body).forEach(b => b.setAttribute('aria-selected', String(b.dataset.m === m))); $$('form', body).forEach(f => { f.hidden = f.dataset.p !== m; }); $(m === 'find' ? '#fd-q' : '#fd-n', body).focus(); };
+  $$('[role=tab]', body).forEach(b => b.onclick = () => show(b.dataset.m));
+  show(mode);
+  const msg = $('[data-msg]', body);
+  $('[data-p=find]', body).onsubmit = e => {
+    e.preventDefault();
+    const r = findPacket(ws, $('#fd-k', body).value, $('#fd-q', body).value, $('#fd-c', body).checked);
+    msg.className = `sm ${r.ok ? 'okt' : 'bad'}`; msg.textContent = r.msg;
+  };
+  $('[data-p=goto]', body).onsubmit = e => {
+    e.preventDefault();
+    const n = +$('#fd-n', body).value, m2 = $('[data-msg2]', body);
+    if (!ws.byNo.has(n)) { m2.className = 'sm bad'; m2.textContent = `No existe el paquete ${n}.`; return; }
+    if (!ws.view.some(p => p.no === n)) { m2.className = 'sm bad'; m2.textContent = `El paquete ${n} está oculto por el filtro actual. Bórralo para verlo.`; return; }
+    closeDialog(); ws.select(n, { focusList: true });
+  };
+}
+/* Busca el siguiente paquete mostrado, tras el seleccionado y dando la vuelta, como Wireshark. */
+function findPacket(ws, kind, q, cs) {
+  q = String(q || '');
+  if (!q.trim()) return { ok: false, msg: 'Escribe qué buscar.' };
+  let test;
+  if (kind === 'filter') { const r = parseFilter(q); if (!r.ok) return { ok: false, msg: r.error || 'El filtro no es válido.' }; test = r.test; }
+  else if (kind === 'hex') {
+    const h = q.replace(/0x|[\s:.-]/gi, '');
+    if (!/^([0-9a-f]{2})+$/i.test(h)) return { ok: false, msg: 'Escribe bytes en hexadecimal, por pares: 50 4b 03 04' };
+    const nd = h.match(/../g).map(x => parseInt(x, 16));
+    test = p => { const b = p.b; outer: for (let i = 0; i + nd.length <= b.length; i++) { for (let j = 0; j < nd.length; j++) if (b[i + j] !== nd[j]) continue outer; return true; } return false; };
+  } else {
+    const needle = cs ? q : q.toLowerCase();
+    test = p => { const s = TD.decode(p.b); return (cs ? s : s.toLowerCase()).includes(needle); };
+  }
+  const v = ws.view, start = Math.max(-1, v.findIndex(p => p.no === ws.sel));
+  for (let k = 1; k <= v.length; k++) {
+    const p = v[(start + k) % v.length];
+    if (test(p)) { ws.select(p.no); return { ok: true, msg: `Encontrado en el paquete ${p.no}${(start + k) >= v.length && start >= 0 ? ' (se ha dado la vuelta)' : ''}.` }; }
+  }
+  return { ok: false, msg: 'No aparece en ningún paquete mostrado.' };
 }
 
 /* src/app/45-ladder.js */
@@ -4290,7 +4578,7 @@ function viewModule(main, { id, q }) {
     sync();
     if (modProgress(m).done === m.tasks.length && S.earnBadge(m.id)) {
       $('[data-end]', main).classList.remove('hide'); $('[data-badge]', main).classList.add('ok');
-      setTimeout(() => celebrate(m, nextM), 500);
+      setTimeout(() => { if (location.hash.split('?')[0] === `#/m/${m.id}`) celebrate(m, nextM); }, 500);   // solo si sigues en el módulo
     }
   };
   $$('.task', main).forEach(card => {
@@ -4565,12 +4853,14 @@ function openKeys() {
 function onKey(e) {
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); return; }
+  if ((e.ctrlKey || e.metaKey) && CUR_WS && !$('#dlg').open && ['f', 'g'].includes(e.key.toLowerCase())) { e.preventDefault(); openFind(CUR_WS, e.key.toLowerCase() === 'g' ? 'goto' : 'find'); return; }
   if (typing || $('#dlg').open || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === '/' && CUR_WS) { e.preventDefault(); CUR_WS.focusFilter(); }
   else if (e.key === '?') { e.preventDefault(); openKeys(); }
   else if (e.key === 'T' && e.shiftKey) toggleTheme();
   else if ((e.key === 'f' || e.key === 'F') && !e.shiftKey && CUR_WS) CUR_WS.follow();
   else if ((e.key === 's' || e.key === 'S') && !e.shiftKey && CUR_WS) openStats(CUR_WS);
+  else if ((e.key === 'e' || e.key === 'E') && !e.shiftKey && CUR_WS) openExpert(CUR_WS);
 }
 
 function boot() {

@@ -11,12 +11,31 @@ Aprende a leer la red como un pentester sin instalar nada: capturas sintéticas 
 | | |
 |---|---|
 | **8 módulos** | Saludo TCP, HTTP, cookies y credenciales, DNS, TLS, ataques web, Directorio Activo (Kerberos, SMB2, NTLM) y caza en el SOC (ARP spoofing, beacon de C2, exfiltración por DNS) |
-| **31 lecciones · 53 retos** | Escribir filtros, seleccionar paquetes, responder y tests. Cada reto tiene pistas y se comprueba contra la captura al instante |
+| **32 lecciones · 58 retos** | Escribir filtros, seleccionar paquetes, responder y tests. Cada reto tiene pistas y se comprueba contra la captura al instante |
 | **8 capturas, 578 paquetes** | Construidas byte a byte (Ethernet, ARP, IPv4, ICMP, UDP, TCP, DNS, DHCP, HTTP, TLS, SMB2, NTLMSSP, Kerberos v5) con semilla fija: siempre idénticas |
-| **Espacio tipo Wireshark** | Lista virtualizada, árbol de detalle con rangos de bytes, volcado hexadecimal, reglas de color, Seguir flujo TCP, estadísticas y diagrama de escalera |
+| **Espacio tipo Wireshark** | Lista virtualizada, árbol de detalle con rangos de bytes, volcado hexadecimal, reglas de color, Seguir flujo TCP y UDP, estadísticas (conversaciones, endpoints, jerarquía, E/S) y diagrama de escalera |
+| **Herramientas de analista** | Información experta con los mensajes y severidades de Wireshark, Exportar objetos HTTP (ver y guardar), Credenciales (HTTP Basic, FTP, NTLMSSP), Buscar paquete por filtro, cadena o hex (`Ctrl F`), Ir al paquete (`Ctrl G`) y formato de tiempo (desde el inicio, desde el anterior capturado o mostrado, hora UTC) |
 | **Filtros de visualización** | 136 campos con la semántica de Wireshark 4.x (`==` sobre cualquier valor, `in {80, 443}`, rangos, `contains`, `matches`, funciones), errores en español con posición y «¿Querías decir…?» |
 | **Exportar** | Cada captura en `.pcapng` para repetir el reto en tu Wireshark de verdad; también lee `.pcap` y `.pcapng` |
 | **Chuleta y glosario** | 41 términos y los filtros de uso diario, con búsqueda global `Ctrl K` |
+
+## Herramientas de analista
+
+| Información experta | Objetos HTTP |
+|---|---|
+| ![Información experta del módulo 6](docs/capturas/experto.webp) | ![Exportar objetos HTTP con vista previa](docs/capturas/objetos-http.webp) |
+
+![Beacon de C2 con el formato de tiempo «desde el anterior mostrado»](docs/capturas/beacon.webp)
+
+Las mismas funciones que usa un pentester o un analista de SOC en Wireshark, con su comportamiento real:
+
+- **Información experta** (`E`): mensajes en inglés tal como los emite Wireshark y su severidad (por ejemplo, `Connection reset (RST)` es *Warning* y `Connection establish request (SYN): server port 80` es *Chat*), con salto a cada paquete y botón para filtrarlos.
+- **Objetos HTTP**: cada cuerpo reconstruido con host, tipo, tamaño y nombre seguro; vista previa como texto (nunca se interpreta el HTML de la captura) y descarga.
+- **Credenciales**: paquete, protocolo, usuario e información, y salto al campo exacto del árbol.
+- **Buscar** por filtro, cadena o hex desde el paquete seleccionado y dando la vuelta, como Wireshark; **Ir al paquete** avisa si el paquete está oculto por el filtro.
+- **Formato de tiempo**: con «desde el anterior mostrado» el intervalo de un beacon salta a la vista (60 s en el módulo 8).
+
+Cinco retos nuevos obligan a usarlas: los avisos de la información experta, el fichero que esconde `robots.txt`, la firma ZIP `50 4b 03 04` buscada en hexadecimal, el intervalo del beacon y la contraseña exfiltrada por DNS en Base64.
 
 ## El megalodón 3D
 
@@ -63,8 +82,8 @@ npm run build        # src/ → dist/index.html y megalodon.html
 
 ## Pruebas
 
-- **Motor (8 pruebas, `node --test`):** las 8 capturas se generan y disecan; son deterministas; exportar a pcap/pcapng y releer conserva cada byte; **los 53 retos tienen solución comprobable** contra su captura; los 57 botones «Pruébalo» compilan y muestran paquetes; sintaxis de filtros de Wireshark 4.x y errores; estadísticas y Follow TCP Stream; checksum RFC 1071.
-- **E2E (12 pruebas, Chromium real):** CSP; montaje del megalodón; pausa accesible y plano técnico; desmontaje al cambiar de vista; movimiento reducido; respaldo sin WebGL2; reto resuelto que suma XP; búsqueda `Ctrl K`; y **axe-core con 0 infracciones WCAG 2.2 AA** en 6 vistas, a 1280 y 390 px, en oscuro y claro.
+- **Motor (13 pruebas, `node --test`):** las 8 capturas se generan y disecan; son deterministas; exportar a pcap/pcapng y releer conserva cada byte; **los 58 retos tienen solución comprobable** contra su captura y las respuestas derivadas (avisos, intervalo del beacon, Base64 exfiltrado, firma ZIP) se recalculan desde los paquetes; los 60 botones «Pruébalo» compilan y muestran paquetes; sintaxis de filtros de Wireshark 4.x; información experta, objetos HTTP, credenciales y flujo UDP; checksum RFC 1071.
+- **E2E (17 pruebas, Chromium real):** **el curso completo se resuelve desde la interfaz** (58 retos y 8 insignias); herramientas de analista; CSP; megalodón 3D; búsqueda `Ctrl K`; y **axe-core con 0 infracciones WCAG 2.2 AA** en 6 vistas y en los diálogos nuevos, a 1280 y 390 px, en oscuro y claro.
 
 ## Avisos
 
