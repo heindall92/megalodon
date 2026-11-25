@@ -79,3 +79,36 @@ function download(bytes, name, type = 'application/octet-stream') {
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+/* Hoja inferior del móvil («Más»): se arrastra hacia abajo para cerrarla. Sigue al dedo 1:1 (sin muelle mientras arrastras),
+   hacia arriba se resiste (goma) y al soltar se cierra si pasaste el 40 % de su altura o si la lanzaste rápido. */
+function sheetDrag(d) {
+  const panel = $('.dlg-in', d); if (!panel) return;
+  let st = null;
+  const curve = 'cubic-bezier(0.32, 0.72, 0, 1)';
+  panel.addEventListener('pointerdown', e => {
+    if (!matchMedia('(max-width: 900px)').matches || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    st = { id: e.pointerId, y: e.clientY, on: false, dy: 0, pts: [[e.timeStamp, e.clientY]] };
+  });
+  panel.addEventListener('pointermove', e => {
+    if (!st || e.pointerId !== st.id) return;
+    const dy = e.clientY - st.y;
+    if (!st.on) { if (Math.abs(dy) < 6) return; st.on = true; panel.setPointerCapture(e.pointerId); panel.style.transition = 'none'; }
+    st.dy = dy;
+    panel.style.transform = `translateY(${dy > 0 ? dy : dy * 0.2}px)`;
+    st.pts.push([e.timeStamp, e.clientY]); if (st.pts.length > 6) st.pts.shift();
+  });
+  const end = e => {
+    if (!st || e.pointerId !== st.id) return;
+    const s = st; st = null; if (!s.on) return;
+    const a = s.pts[0], b = s.pts[s.pts.length - 1], v = (b[1] - a[1]) / Math.max(1, b[0] - a[0]), h = panel.offsetHeight;
+    if (s.dy > h * 0.4 || (v > 0.45 && s.dy > 10)) {
+      panel.style.transition = `transform 200ms ${curve}`; panel.style.transform = `translateY(${h + 32}px)`;
+      setTimeout(() => { closeDialog(true); panel.style.transform = ''; panel.style.transition = ''; }, 200);
+    } else {
+      panel.style.transition = `transform 240ms ${curve}`; panel.style.transform = '';
+      setTimeout(() => { panel.style.transition = ''; }, 260);
+    }
+  };
+  panel.addEventListener('pointerup', end); panel.addEventListener('pointercancel', end);
+}

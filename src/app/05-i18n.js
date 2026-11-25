@@ -17,6 +17,7 @@ const STRINGS = {
     sideToggle: 'Mostrar u ocultar la barra lateral', brandSub: 'Laboratorio de Wireshark', more: 'Más', navMain: 'Secciones', navMobile: 'Secciones (móvil)', themeSwitch: 'Modo oscuro', langSwitch: 'Idioma', allModules: 'Todos los módulos', levelProg: 'Progreso de nivel',
     conv: 'Conversaciones', hier: 'Jerarquía de protocolos', io: 'Gráfico de E/S', interval: 'Intervalo', filterThis: 'Filtrar esto', filterStream: 'Filtrar este flujo',
     prevStream: 'Flujo anterior', nextStream: 'Flujo siguiente', client: 'Cliente', server: 'Servidor', allPackets: 'Todos los paquetes', matching: 'Cumplen el filtro',
+    profile: 'Perfil', profileSetup: 'Configura tu perfil', about: 'Acerca de',
     moduleDone: '¡Módulo completado!', badgeEarned: 'Has ganado la insignia', next: 'Siguiente módulo', back: 'Volver', notFound: 'Esta página no existe.',
   },
   en: {
@@ -36,6 +37,7 @@ const STRINGS = {
     sideToggle: 'Show or hide the sidebar', brandSub: 'Wireshark lab', more: 'More', navMain: 'Sections', navMobile: 'Sections (mobile)', themeSwitch: 'Dark mode', langSwitch: 'Language', allModules: 'All modules', levelProg: 'Level progress',
     conv: 'Conversations', hier: 'Protocol Hierarchy', io: 'I/O Graph', interval: 'Interval', filterThis: 'Filter this', filterStream: 'Filter this stream',
     prevStream: 'Previous stream', nextStream: 'Next stream', client: 'Client', server: 'Server', allPackets: 'All packets', matching: 'Match the filter',
+    profile: 'Profile', profileSetup: 'Set up your profile', about: 'About',
     moduleDone: 'Module complete!', badgeEarned: 'You earned the badge', next: 'Next module', back: 'Back', notFound: 'This page does not exist.',
   },
 };

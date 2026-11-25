@@ -16,7 +16,8 @@ export const ORDER = [
   'src/content/modules.js', 'src/content/reference.js',
   '@hero',
   'src/app/05-i18n.js', 'src/app/10-state.js', 'src/app/20-ui.js', 'src/app/30-workspace.js',
-  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/50-views.js', 'src/app/90-shell.js',
+  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/50-views.js', 'src/app/60-perfil.js',
+  'src/app/80-fx.js', 'src/app/85-search.js', 'src/app/90-shell.js',
 ];
 
 function heroChunk() {
@@ -24,7 +25,8 @@ function heroChunk() {
   const b64 = f => readFileSync(join(ROOT, 'src/assets', f)).toString('base64');
   const obj = { avif: `data:image/avif;base64,${b64('hero.avif')}`, webp: `data:image/webp;base64,${b64('hero.webp')}`, ...meta };
   const logo = `data:image/webp;base64,${b64('logo.webp')}`;
-  return `/* hero: assets/hero.avif + hero.webp · logo: assets/logo.webp */\nconst HERO_IMG = ${JSON.stringify(obj)};\nconst LOGO_IMG = ${JSON.stringify(logo)};\n`;
+  const version = JSON.parse(rd('package.json')).version;
+  return `/* hero: assets/hero.avif + hero.webp · logo: assets/logo.webp */\nconst HERO_IMG = ${JSON.stringify(obj)};\nconst LOGO_IMG = ${JSON.stringify(logo)};\nconst APP_VERSION = ${JSON.stringify(version)};\n`;
 }
 
 export function build() {

@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/LICENCIA-MIT-4169A1?style=flat"/></a>
-  <img alt="Versión 1.3.2" src="https://img.shields.io/badge/versi%C3%B3n-1.3.2-3B8BFF?style=flat"/>
+  <img alt="Versión 1.4.0" src="https://img.shields.io/badge/versi%C3%B3n-1.4.0-3B8BFF?style=flat"/>
   <img alt="Filtros de Wireshark 4.x" src="https://img.shields.io/badge/filtros-Wireshark%204.x-1679A7?style=flat"/>
   <img alt="Ruta eWPT" src="https://img.shields.io/badge/ruta-eWPT-E07B39?style=flat"/>
   <img alt="8 módulos y 58 retos" src="https://img.shields.io/badge/8%20m%C3%B3dulos-58%20retos-7B4FD1?style=flat"/>
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/capturas/inicio-claro.webp" alt="Portada de Megalodon en modo claro: el megalodón dibujado como un plano técnico azul a la derecha del título; a la izquierda, la barra lateral con el logo, los ocho módulos y su progreso; arriba, el buscador y los interruptores de idioma y tema" width="880"/>
+  <img src="docs/capturas/inicio-claro.webp" alt="Portada de Megalodon en modo claro: el megalodón dibujado como un plano técnico azul a la derecha del título; encima de la ilustración flotan el botón del lateral y el buscador a la izquierda y los interruptores de idioma y tema a la derecha; a la izquierda, la barra lateral con el logo, los ocho módulos, la tarjeta del perfil y el nivel" width="880"/>
 </p>
 
 Para leer tráfico con soltura hay que haber mirado muchas capturas, y las de verdad no explican nada ni dicen si lo has entendido. Megalodon reúne **8 capturas sintéticas (578 paquetes)** de un pentest de laboratorio sobre **tienda.ewpt.local** y la red de **MEGACORP** (inventadas) y te sienta delante de un espacio que se comporta como Wireshark. Con él practicas:
@@ -105,6 +105,15 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 ---
 
 ## <img src="docs/assets/icons/sparkles.svg" width="20" height="20" valign="middle"/> Novedades
+
+### 1.4.0 · noviembre de 2026 · Perfil, «Acerca de», tema con gota y buscador nuevo
+
+- **Tu perfil, configurable.** Pon tu nombre, tu tipo de perfil (estudiante, profesional, docente, autodidacta o cambio de carrera), tu rol (pentester, SOC, sistemas, redes, desarrollo, auditoría, GRC… u otro escrito por ti) y el color de tu avatar. Se guarda al momento y solo en tu navegador. La tarjeta muestra XP, nivel, retos, insignias y un **mapa de actividad** de las últimas 15 semanas con tu racha. Tu avatar y tu rol aparecen abajo en la barra lateral.
+- **«Acerca de»**, como en Rosetta: el autor con sus enlaces, los **laboratorios** (Megalodon, Blue-Jr, WhiteFox, Atlas GRC y Astrolabio) y las **herramientas GRC y de seguridad** del ecosistema (ARGOS, Rosetta, ENS Compliance Studio, KAIROS, CTEM-Nexus, ENS AD Auditor, MCP-Shield y Norvik), con «Estás aquí» en Megalodon, privacidad, licencias y avisos.
+- **Interruptor de tema con gota**, adaptado del Theme Switch de [Pin UI](https://www.pinui.xyz/components/theme-switch): un botón cuadrado con la luna en claro y el sol en oscuro. Al pulsarlo cae una gota del color del tema nuevo, se aplasta, el botón cede, salen dos ondas y el tema nuevo se abre en círculo sobre la página real. En Ajustes puedes elegir **Lluvia** (charcos que crecen hasta cubrirlo todo) o **Fundido**.
+- **Buscador nuevo**, adaptado de la Search Card de [Pin UI](https://www.pinui.xyz/components/search-card): la píldora crece hasta ser una tarjeta con tus **búsquedas recientes**. Cada una lleva su baldosa de color y una papelera, y bajo la fila activa se desliza una lámina. Tiene «Borrar todo» y «Restaurar», y **fichas de categoría** para acotar la búsqueda, con un contador que rueda.
+- **Portada sin barra**, como en Blue-Jr: el botón del lateral y el buscador quedan arriba a la izquierda y los interruptores a la derecha, flotando sobre la ilustración. El resto de páginas conserva la barra.
+- **Hoja «Más» del móvil** con perfil y «Acerca de»; se cierra arrastrándola hacia abajo.
 
 ### 1.3.2 · noviembre de 2026 · Logo y más aire
 
@@ -224,8 +233,10 @@ mindmap
 | <img src="docs/assets/icons/flask-conical.svg" width="18"/> | **Laboratorio libre** | Cualquiera de las ocho capturas, o la tuya en `.pcap` o `.pcapng` (arrastrándola o con «Abrir captura»). |
 | <img src="docs/assets/icons/book-open.svg" width="18"/> | **Chuleta** | Los filtros de uso diario, con copiar y probar en el laboratorio, y la tabla de los 136 campos. |
 | <img src="docs/assets/icons/languages.svg" width="18"/> | **Glosario** | 41 términos de redes y pentesting, con buscador. |
-| <img src="docs/assets/icons/terminal.svg" width="18"/> | **Búsqueda** (`Ctrl K`) | Páginas, módulos, lecciones, retos, glosario, filtros, campos y acciones (tema, idioma, barra lateral). |
-| <img src="docs/assets/icons/settings.svg" width="18"/> | **Ajustes, ayuda y atajos** | Tema, idioma, números de secuencia relativos, colores y borrar el progreso; guía de las tres zonas y de las herramientas; atajos (`?`). |
+| <img src="docs/assets/icons/user-round.svg" width="18"/> | **Perfil** | Nombre, tipo de perfil, rol (o uno propio) y color del avatar, con guardado al instante. XP, nivel, retos, insignias y mapa de actividad de 15 semanas con tu racha. |
+| <img src="docs/assets/icons/waypoints.svg" width="18"/> | **Acerca de** | Autor y enlaces, los cinco laboratorios y las ocho herramientas del ecosistema, privacidad, licencias y avisos de independencia. |
+| <img src="docs/assets/icons/terminal.svg" width="18"/> | **Búsqueda** (`Ctrl K`) | Páginas, módulos, lecciones, retos, glosario, filtros, campos y acciones (tema, idioma, barra lateral). Recuerda tus seis últimas búsquedas y acota por categorías. `Supr` quita un reciente; `Esc` primero borra y luego cierra. |
+| <img src="docs/assets/icons/settings.svg" width="18"/> | **Ajustes, ayuda y atajos** | Tema, efecto al cambiar de tema (gota, lluvia o fundido), idioma, números de secuencia relativos, colores y borrar el progreso; guía de las tres zonas y de las herramientas; atajos (`?`). |
 
 ## <img src="docs/assets/icons/target.svg" width="20" height="20" valign="middle"/> Cómo se corrige
 
@@ -276,17 +287,25 @@ Una prueba resuelve cada reto con su solución de referencia contra su captura. 
 <td><img src="docs/capturas/ingles-claro.webp" alt="Laboratorio libre en inglés y en modo claro"/><br/><sub><b>Inglés y modo claro</b> · interruptores ES|EN y claro|oscuro</sub></td>
 </tr>
 <tr>
-<td colspan="2"><img src="docs/capturas/inicio-oscuro.webp" alt="Portada en modo oscuro"/><br/><sub><b>Modo oscuro</b> · la misma portada con el tema oscuro</sub></td>
+<td><img src="docs/capturas/perfil.webp" alt="Perfil con avatar, nombre, rol y tipo de perfil, estadísticas, mapa de actividad, insignias y el formulario para editarlos"/><br/><sub><b>Perfil</b> · nombre, tipo, rol y color; actividad e insignias</sub></td>
+<td><img src="docs/capturas/acerca.webp" alt="Acerca de con el autor, sus enlaces y los laboratorios del ecosistema, con Estás aquí en Megalodon"/><br/><sub><b>Acerca de</b> · autor, laboratorios y herramientas del ecosistema</sub></td>
+</tr>
+<tr>
+<td><img src="docs/capturas/buscador.webp" alt="Buscador abierto desde la píldora con cuatro búsquedas recientes, la papelera en la fila activa y las fichas de categoría"/><br/><sub><b>Buscador</b> · recientes con su baldosa, papelera y fichas de categoría</sub></td>
+<td><img src="docs/capturas/tema-gota.webp" alt="Cambio de tema a mitad: el tema claro se abre en círculo desde el botón de tema sobre la página oscura, con las ondas de la gota"/><br/><sub><b>Tema con gota</b> · el tema nuevo se abre desde el botón</sub></td>
+</tr>
+<tr>
+<td colspan="2"><img src="docs/capturas/inicio-oscuro.webp" alt="Portada en modo oscuro con los controles flotando sobre la ilustración"/><br/><sub><b>Modo oscuro</b> · la misma portada con el tema oscuro</sub></td>
 </tr>
 </table>
 
 <p align="center">
   <img src="docs/capturas/movil-pestanas.webp" alt="Módulo 1 en el móvil con la barra de pestañas abajo" width="260"/>
   &nbsp;&nbsp;
-  <img src="docs/capturas/movil-mas.webp" alt="Hoja Más con glosario, ajustes, ayuda y atajos" width="260"/>
+  <img src="docs/capturas/movil-mas.webp" alt="Hoja Más con el perfil, glosario, acerca de, ajustes, ayuda y atajos" width="260"/>
   &nbsp;&nbsp;
   <img src="docs/capturas/movil.webp" alt="Inicio en el móvil" width="260"/>
-  <br/><sub><b>Móvil</b> · barra de pestañas abajo y hoja «Más» con glosario, ajustes, ayuda y atajos</sub>
+  <br/><sub><b>Móvil</b> · barra de pestañas abajo y hoja «Más» con perfil, glosario, acerca de, ajustes, ayuda y atajos (se cierra arrastrando)</sub>
 </p>
 
 ## <img src="docs/assets/icons/wand-sparkles.svg" width="20" height="20" valign="middle"/> Movimiento y diseño
@@ -297,12 +316,14 @@ Siguiendo los principios de Emil Kowalski y el diseño de Apple:
 |---|---|
 | Barra lateral | Se pliega en 320 ms con la curva de cajón de iOS (`cubic-bezier(0.32, 0.72, 0, 1)`). Plegada, se despliega por encima sin mover el contenido. El indicador de la sección activa se desliza en 340 ms. |
 | Entrada del lateral | Los elementos entran escalonados 25 ms (300 ms cada uno), solo en la primera carga. |
-| Interruptor de tema | El pomo se desliza en 280 ms y se estira al pulsarlo, como en iOS. Al cambiar de tema, los colores se funden en 300 ms. |
+| Interruptor de tema | Adaptado de Pin UI. La luna y el sol giran un cuarto de vuelta en 450 ms. **Gota**: cae con física real (s = v₀·t + ½·g·t²) y se estira con la velocidad conservando el volumen. Al llegar se aplasta, el botón cede y vuelve con un muelle (520 ms), salen dos ondas y el tema nuevo se abre en círculo desde el impacto con View Transitions (1050 ms, curva de cajón). **Lluvia**: trazos inclinados por el viento y charcos que crecen y se unen; cada charco nace en su celda y crece hasta la diagonal de esa celda, así que la cobertura está garantizada. Pulsar a mitad lo interrumpe y aplica al momento el último tema pedido. |
+| Buscador | Adaptado de Pin UI. La píldora se abre en tarjeta en 560 ms (recorte que crece desde la píldora, con el arranque suave de la curva). El contenido entra 140 ms después y las filas, escalonadas cada 45 ms. La lámina se desliza en 240 ms bajo la fila activa y la papelera aparece en 220 ms. Una fila quitada se pliega en 260 ms y el contador de categorías rueda en 320 ms. Al cerrar, todo vuelve a la píldora. |
+| Hoja «Más» (móvil) | Sale desde abajo con la curva de cajón (420 ms). Se arrastra 1:1 con el dedo (hacia arriba se resiste) y se cierra si pasas el 40 % de su altura o si la lanzas rápido. Si no, vuelve en 240 ms. |
 | Botones | Se hunden al pulsarlos, entre el 94 % y el 98,5 % de su tamaño según la pieza (los pequeños, más). |
 | Cambio de vista | El contenido entra en 240 ms con `ease-out`. |
 | Nivel y XP | El nivel da un pequeño salto con muelle (450 ms) cada vez que sumas XP. |
 | Portada | La ilustración se acerca muy despacio (36 s, ida y vuelta) para dar profundidad. |
-| Movimiento reducido | Sin desplazamientos ni bucles. Las transiciones del lateral y del tema son instantáneas, y la ilustración de la portada queda quieta. |
+| Movimiento reducido | Sin desplazamientos ni bucles. Las transiciones del lateral son instantáneas, el tema cambia sin gota ni lluvia, el buscador solo se funde y la ilustración de la portada queda quieta. |
 
 Oscuro casi negro frío (`#0b0d11` / `#12151b`) o claro gris perla (`#f3f5f8` / `#ffffff`), con un solo acento azul (`#6cb2ff` en oscuro y `#143f94` en claro). Tipografía del sistema (SF Pro en Apple) y monoespaciada del sistema para paquetes, bytes y filtros. Iconos solo de **Lucide**.
 
@@ -363,7 +384,7 @@ flowchart LR
 - **CSP** generada en el build: `default-src 'none'`, `script-src` y `style-src` solo por hash, `connect-src 'none'`. La compilación falla si el HTML carga algo externo, y las e2e bloquean cualquier petición que no sea `file:`, `data:` o `blob:`.
 - **El contenido de las capturas se trata como texto.** Toda salida al DOM pasa por `esc()`. Los objetos HTTP se previsualizan con `textContent`, nunca como HTML.
 - **Tus capturas no salen del equipo.** Los `.pcap` y `.pcapng` que abres se leen en el navegador, con un límite de 64 MB.
-- **Progreso local.** Solo se guarda en `localStorage`, con la clave `megalodon.v1`.
+- **Progreso y perfil locales.** Tu progreso, tu perfil y tus búsquedas recientes solo se guardan en `localStorage`, con la clave `megalodon.v1`. Al cargarse, el perfil se limpia: tipo, rol y color solo admiten valores de una lista, y el texto libre se recorta (60 y 40 caracteres) y siempre se escapa al pintarse. Una prueba mete `<img onerror>` como nombre y comprueba que se ve como texto.
 - **Capturas sintéticas.** Usan direcciones de laboratorio y dominios de prueba. Ver [SECURITY.md](SECURITY.md).
 
 ## <img src="docs/assets/icons/flask-conical.svg" width="20" height="20" valign="middle"/> Pruebas
@@ -372,8 +393,8 @@ flowchart LR
 |---|---|---|
 | Motor (`engine.test.mjs`) | 13 | Las 8 capturas se generan, se disecan y son deterministas. Exportar a pcap/pcapng y releer conserva cada byte. **Los 58 retos tienen solución comprobable** contra su captura, y las respuestas derivadas (avisos, intervalo del beacon, Base64 exfiltrado, firma ZIP) se recalculan desde los paquetes. Los 60 «Pruébalo» compilan y muestran paquetes. También comprueba la sintaxis de filtros de Wireshark 4.x, la información experta, los objetos HTTP, las credenciales, el flujo UDP y el checksum RFC 1071. |
 | Idioma (`i18n.test.mjs`) | 5 | Español e inglés tienen las mismas claves. Los ocho módulos tienen título, subtítulo e insignia en inglés. **Cada error del motor de filtros** y **cada etiqueta del árbol de detalle de los 578 paquetes** están traducidos, sin restos en español. |
-| E2E (`e2e.mjs`) | 20 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>búsqueda `Ctrl K`;</li><li>portada: la ilustración carga, el tiburón queda a la derecha del título a 1280, 1440 y 1920 px (también con la barra plegada) y se queda quieta con movimiento reducido;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más»;</li><li>CSP estricta y red bloqueada.</li></ul> |
-| Accesibilidad (dentro de `e2e.mjs`) | — | axe-core (WCAG 2.2 A/AA) da **cero violaciones** en: <ul><li>6 vistas, a 1280 y 390 px, en claro y oscuro;</li><li>los diálogos de análisis;</li><li>la barra lateral plegada;</li><li>la interfaz en inglés;</li><li>la hoja «Más».</li></ul> |
+| E2E (`e2e.mjs`) | 25 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>buscador: nace de la píldora, guarda y quita recientes (papelera, `Supr`, «Borrar todo» y «Restaurar»), filtra por categorías y devuelve el foco;</li><li>perfil: guardado, lateral, inglés, texto que nunca es HTML, vaciarlo sin perder el progreso y el peor caso (nombre de 60 caracteres sin espacios a 1280 y 390 px);</li><li>«Acerca de»: los 13 proyectos, enlaces `https` con `noopener noreferrer`, «Estás aquí» y versión;</li><li>efectos de tema: gota centrada en el botón, lluvia, interrupción sin restos y movimiento reducido;</li><li>portada sin barra con los controles sobre la ilustración;</li><li>portada: la ilustración carga, el tiburón queda a la derecha del título a 1280, 1440 y 1920 px (también con la barra plegada) y se queda quieta con movimiento reducido;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más» y su cierre arrastrando;</li><li>CSP estricta y red bloqueada.</li></ul> |
+| Accesibilidad (dentro de `e2e.mjs`) | — | axe-core (WCAG 2.2 A/AA) da **cero violaciones** en: <ul><li>8 vistas (también perfil y «Acerca de») y el buscador abierto, a 1280 y 390 px, en claro y oscuro;</li><li>los diálogos de análisis;</li><li>la barra lateral plegada;</li><li>la interfaz en inglés;</li><li>la hoja «Más».</li></ul> |
 
 La [integración continua](.github/workflows/tests.yml) ejecuta todo en cada *push* y *pull request* y comprueba que los HTML están al día.
 
@@ -387,8 +408,9 @@ Detalle en [ROADMAP.md](ROADMAP.md).
 - [x] 1.3.0 · Barra lateral plegable, barra de pestañas en el móvil, interruptores e interfaz en inglés
 - [x] 1.3.1 · Portada con la ilustración del megalodón y sin el 3D
 - [x] 1.3.2 · Logo nuevo, favicon y más aire en la portada
-- [ ] 1.3.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
-- [ ] 1.4.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
+- [x] 1.4.0 · Perfil configurable, «Acerca de» con el ecosistema, tema con gota y buscador nuevo
+- [ ] 1.4.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
+- [ ] 1.5.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
 
 ## <img src="docs/assets/icons/triangle-alert.svg" width="20" height="20" valign="middle"/> Limitaciones conocidas
 
@@ -423,13 +445,17 @@ megalodon/
 │   │   ├── 40-dialogs.js       Seguir flujo, estadísticas y herramientas de analista
 │   │   ├── 45-ladder.js        Diagrama de escalera del saludo TCP
 │   │   ├── 50-views.js         Inicio, módulos, laboratorio, chuleta y glosario
-│   │   └── 90-shell.js         Barra lateral, barra superior, pestañas, búsqueda y ajustes
+│   │   ├── 60-perfil.js        Perfil configurable y «Acerca de» con el ecosistema
+│   │   ├── 80-fx.js            Cambio de tema con gota, lluvia o fundido (View Transitions)
+│   │   ├── 85-search.js        Buscador: la píldora que se abre en tarjeta
+│   │   └── 90-shell.js         Barra lateral, barra superior, pestañas, índice de búsqueda y ajustes
 │   └── assets/                 Ilustración de la portada (AVIF y WebP), logo y favicon
 │
 ├── 📦 dist/index.html          La aplicación generada (igual que megalodon.html)
 ├── 🛠️ scripts/                  build.mjs · capturas.mjs
 ├── 🧪 tests/                    engine · i18n · e2e · load
 ├── 📄 docs/                     Capturas, cabecera e iconos del README
+├── 🎨 .claude/skills/           Skills de diseño: impeccable, ui-ux-pro-max y las de Emil Kowalski
 └── ⚙️ .github/workflows/        tests.yml · pages.yml
 ```
 
@@ -442,6 +468,7 @@ Megalodon es un proyecto independiente, sin relación con la Wireshark Foundatio
 Componentes de terceros:
 
 - iconos de [Lucide](https://lucide.dev) (ISC);
+- el interruptor de tema y el buscador se adaptan de [Pin UI](https://github.com/shadcn-labs/Pin-UI) (MIT, © Rachit Thakur), reescritos sin React ni Motion;
 - logotipos de [Simple Icons](https://simpleicons.org) (CC0) en la tabla `megalodon.yaml`, cuyas marcas pertenecen a sus titulares;
 - [Playwright](https://playwright.dev) y [axe-core](https://github.com/dequelabs/axe-core), solo para las pruebas.
 

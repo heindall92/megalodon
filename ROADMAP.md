@@ -24,10 +24,17 @@
 - [x] Logo del megalodón en la barra lateral, el móvil y el favicon
 - [x] Ritmo vertical de la portada (32 / 80 / 48 px) y captura principal del README en claro
 
-## 1.3.x · Contenido en inglés
+## 1.4.0 · Perfil, «Acerca de», tema con gota y buscador ✅
+- [x] Perfil configurable (nombre, tipo de perfil, rol propio y color) con actividad e insignias, y tarjeta de cuenta en el lateral
+- [x] «Acerca de» con el autor y el ecosistema de laboratorios y herramientas, como en Rosetta
+- [x] Interruptor de tema y buscador adaptados de Pin UI (MIT), sin React; portada sin barra como en Blue-Jr
+- [x] Hoja «Más» que se cierra arrastrando; skills de diseño en `.claude/skills/`
+- [x] e2e y axe del perfil (con su peor caso), «Acerca de», buscador y efectos
+
+## 1.4.x · Contenido en inglés
 - [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
 
-## 1.4.0 · Más capturas
+## 1.5.0 · Más capturas
 - [ ] Módulo de SMB y movimiento lateral (PsExec visto en el tráfico)
 - [ ] Módulo de VoIP/SIP y de DHCP spoofing
 - [ ] Cada reto nuevo con su solución comprobada en `tests/engine.test.mjs`

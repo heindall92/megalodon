@@ -2,8 +2,9 @@
 const ROUTES = [
   [/^\/?$/, viewHome, 'home'], [/^\/modulos$/, viewModules, 'modules'], [/^\/m\/(m\d)$/, viewModule, 'modules'],
   [/^\/lab$/, viewLab, 'lab'], [/^\/chuleta$/, viewCheat, 'cheat'], [/^\/glosario$/, viewGlossary, 'glossary'],
+  [/^\/perfil$/, viewProfile, 'profile'], [/^\/acerca$/, viewAbout, 'about'],
 ];
-const NAV = [['home', '#/', 'home'], ['modules', '#/modulos', 'layers'], ['lab', '#/lab', 'flask'], ['cheat', '#/chuleta', 'cheat'], ['glossary', '#/glosario', 'glossary']];
+const NAV = [['home', '#/', 'home'], ['modules', '#/modulos', 'layers'], ['lab', '#/lab', 'flask'], ['cheat', '#/chuleta', 'cheat'], ['glossary', '#/glosario', 'glossary'], ['about', '#/acerca', 'info']];
 let cleanup = null, firstRoute = true;
 
 function resolvedTheme() { const th = S.get().settings.theme; return th === 'system' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : th; }
@@ -11,7 +12,7 @@ function applyTheme(animate) {
   const th = resolvedTheme(), root = document.documentElement;
   if (animate && !REDUCED.matches) { root.classList.add('theming'); clearTimeout(applyTheme.tm); applyTheme.tm = setTimeout(() => root.classList.remove('theming'), 320); }
   root.dataset.theme = th;
-  const b = $('[data-theme-btn]'); if (b) b.setAttribute('aria-checked', String(th === 'dark'));
+  const b = $('[data-theme-btn]'); if (b) { b.setAttribute('aria-checked', String(th === 'dark')); b.title = `${th === 'dark' ? t('themeToLight') : t('themeToDark')} (${L('Mayús', 'Shift')} T)`; }
 }
 function applyLang() { LANG = S.get().settings.lang; document.documentElement.lang = LANG; $('#skip').textContent = t('skip'); }
 
@@ -41,6 +42,7 @@ function renderSide() {
       ${NAV.slice(2).map((n, k) => item(n, 10 + k)).join('')}
     </nav>
     <div class="side-foot">
+      ${acctCard()}
       <a class="lvl" href="#/modulos" title="${t('level')}: ${esc(lvName(lv))}"><span class="lvl-ic" aria-hidden="true">${ic('trophy')}</span><span class="lvl-txt"><b>${esc(lvName(lv))} · <span class="num" data-xp>${xp}</span> XP</b><span class="meter" role="progressbar" aria-label="${t('levelProg')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i data-w="${Math.max(3, pct)}"></i></span></span></a>
     </div>`;
   $$('[data-i]', $('#side')).forEach(el => el.style.setProperty('--i', el.dataset.i));   // la CSP prohíbe style en línea
@@ -56,20 +58,26 @@ function updateSide() {
     $('.dotn', a).className = `dotn ${p.done === p.total ? 'ok' : p.done ? 'mid' : ''}`;
   });
   const xp = S.xp(), lv = S.level(), pct = lv.next ? Math.round(100 * (xp - lv.min) / (lv.next - lv.min)) : 100;
+  const ac = $('.acct'); if (ac) { const fresh = acctCard(); if (ac.outerHTML !== fresh) { ac.outerHTML = fresh; markNav(); } }
   const l = $('.lvl'); if (!l) return;
   $('.lvl-txt b', l).innerHTML = `${esc(lvName(lv))} · <span class="num" data-xp>${xp}</span> XP`;
   l.title = `${t('level')}: ${lvName(lv)}`;
   const m = $('.meter', l); m.setAttribute('aria-valuenow', String(pct)); $('i', m).style.width = `${Math.max(3, pct)}%`;
+}
+/* Tarjeta de cuenta del lateral: avatar, nombre (o la invitación a configurarlo) y rol; lleva al perfil */
+function acctCard() {
+  const p = S.get().profile, line = profileLine(p);
+  return `<a class="acct" href="#/perfil" data-nav="profile" title="${esc(p.name ? `${t('profile')}: ${p.name}` : t('profileSetup'))}">${avatar(p)}<span class="acct-txt"><b>${p.name ? esc(p.name) : t('profileSetup')}</b><small>${line ? esc(line) : L('Nombre, tipo de perfil y rol', 'Name, profile type and role')}</small></span>${ic('chevR', 'sm acct-go')}</a>`;
 }
 function renderTop() {
   const th = resolvedTheme();
   $('#top').innerHTML = `<div class="top-in">
       <button class="ibtn only-desk" type="button" data-side aria-label="${t('sideToggle')}" aria-expanded="${sideOpen()}" title="${t('sideToggle')} ( [ )">${ic('panel')}</button>
       <a class="brand-m" href="#/" aria-label="Megalodon · ${t('home')}"><img class="logo" src="${LOGO_IMG}" alt="" width="32" height="32" decoding="async"><b>Megalodon</b></a>
+      <button class="search-btn" type="button" data-search aria-label="${t('search')} (Ctrl K)" aria-haspopup="dialog">${ic('search')}<span class="sb-t">${t('search')}…</span><kbd>Ctrl K</kbd></button>
       <span class="grow"></span>
-      <button class="search-btn" type="button" data-search aria-label="${t('search')} (Ctrl K)">${ic('search')}<span class="sb-t">${t('search')}…</span><kbd>Ctrl K</kbd></button>
       <div class="lang-sw" role="group" aria-label="${t('langSwitch')}"><button type="button" data-lang="es" aria-pressed="${LANG === 'es'}" lang="es" aria-label="Español">ES</button><button type="button" data-lang="en" aria-pressed="${LANG === 'en'}" lang="en" aria-label="English">EN</button></div>
-      <button class="theme-sw" type="button" role="switch" data-theme-btn aria-checked="${th === 'dark'}" aria-label="${t('themeSwitch')}"><span class="track" aria-hidden="true">${ic('sun')}${ic('moon')}</span><span class="knob" aria-hidden="true"></span></button>
+      <button class="theme-sw" type="button" role="switch" data-theme-btn aria-checked="${th === 'dark'}" aria-label="${t('themeSwitch')}" title="${th === 'dark' ? t('themeToLight') : t('themeToDark')} (${L('Mayús', 'Shift')} T)"><span class="ts-moon" aria-hidden="true">${ic('moon')}</span><span class="ts-sun" aria-hidden="true">${ic('sun')}</span></button>
       <button class="ibtn only-desk" type="button" data-help aria-label="${t('help')}" title="${t('help')}">${ic('help')}</button>
       <button class="ibtn only-desk" type="button" data-keys aria-label="${t('shortcuts')}" title="${t('shortcuts')} (?)">${ic('keyboard')}</button>
       <button class="ibtn only-desk" type="button" data-settings aria-label="${t('settings')}" title="${t('settings')}">${ic('settings')}</button>
@@ -91,12 +99,15 @@ function renderTabbar() {
 }
 function openMore() {
   const d = openDialog({ title: `${ic('more')} ${t('more')}`, cls: 'narrow sheet', body: `<div class="more-list">
+      <a href="#/perfil" data-go class="more-acct">${avatar(S.get().profile)}<span>${S.get().profile.name ? esc(S.get().profile.name) : t('profileSetup')}<small>${esc(profileLine(S.get().profile) || t('profile'))}</small></span>${ic('chevR', 'sm')}</a>
       <a href="#/glosario" data-go>${ic('glossary')}<span>${t('glossary')}</span>${ic('chevR', 'sm')}</a>
+      <a href="#/acerca" data-go>${ic('info')}<span>${t('about')}</span>${ic('chevR', 'sm')}</a>
       <button type="button" data-a="settings">${ic('settings')}<span>${t('settings')}</span>${ic('chevR', 'sm')}</button>
       <button type="button" data-a="help">${ic('help')}<span>${t('help')}</span>${ic('chevR', 'sm')}</button>
       <button type="button" data-a="keys">${ic('keyboard')}<span>${t('shortcuts')}</span>${ic('chevR', 'sm')}</button>
     </div>` });
-  $('[data-go]', d).onclick = () => closeDialog(true);
+  $$('[data-go]', d).forEach(a => a.onclick = () => closeDialog(true));
+  sheetDrag(d);
   $$('[data-a]', d).forEach(b => b.onclick = () => { closeDialog(true); ({ settings: openSettings, help: openHelp, keys: openKeys })[b.dataset.a](); });
 }
 function toggleSide() {
@@ -120,7 +131,7 @@ function moveIndicator() {
   ind.style.height = `${h}px`; ind.style.opacity = '1'; ind.style.transform = `translateY(${y}px)`; indY = y;
 }
 function closeMenu() {}
-function toggleTheme() { S.set('theme', resolvedTheme() === 'light' ? 'dark' : 'light'); applyTheme(true); }
+function toggleTheme() { switchTheme(resolvedTheme() === 'light' ? 'dark' : 'light'); }
 let CUR_NAV = 'home';
 function markNav() {
   $$('[data-nav]').forEach(a => { const on = a.dataset.nav === CUR_NAV && !(CUR_MOD && a.closest('.side-nav')); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -134,10 +145,11 @@ function route() {
   if (cleanup) { try { cleanup(); } catch { /* vista ya desmontada */ } cleanup = null; }
   closeMenu();
   if ($('#dlg').open) closeDialog(true);
+  if (searchOpen()) { SC.dlg.close(); SC.closing = false; document.body.classList.remove('sc-open'); }
   const main = $('#main');
   let hit = null;
   for (const [re, fn, nav] of ROUTES) { const m = path.match(re); if (m) { hit = { fn, nav, id: m[1] }; break; } }
-  CUR_NAV = hit ? hit.nav : ''; CUR_MOD = hit && hit.fn === viewModule ? hit.id : null;
+  CUR_NAV = hit ? hit.nav : ''; document.body.classList.toggle('is-home', CUR_NAV === 'home'); CUR_MOD = hit && hit.fn === viewModule ? hit.id : null;
   main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter');
   cleanup = hit ? hit.fn(main, { id: hit.id, q }) || null : (viewNotFound(main), null);
   $$('.meter[aria-valuemax]', main).forEach(mt => { const i = mt.firstElementChild; if (i && !i.style.width) i.style.width = `${Math.max(2, 100 * (+mt.getAttribute('aria-valuenow')) / (+mt.getAttribute('aria-valuemax')))}%`; });
@@ -154,46 +166,21 @@ function searchIndex() {
   if (SEARCH_INDEX) return SEARCH_INDEX;
   const ix = [];
   const K = { page: L('Página', 'Page'), mod: L('Módulo', 'Module'), les: L('Lección', 'Lesson'), task: L('Reto', 'Challenge'), glo: t('glossary'), flt: L('Filtro', 'Filter'), fld: L('Campo', 'Field'), act: L('Acción', 'Action') };
-  NAV.forEach(([k, h, i]) => ix.push({ ty: 'page', i, title: t(k), go: h }));
+  [...NAV, ['profile', '#/perfil', 'user']].forEach(([k, h, i]) => ix.push({ id: `page:${k}`, ty: 'page', i, title: t(k), go: h }));
   MODULES.forEach(m => {
-    ix.push({ ty: 'mod', i: m.icon, title: `${m.n}. ${mT(m, 'title')}`, d: mT(m, 'sub'), go: `#/m/${m.id}`, body: LANG === 'en' ? `${m.title} ${m.sub}` : '' });
-    m.lessons.forEach((l, j) => ix.push({ ty: 'les', i: 'book', title: l.h, d: `${K.mod} ${m.n} · ${plain(l.p[0]).slice(0, 90)}`, go: `#/m/${m.id}?l=${j}`, body: plain(l.p.join(' ')) }));
-    m.tasks.forEach(x => ix.push({ ty: 'task', i: 'target', title: plain(x.q), d: `${K.mod} ${m.n} · ${mT(m, 'title')}`, go: `#/m/${m.id}?t=${x.id}` }));
+    ix.push({ id: `mod:${m.id}`, ty: 'mod', i: m.icon, title: `${m.n}. ${mT(m, 'title')}`, d: mT(m, 'sub'), go: `#/m/${m.id}`, body: LANG === 'en' ? `${m.title} ${m.sub}` : '' });
+    m.lessons.forEach((l, j) => ix.push({ id: `les:${m.id}:${j}`, ty: 'les', i: 'book', title: l.h, d: `${K.mod} ${m.n} · ${plain(l.p[0]).slice(0, 90)}`, go: `#/m/${m.id}?l=${j}`, body: plain(l.p.join(' ')) }));
+    m.tasks.forEach(x => ix.push({ id: `task:${x.id}`, ty: 'task', i: 'target', title: plain(x.q), d: `${K.mod} ${m.n} · ${mT(m, 'title')}`, go: `#/m/${m.id}?t=${x.id}` }));
   });
-  GLOSSARY.forEach(([term, d]) => ix.push({ ty: 'glo', i: 'glossary', title: term, d, go: `#/glosario?q=${encodeURIComponent(term)}` }));
-  CHEATS.forEach(g => g.items.forEach(([f, d]) => { if (!/\s{3}| vs /.test(f)) ix.push({ ty: 'flt', i: 'filter', title: f, d, go: `#/lab?f=${encodeURIComponent(f)}`, mono: true }); }));
-  FIELD_DEFS.forEach(([n, , d]) => ix.push({ ty: 'fld', i: 'tree', title: n, d, go: `#/lab?f=${encodeURIComponent(n)}`, mono: true }));
-  ix.push({ ty: 'act', i: 'sun', title: L('Cambiar tema claro u oscuro', 'Toggle light or dark theme'), act: toggleTheme }, { ty: 'act', i: 'lang', title: L('Interfaz en inglés', 'Interface in Spanish'), act: () => setLang(LANG === 'en' ? 'es' : 'en') }, { ty: 'act', i: 'panel', title: t('sideToggle'), act: toggleSide }, { ty: 'act', i: 'settings', title: t('settings'), act: openSettings }, { ty: 'act', i: 'keyboard', title: t('shortcuts'), act: openKeys }, { ty: 'act', i: 'help', title: t('help'), act: openHelp });
+  GLOSSARY.forEach(([term, d]) => ix.push({ id: `glo:${term}`, ty: 'glo', i: 'glossary', title: term, d, go: `#/glosario?q=${encodeURIComponent(term)}` }));
+  CHEATS.forEach(g => g.items.forEach(([f, d]) => { if (!/\s{3}| vs /.test(f)) ix.push({ id: `flt:${f}`, ty: 'flt', i: 'filter', title: f, d, go: `#/lab?f=${encodeURIComponent(f)}`, mono: true }); }));
+  FIELD_DEFS.forEach(([n, , d]) => ix.push({ id: `fld:${n}`, ty: 'fld', i: 'tree', title: n, d, go: `#/lab?f=${encodeURIComponent(n)}`, mono: true }));
+  [['theme', 'sun', L('Cambiar tema claro u oscuro', 'Toggle light or dark theme'), toggleTheme], ['lang', 'lang', L('Interfaz en inglés', 'Interface in Spanish'), () => setLang(LANG === 'en' ? 'es' : 'en')], ['side', 'panel', t('sideToggle'), toggleSide], ['settings', 'settings', t('settings'), openSettings], ['keys', 'keyboard', t('shortcuts'), openKeys], ['help', 'help', t('help'), openHelp]]
+    .forEach(([id, i, title, act]) => ix.push({ id: `act:${id}`, ty: 'act', i, title, act }));
   ix.forEach(x => { x.k = K[x.ty]; });
   ix.forEach(x => { x.nt = norm(x.title); x.nd = norm((x.d || '') + ' ' + (x.body || '')); });
   return (SEARCH_INDEX = ix);
 }
-function openSearch() {
-  const body = document.createElement('div');
-  body.innerHTML = `<div class="sbox"><span aria-hidden="true">${ic('search')}</span><label class="vh" for="s-q">${t('search')}</label><input id="s-q" type="text" role="combobox" aria-expanded="true" aria-controls="s-r" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="${esc(t('searchPh'))}"></div><ul id="s-r" class="sres" role="listbox" aria-label="${L('Resultados', 'Results')}"></ul><p class="sm muted s-foot"><kbd>↑</kbd><kbd>↓</kbd> ${L('moverte', 'move')} · <kbd>Enter</kbd> ${L('abrir', 'open')} · <kbd>Esc</kbd> ${L('cerrar', 'close')}</p>`;
-  openDialog({ title: `${ic('search')} ${t('search')}`, body, cls: 'search' });
-  const inp = $('#s-q'), list = $('#s-r');
-  let res = [], idx = 0;
-  const draw = () => {
-    const v = norm(inp.value), ix = searchIndex();
-    if (!v) res = ix.filter(x => x.ty === 'mod' || x.ty === 'page').slice(0, 14);
-    else res = ix.map(x => ({ x, s: x.nt.startsWith(v) ? 3 : x.nt.includes(v) ? 2 : x.nd.includes(v) ? 1 : 0 })).filter(r => r.s).sort((a, b) => b.s - a.s || a.x.title.length - b.x.title.length).slice(0, 30).map(r => r.x);
-    idx = 0;
-    list.innerHTML = res.length ? res.map((x, i) => `<li role="option" id="s-o${i}" aria-selected="${i === idx}" data-i="${i}"><span class="s-ic">${ic(x.i, 'sm')}</span><span class="s-t"><span class="${x.mono ? 'mono' : ''}">${esc(x.title.length > 110 ? x.title.slice(0, 108) + '…' : x.title)}</span>${x.d ? `<small>${esc(x.d.length > 100 ? x.d.slice(0, 98) + '…' : x.d)}</small>` : ''}</span><span class="s-k">${x.k}</span></li>`).join('') : `<li class="s-none" role="option" aria-disabled="true">${L('Nada por aquí. Prueba con «syn», «cookie» o «dns».', 'Nothing here. Try “syn”, “cookie” or “dns”.')}</li>`;
-    inp.setAttribute('aria-activedescendant', res.length ? 's-o0' : '');
-  };
-  const go = i => { const x = res[i]; if (!x) return; closeDialog(true); if (x.act) x.act(); else if (location.hash === x.go) route(); else location.hash = x.go; };
-  const mark = () => { $$('[role=option]', list).forEach((li, i) => li.setAttribute('aria-selected', String(i === idx))); const el = $(`#s-o${idx}`); if (el) { el.scrollIntoView({ block: 'nearest' }); inp.setAttribute('aria-activedescendant', el.id); } };
-  inp.addEventListener('input', draw);
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); idx = Math.min(res.length - 1, idx + 1); mark(); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); idx = Math.max(0, idx - 1); mark(); }
-    else if (e.key === 'Enter') { e.preventDefault(); go(idx); }
-  });
-  list.addEventListener('click', e => { const li = e.target.closest('[data-i]'); if (li) go(+li.dataset.i); });
-  draw(); inp.focus();
-}
-
 /* ---------- Ajustes, ayuda y atajos ---------- */
 function openSettings() {
   const st = S.get().settings;
@@ -202,6 +189,7 @@ function openSettings() {
   const solved = Object.keys(S.get().done).length;
   const d = openDialog({ title: `${ic('settings')} ${t('settings')}`, body: `
     <div class="set-row"><div><p>${t('theme')}</p></div><div data-set="theme">${seg(t('theme'), st.theme, [['light', t('light'), 'sun'], ['dark', t('dark'), 'moon'], ['system', t('system'), null]])}</div></div>
+    <div class="set-row"><div><p>${L('Efecto al cambiar de tema', 'Theme change effect')}</p><p class="sm muted">${L('Gota: cae sobre el botón y el tema nuevo se abre desde ahí. Lluvia: los charcos crecen hasta cubrirlo todo. Con «reducir movimiento» el cambio es directo.', 'Drop: it falls on the button and the new theme opens from there. Rain: puddles grow until they cover everything. With “reduce motion” the change is instant.')}</p></div><div data-set="themeFx">${seg(L('Efecto al cambiar de tema', 'Theme change effect'), FX_KINDS.includes(st.themeFx) ? st.themeFx : 'drop', [['drop', L('Gota', 'Drop'), null], ['rain', L('Lluvia', 'Rain'), null], ['fade', L('Fundido', 'Fade'), null]])}</div></div>
     <div class="set-row"><div><p>${t('language')}</p><p class="sm muted">${L('Interfaz en español o inglés. Las lecciones están en español.', 'Interface in Spanish or English. Lessons are in Spanish.')}</p></div><div data-set="lang">${seg(t('language'), st.lang, [['es', 'Español'], ['en', 'English']])}</div></div>
     ${sw('relative', L('Números de secuencia relativos', 'Relative sequence numbers'), L('Como Wireshark por defecto: Seq y Ack empiezan en 0. Desactívalo para ver los valores reales.', 'Wireshark’s default: Seq and Ack start at 0. Turn it off to see the real values.'))}
     ${sw('colorize', L('Colorear paquetes', 'Colorize packets'), L('Reglas de color de Wireshark: TCP, HTTP, RST, problemas…', 'Wireshark coloring rules: TCP, HTTP, RST, problems…'))}
@@ -245,6 +233,7 @@ function openKeys() {
 function onKey(e) {
   const tag = (e.target.tagName || '').toLowerCase(), typing = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openSearch(); return; }
+  if (searchOpen()) return;
   if ((e.ctrlKey || e.metaKey) && CUR_WS && !$('#dlg').open && ['f', 'g'].includes(e.key.toLowerCase())) { e.preventDefault(); openFind(CUR_WS, e.key.toLowerCase() === 'g' ? 'goto' : 'find'); return; }
   if (typing || $('#dlg').open || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === '/' && CUR_WS) { e.preventDefault(); CUR_WS.focusFilter(); }
