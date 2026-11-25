@@ -13,6 +13,78 @@ function filterFor(node) {
   if (node.field === 'tcp.flags') return `tcp.flags == 0x${Number(v).toString(16).padStart(3, '0')}`;
   return `${node.field} == ${v}`;
 }
+/* Los mensajes del motor de filtros están en español; en inglés se traducen aquí, sin tocar el motor. */
+const FERR_EN = [
+  [/^Falta cerrar las comillas de la cadena$/, 'Missing closing quote in the string'],
+  [/^Un solo «=» no vale: para comparar usa «==»$/, 'A single “=” is not valid: use “==” to compare'],
+  [/^«(.)» suelto no vale: usa «(..)»$/, '“$1” on its own is not valid: use “$2”'],
+  [/^Carácter inesperado «(.*)»$/, 'Unexpected character “$1”'],
+  [/^Se esperaba una expresión regular entre comillas tras «matches»$/, 'Expected a quoted regular expression after “matches”'],
+  [/^Se esperaba un campo dentro de la función$/, 'Expected a field inside the function'],
+  [/^Se esperaba «\)» para cerrar la función$/, 'Expected “)” to close the function'],
+  [/^Se esperaba «\)» para cerrar el paréntesis$/, 'Expected “)” to close the parenthesis'],
+  [/^Se esperaba «\{» después de «in»$/, 'Expected “{” after “in”'],
+  [/^Se esperaba (.*)$/, 'Expected $1'],
+  [/^El filtro termina antes de tiempo: falta un valor$/, 'The filter ends too early: a value is missing'],
+  [/^El filtro termina antes de tiempo$/, 'The filter ends too early'],
+  [/^No se esperaba «(.*)» aquí$/, '“$1” was not expected here'],
+  [/^«(.*)» no es un campo ni un protocolo conocido\. ¿Querías decir «(.*)»\?$/, '“$1” is not a known field or protocol. Did you mean “$2”?'],
+  [/^«(.*)» no es un campo ni un protocolo conocido$/, '“$1” is not a known field or protocol'],
+  [/^«(.*)» necesita algo a su izquierda$/, '“$1” needs something on its left'],
+  [/^Falta «}» para cerrar el conjunto$/, 'Missing “}” to close the set'],
+  [/^Separa los valores del conjunto con comas: \{80, 443\}$/, 'Separate set values with commas: {80, 443}'],
+  [/^El conjunto de «in» está vacío$/, 'The “in” set is empty'],
+  [/^«(.*)» solo funciona con campos de texto; (.*) es numérico$/, '“$1” only works with text fields; $2 is numeric'],
+  [/^La expresión regular no es válida$/, 'The regular expression is not valid'],
+  [/^Falta el texto a buscar tras «contains»$/, 'Missing the text to search for after “contains”'],
+  [/^Falta el valor con el que comparar ?(.*)$/, 'Missing the value to compare $1 with'],
+  [/^«(.*)» no es un número válido para este campo$/, '“$1” is not a valid number for this field'],
+  [/^«(.*)» no es una dirección IPv4 válida \(p\. ej\. (.*) o (.*)\)$/, '“$1” is not a valid IPv4 address (e.g. $2 or $3)'],
+  [/^«(.*)» no es una MAC válida \(p\. ej\. (.*)\)$/, '“$1” is not a valid MAC (e.g. $2)'],
+  [/^Un protocolo no se compara con un valor: escribe solo su nombre, p\. ej\. «http»$/, 'A protocol is not compared with a value: write just its name, e.g. “http”'],
+  [/^Falta un operador lógico \(«&&» o «\|\|»\) antes de «(.*)»$/, 'Missing a logical operator (“&&” or “||”) before “$1”'],
+];
+const fErr = m => { if (LANG !== 'en' || !m) return m; for (const [re, en] of FERR_EN) if (re.test(m)) return m.replace(re, en); return m; };
+/* Árbol de detalle en inglés con las etiquetas que muestra Wireshark (el disector las genera en español). */
+const TREE_EN = [
+  [/^Frame (\d+): (\d+) bytes en el cable \((\d+) bits\), (\d+) bytes capturados$/, 'Frame $1: $2 bytes on wire ($3 bits), $4 bytes captured'],
+  [/^Hora de llegada \(epoch\): /, 'Epoch Arrival Time: '], [/^Longitud de la trama: (.*) bytes$/, 'Frame Length: $1 bytes'], [/^Número de trama: /, 'Frame Number: '],
+  [/^\[Tiempo desde el paquete anterior: /, '[Time delta from previous captured frame: '], [/^\[Tiempo desde el primer paquete: /, '[Time since reference or first frame: '],
+  [/^\[Protocolos en la trama: /, '[Protocols in frame: '], [/^\[Respuesta en la trama: /, '[Response in frame: '],
+  [/^Tipo de contenido: /, 'Content Type: '], [/^Tipo opaco: (.*) ← en TLS (\S+) el tipo real va cifrado dentro$/, 'Opaque Type: $1 ← in TLS $2 the real type is encrypted inside'],
+  [/^Destino: /, 'Destination: '], [/^Origen: /, 'Source: '], [/^Tipo: (.*)Desconocido/, 'Type: $1Unknown'], [/^Tipo: (.*)\(otro\)$/, 'Type: $1(other)'], [/^Tipo: /, 'Type: '],
+  [/= Versión: /, '= Version: '], [/= Longitud de cabecera: /, '= Header Length: '], [/^Longitud total: /, 'Total Length: '], [/^Identificación: /, 'Identification: '],
+  [/^Tiempo de vida \(TTL\): /, 'Time to Live: '], [/^Protocolo: /, 'Protocol: '], [/^Checksum de cabecera: /, 'Header Checksum: '],
+  [/^Dirección de origen: /, 'Source Address: '], [/^Dirección de destino: /, 'Destination Address: '],
+  [/^Puerto de origen: /, 'Source Port: '], [/^Puerto de destino: /, 'Destination Port: '], [/^\[Índice de flujo: /, '[Stream index: '],
+  [/^\[Longitud del segmento TCP: /, '[TCP Segment Len: '], [/^Número de secuencia \(bruto\): /, 'Sequence Number (raw): '],
+  [/^Número de secuencia: (\d+) {4}\(número relativo\)$/, 'Sequence Number: $1    (relative sequence number)'], [/^Número de secuencia: /, 'Sequence Number: '],
+  [/^\[Siguiente número de secuencia: (\d+) {4}\(relativo\)\]$/, '[Next Sequence Number: $1    (relative sequence number)]'], [/^\[Siguiente número de secuencia: /, '[Next Sequence Number: '],
+  [/^Número de acuse \(bruto\): /, 'Acknowledgment number (raw): '], [/^Número de acuse: (\d+) {4}\(relativo\)$/, 'Acknowledgment Number: $1    (relative ack number)'], [/^Número de acuse: /, 'Acknowledgment Number: '],
+  [/<ninguno>/, '<None>'], [/^Ventana: /, 'Window: '], [/^\[Ventana calculada: /, '[Calculated window size: '], [/^Opciones: \((.*) bytes\)$/, 'Options: ($1 bytes)'],
+  [/^SACK permitido$/, 'SACK permitted'], [/\(multiplicar por (\d+)\)$/, '(multiply by $1)'], [/^\[Análisis SEQ\/ACK\]$/, '[SEQ/ACK analysis]'],
+  [/^\[Este segmento es una retransmisión\]$/, '[This frame is a (suspected) retransmission]'], [/^Datos TCP \((.*) bytes\)$/, 'TCP payload ($1 bytes)'],
+  [/^Longitud: /, 'Length: '], [/^Código: /, 'Code: '],
+  [/^Tipo de hardware: /, 'Hardware type: '], [/^Tipo de protocolo: /, 'Protocol type: '], [/^MAC del emisor: /, 'Sender MAC address: '], [/^IP del emisor: /, 'Sender IP address: '],
+  [/^MAC de destino: /, 'Target MAC address: '], [/^IP de destino: /, 'Target IP address: '],
+  [/^ID de transacción: /, 'Transaction ID: '], [/^Flags: Respuesta$/, 'Flags: Response'], [/^Flags: Petición$/, 'Flags: Request'],
+  [/^Preguntas: /, 'Questions: '], [/^Respuestas: /, 'Answer RRs: '], [/^Nombre: /, 'Name: '], [/^TTL: (\d+) \((\d+) segundos\)$/, 'Time to live: $1 ($2 seconds)'],
+  [/^MAC del cliente: /, 'Client MAC address: '], [/^Tu IP \(yiaddr\): /, 'Your (client) IP address: '],
+  [/^Opción \(53\) Tipo de mensaje DHCP: /, 'Option: (53) DHCP Message Type: '], [/^Opción \(50\) IP solicitada: /, 'Option: (50) Requested IP Address: '],
+  [/^Opción \(54\) Servidor DHCP: /, 'Option: (54) DHCP Server Identifier: '], [/^Opción \(12\) Nombre del equipo: /, 'Option: (12) Host Name: '],
+  [/^Opción \((\d+)\)$/, 'Option: ($1)'], [/^Opción (\d+)$/, 'Option $1'], [/^Fin de la lista de opciones \(EOL\)$/, 'End of Option List (EOL)'],
+  [/^Método: /, 'Request Method: '], [/^URI: /, 'Request URI: '], [/^Versión: /, 'Version: '], [/^Código de estado: /, 'Status Code: '], [/^Frase: /, 'Response Phrase: '],
+  [/^\[URI completa pedida: /, '[Full request URI: '], [/^\[URI completa: /, '[Full request URI: '], [/^\[URI pedida: /, '[Request URI: '],
+  [/^\[Petición en la trama: /, '[Request in frame: '], [/^\[Tiempo desde la petición: /, '[Time since request: '], [/^Credenciales: /, 'Credentials: '],
+  [/^Par de cookie: /, 'Cookie pair: '], [/^Cuerpo \((.*) bytes\)$/, 'File Data: $1 bytes'], [/^Elemento del formulario: /, 'Form item: '], [/^Clave: /, 'Key: '], [/^Valor: /, 'Value: '],
+  [/^Orden: ([A-Z]+)$/, 'Request command: $1'], [/^Orden: /, 'Command: '], [/^Argumento: /, 'Request arg: '], [/^Código de respuesta: /, 'Response code: '],
+  [/^Tipo de handshake: /, 'Handshake Type: '], [/^Longitud del Session ID: /, 'Session ID Length: '], [/\(len=(\d+)\)$/, '(len=$1)'], [/^Extension: tipo /, 'Extension: type '],
+  [/^Mensaje Change Cipher Spec$/, 'Change Cipher Spec Message'], [/^Datos de aplicación cifrados: /, 'Encrypted Application Data: '],
+  [/^NetBIOS Session Service \(longitud (\d+)\)$/, 'NetBIOS Session Service (length $1)'], [/^Cabecera SMB2$/, 'SMB2 Header'], [/^Estado NT: /, 'NT Status: '],
+  [/^Identificador NTLMSSP: /, 'NTLMSSP identifier: '], [/^Tipo de mensaje: /, 'NTLM Message Type: '], [/^Dominio: /, 'Domain name: '], [/^Usuario: /, 'User name: '], [/^Equipo: /, 'Host name: '],
+  [/^ENCTYPE \(que acepta el cliente\): /, 'ENCTYPE: '], [/^etype del ticket: /, 'etype (ticket): '], [/^etype de enc-part: /, 'etype (enc-part): '],
+];
+const treeLabel = l => { if (LANG !== 'en') return l; let out = l; for (const [re, en] of TREE_EN) out = out.replace(re, en); return out; };
 const treeKey = (node, depth) => depth + ':' + node.label.split(/[,:(\[]/)[0].trim();
 
 class Workspace {
@@ -31,22 +103,22 @@ class Workspace {
       <div class="ws-bar">
         <div class="fbar" data-state="empty">
           <span class="fbar-ic" aria-hidden="true">${ic('filter')}</span>
-          <label class="vh" for="${id}-f">Filtro de visualización</label>
+          <label class="vh" for="${id}-f">${L('Filtro de visualización', 'Display filter')}</label>
           <input id="${id}-f" class="finput mono" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-ac" aria-describedby="${id}-msg" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(t('filterPh'))}">
           <button class="ibtn sm" data-clear type="button" aria-label="${t('clear')}">${ic('x')}</button>
           <button class="btn sm primary" data-apply type="button" aria-label="${t('apply')}">${ic('enter')}<span>${t('apply')}</span></button>
-          <ul class="ac" id="${id}-ac" role="listbox" aria-label="Sugerencias" hidden></ul>
+          <ul class="ac" id="${id}-ac" role="listbox" aria-label="${L('Sugerencias', 'Suggestions')}" hidden></ul>
         </div>
-        <div class="ws-tools" role="toolbar" aria-label="Herramientas">
+        <div class="ws-tools" role="toolbar" aria-label="${L('Herramientas', 'Tools')}">
           <button class="tbtn" data-follow type="button" title="${t('follow')} (F)">${ic('follow')}<span>${t('follow')}</span></button>
           <button class="tbtn" data-stats type="button" title="${t('stats')} (S)">${ic('stats')}<span>${t('stats')}</span></button>
-          <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>Experto</span></button>
-          <button class="tbtn" data-objects type="button" title="Archivo › Exportar objetos › HTTP">${ic('file')}<span>${t('objects')}</span></button>
-          <button class="tbtn" data-creds type="button" title="Herramientas › Credenciales">${ic('lock')}<span>${t('creds')}</span></button>
-          <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>Buscar</span></button>
+          <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>${L('Experto', 'Expert')}</span></button>
+          <button class="tbtn" data-objects type="button" title="${L('Archivo › Exportar objetos › HTTP', 'File › Export Objects › HTTP')}">${ic('file')}<span>${t('objects')}</span></button>
+          <button class="tbtn" data-creds type="button" title="${L('Herramientas › Credenciales', 'Tools › Credentials')}">${ic('lock')}<span>${t('creds')}</span></button>
+          <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>${t('search')}</span></button>
           <button class="tbtn" data-color type="button" aria-pressed="true">${ic('sparkles')}<span>${t('colorize')}</span></button>
           ${imp ? `<button class="tbtn" data-open type="button">${ic('upload')}<span>${t('open')}</span></button><input type="file" class="vh" data-file accept=".pcap,.pcapng,.cap,application/vnd.tcpdump.pcap" tabindex="-1" aria-hidden="true">` : ''}
-          <button class="tbtn" data-export type="button">${ic('download')}<span>Exportar</span></button>
+          <button class="tbtn" data-export type="button">${ic('download')}<span>${L('Exportar', 'Export')}</span></button>
         </div>
       </div>
       <p class="fmsg" id="${id}-msg" aria-live="polite"></p>
@@ -60,7 +132,7 @@ class Workspace {
         <div class="pane ptree" aria-label="${t('detail')}" role="region"><ul class="tree" role="tree" aria-label="${t('detail')}" tabindex="0"></ul><p class="pane-empty">${t('noPacket')}</p></div>
         <div class="pane phex" role="region" aria-label="${t('hexView')}" tabindex="0"><div class="hex mono"></div></div>
       </div>
-      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><label class="tfmt"><span>${t('time')}:</span><select data-tfmt aria-label="${t('timeFmt')}"><option value="rel">desde el inicio</option><option value="delta">desde el anterior capturado</option><option value="dview">desde el anterior mostrado</option><option value="abs">hora UTC</option></select></label><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
+      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><label class="tfmt"><span>${t('time')}:</span><select data-tfmt aria-label="${t('timeFmt')}"><option value="rel">${L('desde el inicio', 'since beginning of capture')}</option><option value="delta">${L('desde el anterior capturado', 'since previous captured packet')}</option><option value="dview">${L('desde el anterior mostrado', 'since previous displayed packet')}</option><option value="abs">${L('hora UTC', 'UTC time of day')}</option></select></label><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
       ${imp ? `<div class="drop" hidden>${ic('upload')}<span>${t('importDrop')}</span></div>` : ''}
     </section>`;
     const r = this.host;
@@ -124,27 +196,27 @@ class Workspace {
   }
   async importFile(f) {
     try {
-      if (f.size > 64 * 1024 * 1024) throw new Error('El archivo pesa más de 64 MB; este laboratorio está pensado para capturas pequeñas.');
+      if (f.size > 64 * 1024 * 1024) throw new Error(L('El archivo pesa más de 64 MB; este laboratorio está pensado para capturas pequeñas.', 'The file is over 64 MB; this lab is meant for small captures.'));
       const raw = readCapture(new Uint8Array(await f.arrayBuffer()));
-      if (!raw.length) throw new Error('La captura no tiene paquetes Ethernet que pueda leer.');
+      if (!raw.length) throw new Error(L('La captura no tiene paquetes Ethernet que pueda leer.', 'The capture has no Ethernet packets I can read.'));
       this.load(raw, f.name, '');
-      toast(`Abierta <strong>${esc(f.name)}</strong>: ${fmtNum(raw.length)} paquetes`, 'ok', 'file');
+      toast(`${L('Abierta', 'Opened')} <strong>${esc(f.name)}</strong>: ${fmtNum(raw.length)} ${L('paquetes', 'packets')}`, 'ok', 'file');
       if (this.opts.onImport) this.opts.onImport(f.name);
-    } catch (err) { toast(esc(err.message || 'No se pudo leer la captura'), 'err'); }
+    } catch (err) { toast(esc(err.message || L('No se pudo leer la captura', 'Could not read the capture')), 'err'); }
   }
   exportDialog() {
     const base = this.name.replace(/\.(pcapng|pcap|cap)$/i, '');
-    const d = openDialog({ title: 'Exportar captura', cls: 'narrow', body: `<p class="muted">Se descarga a tu equipo y la abres tal cual en Wireshark.</p>
+    const d = openDialog({ title: L('Exportar captura', 'Export capture'), cls: 'narrow', body: `<p class="muted">${L('Se descarga a tu equipo y la abres tal cual en Wireshark.', 'It downloads to your device and opens as is in Wireshark.')}</p>
       <div class="stack-sm">
-        <button class="choice" data-k="all-ng">${ic('download')}<span><strong>Captura completa · .pcapng</strong><small>${fmtNum(this.pkts.length)} paquetes, formato moderno</small></span></button>
-        <button class="choice" data-k="all-pcap">${ic('download')}<span><strong>Captura completa · .pcap</strong><small>Formato clásico, lo abre cualquier herramienta</small></span></button>
-        <button class="choice" data-k="view-ng" ${this.view.length === this.pkts.length ? 'disabled' : ''}>${ic('filter')}<span><strong>Solo los mostrados · .pcapng</strong><small>${fmtNum(this.view.length)} paquetes con el filtro actual</small></span></button>
+        <button class="choice" data-k="all-ng">${ic('download')}<span><strong>${L('Captura completa', 'Full capture')} · .pcapng</strong><small>${fmtNum(this.pkts.length)} ${L('paquetes, formato moderno', 'packets, modern format')}</small></span></button>
+        <button class="choice" data-k="all-pcap">${ic('download')}<span><strong>${L('Captura completa', 'Full capture')} · .pcap</strong><small>${L('Formato clásico, lo abre cualquier herramienta', 'Classic format, any tool opens it')}</small></span></button>
+        <button class="choice" data-k="view-ng" ${this.view.length === this.pkts.length ? 'disabled' : ''}>${ic('filter')}<span><strong>${L('Solo los mostrados', 'Displayed only')} · .pcapng</strong><small>${fmtNum(this.view.length)} ${L('paquetes con el filtro actual', 'packets with the current filter')}</small></span></button>
       </div>` });
     $$('[data-k]', d).forEach(b => b.onclick = () => {
       const k = b.dataset.k, subset = k.startsWith('view') ? this.view.map(p => this.raw[p.no - 1]) : this.raw;
       const ng = k.endsWith('ng');
       download(ng ? writePcapng(subset, `Megalodon · ${base}`) : writePcap(subset), `${base}${k.startsWith('view') ? '-filtrado' : ''}.${ng ? 'pcapng' : 'pcap'}`, 'application/vnd.tcpdump.pcap');
-      closeDialog(); toast('Captura exportada', 'ok', 'download');
+      closeDialog(); toast(L('Captura exportada', 'Capture exported'), 'ok', 'download');
     });
   }
 
@@ -154,7 +226,7 @@ class Workspace {
     this.$.fbar.dataset.state = r.empty ? 'empty' : r.ok ? 'ok' : 'bad';
     this.$.input.setAttribute('aria-invalid', String(!r.ok));
     this.$.msg.className = 'fmsg ' + (r.ok ? '' : 'bad');
-    this.$.msg.innerHTML = r.ok ? '' : `${ic('ko', 'sm')}<span>${esc(r.error)}</span>`;
+    this.$.msg.innerHTML = r.ok ? '' : `${ic('ko', 'sm')}<span>${esc(fErr(r.error))}</span>`;
     return r;
   }
   apply(silent) {
@@ -287,7 +359,7 @@ class Workspace {
       this.flat.push({ id, node: n, depth, key, parentId, kids, open });
       const f = filterFor(n);
       return `<li role="treeitem" id="${id}" aria-level="${depth + 1}" aria-selected="false" ${kids ? `aria-expanded="${open}"` : ''}>
-        <div class="tn" data-id="${id}">${kids ? `<span class="tw" aria-hidden="true">${ic('chevR', 'sm')}</span>` : '<span class="tw"></span>'}<span class="tl">${esc(n.label)}</span>${f ? `<button class="tf" type="button" tabindex="-1" data-f="${esc(f)}" aria-label="${t('applyAsFilter')}: ${esc(f)}" title="${t('applyAsFilter')}: ${esc(f)}">${ic('filter', 'sm')}</button>` : ''}</div>
+        <div class="tn" data-id="${id}">${kids ? `<span class="tw" aria-hidden="true">${ic('chevR', 'sm')}</span>` : '<span class="tw"></span>'}<span class="tl">${esc(treeLabel(n.label))}</span>${f ? `<button class="tf" type="button" tabindex="-1" data-f="${esc(f)}" aria-label="${t('applyAsFilter')}: ${esc(f)}" title="${t('applyAsFilter')}: ${esc(f)}">${ic('filter', 'sm')}</button>` : ''}</div>
         ${kids ? `<ul role="group"${open ? '' : ' hidden'}>${walk(n.kids, depth + 1, id)}</ul>` : ''}</li>`;
     }).join('');
     this.$.tree.innerHTML = walk(p.tree, 0, null);
@@ -360,7 +432,7 @@ class Workspace {
     const p = this.selected();
     if (stream === undefined && p && p.tcpStream === undefined && p.f['udp.stream']) return openFollow(this, p.f['udp.stream'][0], 'udp');
     const st = stream ?? (p && p.tcpStream);
-    if (st === undefined || st === null) { toast('Selecciona un paquete TCP o UDP para seguir su flujo.', 'info', 'follow'); return; }
+    if (st === undefined || st === null) { toast(L('Selecciona un paquete TCP o UDP para seguir su flujo.', 'Select a TCP or UDP packet to follow its stream.'), 'info', 'follow'); return; }
     openFollow(this, st);
   }
   destroy() { this.unsub && this.unsub(); this.host.innerHTML = ''; }

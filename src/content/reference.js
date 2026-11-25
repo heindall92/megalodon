@@ -1,6 +1,6 @@
 /* Megalodon · chuleta de filtros y glosario. */
 const CHEATS = [
-  { h: 'Lo básico', items: [
+  { h: 'Lo básico', h_en: 'The basics', items: [
     ['tcp', 'Solo TCP (escribe el nombre de cualquier protocolo: udp, dns, http, tls, arp…)'],
     ['!arp', 'Todo menos ARP (también vale «not arp»)'],
     ['ip.addr == 192.168.56.20', 'Paquetes donde esa IP es origen o destino'],
@@ -31,7 +31,7 @@ const CHEATS = [
     ['http.authbasic', 'Credenciales Basic decodificadas'],
     ['urlencoded-form', 'Formularios enviados por POST'],
   ] },
-  { h: 'DNS, TLS y más', items: [
+  { h: 'DNS, TLS y más', h_en: 'DNS, TLS and more', items: [
     ['dns.qry.name contains "ewpt"', 'Consultas a un dominio'],
     ['dns.flags.rcode == 3', 'Nombres que no existen (NXDOMAIN)'],
     ['len(dns.qry.name) > 30', 'Nombres larguísimos (posible exfiltración)'],
@@ -41,7 +41,7 @@ const CHEATS = [
     ['kerberos.etype == 23', 'Tickets Kerberos con RC4'],
     ['ntlmssp.auth.username', 'Usuarios que se autentican por NTLM'],
   ] },
-  { h: 'Operadores', items: [
+  { h: 'Operadores', h_en: 'Operators', items: [
     ['==   !=   >   <   >=   <=', 'Comparar (también eq, ne, gt, lt, ge, le)'],
     ['&&   ||   !', 'Y, o, no (también and, or, not)'],
     ['http.host contains "admin"', 'contains: contiene ese texto (distingue mayúsculas)'],

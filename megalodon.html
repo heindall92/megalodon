@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-pn2vRYCetiqbn/L+xmzndCqqTk9YXQtcQKAXQiHqi8k='; style-src 'sha256-rmkrZDF7Hk+AyhUGvb2gHXy962h26YoGG4S+4cFIZVk='; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-y/5U0uCLqnyYytoYMQTZnUNyh772yvAzk5feC5A9+xI='; style-src 'sha256-C96SuEnKUh+J8kkbNV7gTpU17KM0Edca82DmDD9F5Sw='; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark light">
 <meta name="description" content="Megalodon: laboratorio de Wireshark sin conexión. Capturas de un pentest, filtros con validación al instante y retos guiados del saludo TCP a los ataques web.">
@@ -654,12 +654,127 @@ li[aria-level='1'] > .tn .tl { font-weight: 650; font-family: var(--font-sans); 
   .tbl.ex td.mono { word-break: normal; overflow-wrap: anywhere; min-width: 14ch; }
   .tbl.ex th:nth-child(3), .tbl.ex td:nth-child(3) { display: none; }   /* el protocolo ya va en el mensaje */
 }
+
+/* ========== Armazón 1.3: barra lateral plegable, barra superior flotante y pestañas en el móvil ==========
+   Mismo lenguaje que BlueJr y RiskManager-Jr. Movimiento: muelle sin rebote al plegar, indicador que se desliza,
+   :active a 0,97 y entrada escalonada solo en la primera carga. Con movimiento reducido, sin desplazamientos. */
+:root { --top-h: 80px; --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1); --hair: rgb(255 255 255 / 0.07); --hair-2: rgb(255 255 255 / 0.12); --sidebar: rgb(18 21 27 / 0.92); --tint: rgb(108 178 255 / 0.12); }
+[data-theme='light'] { --hair: rgb(15 23 42 / 0.08); --hair-2: rgb(15 23 42 / 0.13); --sidebar: rgb(255 255 255 / 0.94); --tint: rgb(20 63 148 / 0.08); }
+.app { --sw: 264px; display: grid; grid-template-columns: calc(var(--sw) + 12px) minmax(0, 1fr); min-height: 100dvh; transition: grid-template-columns 320ms var(--ease-drawer); }
+body.side-mini .app { --sw: 68px; }
+.col { min-width: 0; padding: 0 16px 40px; }
+
+/* Lateral */
+.side { --w: var(--sw); position: sticky; top: 0; z-index: 35; height: 100dvh; width: calc(var(--w) + 12px); padding: 12px 0 12px 12px; display: flex; flex-direction: column; overflow: hidden; transition: width 320ms var(--ease-drawer); }
+.side::before { content: ''; position: absolute; inset: 12px 0 12px 12px; z-index: -1; border-radius: 24px; background: var(--sidebar); box-shadow: 0 0 0 1px var(--hair), var(--sh-panel); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); transition: box-shadow 320ms var(--ease-out); }
+.side > * { width: var(--w); transition: width 320ms var(--ease-drawer); }
+body.side-mini .side:is(:hover, :focus-within) { --w: 264px; }
+body.side-mini .side:is(:hover, :focus-within)::before { box-shadow: 0 0 0 1px var(--hair), var(--sh-overlay); }
+body.side-mini .side :is(.txt, .cnt, .brand-txt, .lvl-txt) { opacity: 0; transition: opacity 140ms var(--ease-out); }
+body.side-mini .side:is(:hover, :focus-within) :is(.txt, .cnt, .brand-txt, .lvl-txt) { opacity: 1; transition-delay: 90ms; }
+.side-brand { display: flex; align-items: center; gap: 12px; padding: 18px 15px 12px; color: var(--ink); text-decoration: none; white-space: nowrap; }
+.side-brand .logo, .brand-m .logo { width: 38px; height: 38px; border-radius: 12px; flex: none; background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #1fd38a)); box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent) 70%, transparent); }
+.brand-txt { display: grid; min-width: 0; }
+.brand-txt b { font-size: 17px; font-weight: 720; letter-spacing: -0.02em; }
+.brand-txt small { font: 500 11px/1.3 var(--font-mono); letter-spacing: 0.06em; color: var(--ink-3); text-transform: uppercase; }
+.side-nav { position: relative; flex: 1; padding: 6px 10px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.side-nav ul { list-style: none; margin: 2px 0 6px; padding: 0; }
+.side-ind { position: absolute; left: 10px; right: 10px; top: 0; height: 40px; border-radius: 12px; background: var(--tint); opacity: 0; pointer-events: none; transition: transform 340ms var(--ease-out), height 340ms var(--ease-out), opacity 200ms; }
+.side-ind::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: var(--accent); }
+.side-nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 8px 12px; border-radius: 12px; color: var(--ink-2); text-decoration: none; font-weight: 550; font-size: 14.5px; white-space: nowrap; transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out), transform 140ms var(--ease-out); }
+.side-nav a:active { transform: scale(0.97); }
+.side-nav a[aria-current='page'] { color: var(--ink); }
+.side-nav a[aria-current='page'] > .i { color: var(--accent); }
+.side-nav a.sub { min-height: 36px; padding-left: 13px; font-size: 13.5px; font-weight: 500; }
+.side-nav .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.side-nav .cnt { font: 500 12px var(--font-mono); color: var(--ink-3); }
+.dotn { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 7px; border: 1.5px solid var(--ink-4); transition: transform 220ms var(--ease-out); }
+.dotn b { font: 600 11px var(--font-mono); color: var(--ink-2); }
+.dotn.mid { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.dotn.ok { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 18%, transparent); }
+@media (hover: hover) and (pointer: fine) {
+  .side-nav a:hover { background: color-mix(in srgb, var(--surface-2) 70%, transparent); color: var(--ink); }
+  .side-nav a:hover .dotn { transform: scale(1.12); }
+}
+body.ready .side-nav > a, body.ready .side-nav li { animation: none; }
+.side-nav > a, .side-nav li { animation: side-in 300ms var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 25ms + 40ms); }
+@keyframes side-in { from { opacity: 0; transform: translateX(-8px); } }
+.side-foot { padding: 12px 10px 14px; border-top: 1px solid var(--hair); }
+.lvl { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 12px; color: var(--ink); text-decoration: none; white-space: nowrap; transition: background-color 160ms var(--ease-out); }
+.lvl:active { transform: scale(0.98); }
+.lvl-ic { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 11px; background: var(--ok-soft); color: var(--ok); }
+.lvl-txt { display: grid; gap: 6px; min-width: 0; flex: 1; font-size: 13px; }
+.lvl-txt b { font-weight: 650; overflow: hidden; text-overflow: ellipsis; }
+.lvl.bump .lvl-ic { animation: bump 0.45s var(--spring); }
+@media (hover: hover) and (pointer: fine) { .lvl:hover { background: var(--surface-2); } }
+
+/* Barra superior flotante */
+.top { position: sticky; top: 0; z-index: 30; padding-top: 12px; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.top-in { display: flex; align-items: center; gap: 8px; height: auto; min-height: 56px; width: 100%; padding: 8px 10px; border-radius: 999px; background: var(--glass); box-shadow: 0 0 0 1px var(--hair), var(--sh-panel); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); }
+.top-in > :not(.grow) { flex-shrink: 0; }
+.top .ibtn { border-radius: 50%; width: 40px; height: 40px; }
+.brand-m { display: none; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; font-weight: 720; letter-spacing: -0.02em; }
+.brand-m .logo { width: 32px; height: 32px; border-radius: 10px; }
+.top .search-btn { min-width: 230px; width: auto; height: 40px; padding: 0 8px 0 14px; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hair-2); justify-content: flex-start; color: var(--ink-3); }
+.top .search-btn .sb-t { flex: 1; text-align: left; display: inline; }
+.top .search-btn kbd { display: inline-block; }
+@media (hover: hover) and (pointer: fine) { .top .search-btn:hover { box-shadow: inset 0 0 0 1px var(--accent); } }
+/* Interruptores del mismo tamaño: 80 × 40, relleno 3 y dos huecos de 36 × 32 */
+.lang-sw { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hair); }
+.lang-sw button { min-width: 36px; height: 32px; border: 0; border-radius: 999px; background: none; color: var(--ink-3); font: 650 12px var(--font-mono); transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), box-shadow 200ms var(--ease-out); }
+.lang-sw button[aria-pressed='true'] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--hair-2), var(--sh-raise); }
+.lang-sw button:active { transform: scale(0.94); }
+.theme-sw { position: relative; display: inline-flex; width: 80px; height: 40px; padding: 3px; border: 0; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--hair); cursor: pointer; }
+.theme-sw .track { position: relative; z-index: 1; display: grid; grid-template-columns: 36px 36px; width: 100%; height: 100%; place-items: center; color: var(--ink-3); pointer-events: none; }
+.theme-sw .track .i { width: 15px; height: 15px; transition: color 200ms var(--ease-out); }
+.theme-sw[aria-checked='false'] .track .i:first-child, .theme-sw[aria-checked='true'] .track .i:last-child { color: var(--ink); }
+.theme-sw .knob { position: absolute; top: 3px; left: 3px; width: 36px; height: 34px; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--hair-2), var(--sh-raise); transition: transform 280ms var(--ease-out); }
+.theme-sw[aria-checked='true'] .knob { transform: translateX(38px); }
+.theme-sw:active .knob { width: 40px; }
+.theme-sw[aria-checked='true']:active .knob { transform: translateX(34px); }
+
+/* Pestañas del móvil */
+.tabbar { display: none; }
+.more-list { display: grid; gap: 4px; }
+.more-list a, .more-list button { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border: 0; border-radius: 14px; background: var(--surface-2); color: var(--ink); font: inherit; font-weight: 550; text-decoration: none; text-align: left; }
+.more-list span { flex: 1; }
+.more-list a:active, .more-list button:active { transform: scale(0.98); }
+
+.hero { border-radius: 24px; margin-top: 14px; }
+html { scroll-padding-top: calc(var(--top-h) + 16px); }
+
+@media (max-width: 1100px) { .top .search-btn { min-width: 0; width: 40px; padding: 0; justify-content: center; } .top .search-btn .sb-t, .top .search-btn kbd { display: none; } }
+@media (max-width: 900px) {
+  .app, body.side-mini .app { grid-template-columns: minmax(0, 1fr); }
+  .side, .only-desk { display: none !important; }
+  .brand-m { display: inline-flex; }
+  .col { padding: 0 max(12px, env(safe-area-inset-left)) calc(96px + env(safe-area-inset-bottom)); }
+  .top .search-btn { background: none; box-shadow: none; color: var(--ink-2); }
+  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 40; padding: 6px; border-radius: 24px; background: var(--glass-thick); box-shadow: 0 0 0 1px var(--hair), var(--sh-overlay); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); }
+  .tabbar a, .tabbar button { display: grid; justify-items: center; gap: 2px; min-height: 48px; padding: 7px 2px 5px; border: 0; border-radius: 18px; background: none; color: var(--ink-2); text-decoration: none; font: inherit; font-size: 11px; font-weight: 550; transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 140ms var(--ease-out); }
+  .tabbar a:active, .tabbar button:active { transform: scale(0.94); }
+  .tabbar [aria-current='page'] { background: var(--tint); color: var(--ink); }
+  .tabbar [aria-current='page'] .i { color: var(--accent); }
+  .toasts { bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .hero { margin-inline: -12px; border-radius: 0 0 24px 24px; margin-top: 10px; }
+}
+@media (max-width: 420px) { .brand-m b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .top-in { gap: 4px; padding: 6px 8px; } }
+@media (prefers-reduced-motion: reduce) {
+  .app, .side, .side > *, .side-ind, .theme-sw .knob { transition: none !important; }
+  .side-nav > a, .side-nav li { animation: none; }
+}
 </style>
 </head>
 <body>
 <a class="skip" href="#main" id="skip">Saltar al contenido</a>
-<header id="top" class="top"></header>
-<main id="main" tabindex="-1"></main>
+<div class="app">
+  <aside id="side" class="side"></aside>
+  <div class="col">
+    <header id="top" class="top"></header>
+    <main id="main" tabindex="-1"></main>
+  </div>
+</div>
+<nav id="tabbar" class="tabbar"></nav>
 <dialog id="dlg" class="dlg"></dialog>
 <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 <noscript><p class="noscript">Megalodon necesita JavaScript. Todo funciona en tu navegador, sin conexión.</p></noscript>
@@ -690,6 +805,8 @@ const ICONS={"handshake":"<path d=\"m11 17 2 2a1 1 0 1 0 3-3\" /><path d=\"m14 1
 "ok":"<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"m16 9-5.5 5.5L8 12\" />",
 "hint":"<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\" /><path d=\"M9 18h6\" /><path d=\"M10 22h4\" />",
 "filter":"<path d=\"M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z\" />",
+"panel":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" /><path d=\"M9 3v18\" />",
+"more":"<circle cx=\"12\" cy=\"12\" r=\"1\" /><circle cx=\"19\" cy=\"12\" r=\"1\" /><circle cx=\"5\" cy=\"12\" r=\"1\" />",
 "pause":"<rect x=\"14\" y=\"3\" width=\"5\" height=\"18\" rx=\"1\" /><rect x=\"5\" y=\"3\" width=\"5\" height=\"18\" rx=\"1\" />",
 "play":"<path d=\"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z\" />",
 "chevR":"<path d=\"m9 18 6-6-6-6\" />",
@@ -2314,6 +2431,7 @@ const MODULES = [
     id: 'm1', n: 1, cap: 'm1', icon: 'handshake', mins: 25,
     title: 'El saludo TCP', sub: 'Handshake de tres pasos, puertos, flags, Seq/Ack y cierre',
     badge: 'Domador del handshake',
+    title_en: 'The TCP handshake', sub_en: 'Three-way handshake, ports, flags, Seq/Ack and teardown', badge_en: 'Handshake tamer',
     intro: 'Kali (192.168.56.10) visita la web del laboratorio (192.168.56.20). Antes de que viaje un solo byte de HTTP, las dos máquinas se saludan. Aquí aprendes a leer ese saludo como lo hace un pentester.',
     lessons: [
       { h: 'Las tres zonas de Wireshark', p: ['Arriba está la **lista de paquetes**: una fila por paquete, con número, tiempo, origen, destino, protocolo, longitud e información resumida.', 'En medio, el **árbol de detalle**: el mismo paquete abierto por capas (Ethernet → IP → TCP → HTTP). Abajo, los **bytes** en hexadecimal. Si pulsas un campo del árbol, sus bytes se iluminan; si pulsas un byte, se abre su campo.', 'Los colores no son decoración: violeta claro es TCP, verde es HTTP, gris oscuro con letras rojas es un problema TCP y rojo es un RST.'], try: [['tcp', 'Solo TCP'], ['arp', 'Solo ARP: quién tiene esta IP']] },
@@ -2337,6 +2455,7 @@ const MODULES = [
     id: 'm2', n: 2, cap: 'm2', icon: 'globe', mins: 30,
     title: 'HTTP al desnudo', sub: 'Peticiones, cabeceras, métodos, códigos de estado y Follow Stream',
     badge: 'Lector de HTTP',
+    title_en: 'HTTP laid bare', sub_en: 'Requests, headers, methods, status codes and Follow Stream', badge_en: 'HTTP reader',
     intro: 'Marta entra en la tienda tienda.ewpt.local, inicia sesión y navega por su panel. Todo va por HTTP sin cifrar, así que lo puedes leer entero.',
     lessons: [
       { h: 'Petición y respuesta', p: ['Una petición HTTP empieza con la **línea de petición**: método, ruta y versión, por ejemplo `GET /login HTTP/1.1`. Debajo van las cabeceras y, tras una línea vacía, el cuerpo (si lo hay).', 'La respuesta empieza con la **línea de estado**: `HTTP/1.1 200 OK`. Wireshark enlaza cada respuesta con su petición: en el árbol verás «Petición en la trama» y la URI pedida.'], try: [['http.request', 'Solo peticiones'], ['http.response', 'Solo respuestas']] },
@@ -2360,6 +2479,7 @@ const MODULES = [
     id: 'm3', n: 3, cap: 'm3', icon: 'cookie', mins: 30,
     title: 'Cookies y credenciales en claro', sub: 'Sesiones, Basic Auth, formularios y FTP',
     badge: 'Cazador de credenciales',
+    title_en: 'Cookies and cleartext credentials', sub_en: 'Sessions, Basic Auth, forms and FTP', badge_en: 'Credential hunter',
     intro: 'En la intranet de una empresa, un equipo Windows (192.168.56.40) entra en un panel con Basic Auth, inicia sesión en un formulario y se conecta por FTP. Ninguno de los tres protocolos cifra nada.',
     lessons: [
       { h: 'Cookies: la memoria de la web', p: ['HTTP no recuerda quién eres entre peticiones. Tras el login, el servidor te da una **cookie de sesión** con `Set-Cookie` y tu navegador la devuelve en cada petición con `Cookie`. Quien tenga esa cookie **es** tú para el servidor.', 'Los atributos de la cookie importan: **HttpOnly** impide que JavaScript la lea (frena el robo por XSS), **Secure** obliga a enviarla solo por HTTPS y **SameSite** limita los envíos desde otras webs.'], try: [['http.set_cookie', 'El servidor reparte cookies'], ['http.cookie contains "PHPSESSID"', 'El cliente las devuelve']] },
@@ -2382,6 +2502,7 @@ const MODULES = [
     id: 'm4', n: 4, cap: 'm4', icon: 'signpost', mins: 20,
     title: 'DNS: la guía de teléfonos', sub: 'Consultas, respuestas, tipos de registro y NXDOMAIN',
     badge: 'Rastreador de nombres',
+    title_en: 'DNS: the phone book', sub_en: 'Queries, answers, record types and NXDOMAIN', badge_en: 'Name tracker',
     intro: 'Antes de visitar una web, el equipo pregunta su IP al DNS. Esa conversación cuenta mucho: qué servicios existen, dónde están alojados y qué nombres no existen.',
     lessons: [
       { h: 'Pregunta y respuesta', p: ['DNS suele ir por **UDP al puerto 53**. El cliente pregunta («¿qué IP tiene www.ewpt.local?») y el servidor responde con el mismo **ID de transacción**, así se emparejan.', '`dns.flags.response == 0` son preguntas y `== 1` respuestas. El nombre preguntado está en `dns.qry.name`.'], try: [['dns.flags.response == 0', 'Solo preguntas'], ['dns.qry.name contains "ewpt"', 'Nombres del laboratorio']] },
@@ -2401,6 +2522,7 @@ const MODULES = [
     id: 'm5', n: 5, cap: 'm5', icon: 'lock', mins: 25,
     title: 'TLS: lo que el cifrado deja ver', sub: 'Client Hello, SNI, ALPN, TLS 1.3 y HTTP sin cifrar',
     badge: 'Ojo de cerradura',
+    title_en: 'TLS: what encryption still shows', sub_en: 'Client Hello, SNI, ALPN, TLS 1.3 and unencrypted HTTP', badge_en: 'Keyhole eye',
     intro: 'Kali abre dos webs por HTTPS y, por despiste, envía un login por HTTP normal. Vas a comprobar qué esconde TLS y qué no.',
     lessons: [
       { h: 'El saludo TLS', p: ['Tras el saludo TCP llega el saludo TLS. El cliente envía **Client Hello** (versiones y cifrados que acepta, y el nombre del sitio) y el servidor responde **Server Hello** con lo elegido. En TLS 1.3, casi todo lo que viene después ya va cifrado.', 'El tipo de mensaje está en `tls.handshake.type`: 1 es Client Hello y 2 Server Hello.'], try: [['tls.handshake.type == 1', 'Client Hello'], ['tls.handshake.type == 2', 'Server Hello']] },
@@ -2421,6 +2543,7 @@ const MODULES = [
     id: 'm6', n: 6, cap: 'm6', icon: 'swords', mins: 40,
     title: 'Ataques web en el tráfico', sub: 'Escaneo SYN, fuerza bruta de directorios y de login, SQLi y XSS',
     badge: 'Ojo de halcón',
+    title_en: 'Web attacks on the wire', sub_en: 'SYN scan, directory and login brute force, SQLi and XSS', badge_en: 'Hawk eye',
     intro: 'Desde Kali alguien escanea el servidor, busca directorios ocultos, prueba contraseñas en bucle e inyecta SQL y JavaScript. Todo queda en la captura; aprende a reconocer cada firma.',
     lessons: [
       { h: 'Escaneo SYN (nmap -sS)', p: ['El atacante envía un **SYN** a muchos puertos desde el **mismo puerto de origen** y con ventana pequeña (1024). Si responde **SYN, ACK**, el puerto está abierto y el atacante corta enseguida con **RST** (por eso se llama «medio abierto»). Si responde **RST, ACK**, está cerrado.', 'Para ver los puertos abiertos: `tcp.flags.syn==1 && tcp.flags.ack==1 && tcp.srcport < 1024`. Y en Estadísticas → Conversaciones verás decenas de conversaciones de 2 paquetes.'], try: [['tcp.flags.syn==1 && tcp.flags.ack==0 && tcp.window_size_value == 1024', 'Los SYN del escaneo'], ['tcp.flags.syn==1 && tcp.flags.ack==1 && tcp.srcport < 1024', 'Puertos que dicen «abierto»']] },
@@ -2447,6 +2570,7 @@ const MODULES = [
     id: 'm7', n: 7, cap: 'm7', icon: 'network', mins: 25, extra: true,
     title: 'Directorio Activo: Kerberos, SMB y NTLM', sub: 'Tickets, SPN, RC4 y autenticación NTLM sobre SMB',
     badge: 'Guardián del dominio',
+    title_en: 'Active Directory: Kerberos, SMB and NTLM', sub_en: 'Tickets, SPNs, RC4 and NTLM authentication over SMB', badge_en: 'Domain guardian',
     intro: 'En el dominio MEGACORP.LOCAL, un usuario pide tickets Kerberos y un equipo intruso se autentica por SMB con NTLM contra el controlador de dominio.',
     lessons: [
       { h: 'Kerberos en cuatro mensajes', p: ['**AS-REQ / AS-REP**: el usuario pide al controlador de dominio su TGT (el «pase general»). **TGS-REQ / TGS-REP**: con el TGT pide tickets para servicios concretos, identificados por su **SPN** (por ejemplo `cifs/DC01.megacorp.local`).', 'Campos útiles: `kerberos.CNameString` (usuario), `kerberos.SNameString` (servicio), `kerberos.realm` (dominio) y `kerberos.etype` (cifrado).'], try: [['kerberos', 'Todo Kerberos'], ['kerberos.msg_type == 13', 'Tickets de servicio (TGS-REP)']] },
@@ -2465,6 +2589,7 @@ const MODULES = [
     id: 'm8', n: 8, cap: 'm8', icon: 'radar', mins: 25, extra: true,
     title: 'Caza en el SOC', sub: 'ARP spoofing, beacons de C2 y exfiltración por DNS',
     badge: 'Cazador del SOC',
+    title_en: 'SOC hunting', sub_en: 'ARP spoofing, C2 beacons and DNS exfiltration', badge_en: 'SOC hunter',
     intro: 'Un analista del SOC recibe esta captura de la estación WS-0412 (192.168.56.40). Hay tres cosas raras. Encuéntralas.',
     lessons: [
       { h: 'ARP spoofing', p: ['ARP traduce IP a MAC y no tiene autenticación. Un atacante puede gritar «la puerta de enlace soy yo» con respuestas ARP no pedidas y ponerse en medio (MITM).', 'Señal: varias respuestas ARP para la **misma IP con otra MAC**. Wireshark lo marca como «duplicate IP address».'], try: [['arp.opcode == 2', 'Respuestas ARP'], ['arp.src.proto_ipv4 == 192.168.56.1', 'Quién dice ser la puerta de enlace']] },
@@ -2485,7 +2610,7 @@ const MODULES = [
 /* src/content/reference.js */
 /* Megalodon · chuleta de filtros y glosario. */
 const CHEATS = [
-  { h: 'Lo básico', items: [
+  { h: 'Lo básico', h_en: 'The basics', items: [
     ['tcp', 'Solo TCP (escribe el nombre de cualquier protocolo: udp, dns, http, tls, arp…)'],
     ['!arp', 'Todo menos ARP (también vale «not arp»)'],
     ['ip.addr == 192.168.56.20', 'Paquetes donde esa IP es origen o destino'],
@@ -2516,7 +2641,7 @@ const CHEATS = [
     ['http.authbasic', 'Credenciales Basic decodificadas'],
     ['urlencoded-form', 'Formularios enviados por POST'],
   ] },
-  { h: 'DNS, TLS y más', items: [
+  { h: 'DNS, TLS y más', h_en: 'DNS, TLS and more', items: [
     ['dns.qry.name contains "ewpt"', 'Consultas a un dominio'],
     ['dns.flags.rcode == 3', 'Nombres que no existen (NXDOMAIN)'],
     ['len(dns.qry.name) > 30', 'Nombres larguísimos (posible exfiltración)'],
@@ -2526,7 +2651,7 @@ const CHEATS = [
     ['kerberos.etype == 23', 'Tickets Kerberos con RC4'],
     ['ntlmssp.auth.username', 'Usuarios que se autentican por NTLM'],
   ] },
-  { h: 'Operadores', items: [
+  { h: 'Operadores', h_en: 'Operators', items: [
     ['==   !=   >   <   >=   <=', 'Comparar (también eq, ne, gt, lt, ge, le)'],
     ['&&   ||   !', 'Y, o, no (también and, or, not)'],
     ['http.host contains "admin"', 'contains: contiene ese texto (distingue mayúsculas)'],
@@ -2615,6 +2740,7 @@ const STRINGS = {
     progress: 'Progreso', resetProgress: 'Borrar mi progreso', resetConfirm: 'Sí, borrar', theme: 'Tema', light: 'Claro', dark: 'Oscuro', system: 'Sistema',
     language: 'Idioma', copy: 'Copiar', copied: 'Copiado', lessonsInSpanish: '', importDrop: 'Suelta aquí un .pcap o .pcapng', captures: 'Captura',
     expert: 'Información experta', objects: 'Objetos HTTP', creds: 'Credenciales', endpoints: 'Endpoints', gotoPkt: 'Ir al paquete', findPkt: 'Buscar paquete', timeFmt: 'Formato de tiempo', followUdp: 'Seguir flujo UDP',
+    sideToggle: 'Mostrar u ocultar la barra lateral', brandSub: 'Laboratorio de Wireshark', more: 'Más', navMain: 'Secciones', navMobile: 'Secciones (móvil)', themeSwitch: 'Modo oscuro', langSwitch: 'Idioma', allModules: 'Todos los módulos', levelProg: 'Progreso de nivel',
     conv: 'Conversaciones', hier: 'Jerarquía de protocolos', io: 'Gráfico de E/S', interval: 'Intervalo', filterThis: 'Filtrar esto', filterStream: 'Filtrar este flujo',
     prevStream: 'Flujo anterior', nextStream: 'Flujo siguiente', client: 'Cliente', server: 'Servidor', allPackets: 'Todos los paquetes', matching: 'Cumplen el filtro',
     moduleDone: '¡Módulo completado!', badgeEarned: 'Has ganado la insignia', next: 'Siguiente módulo', back: 'Volver', notFound: 'Esta página no existe.',
@@ -2633,6 +2759,7 @@ const STRINGS = {
     progress: 'Progress', resetProgress: 'Reset my progress', resetConfirm: 'Yes, reset', theme: 'Theme', light: 'Light', dark: 'Dark', system: 'System',
     language: 'Language', copy: 'Copy', copied: 'Copied', lessonsInSpanish: 'Lessons and challenges are written in Spanish.', importDrop: 'Drop a .pcap or .pcapng here', captures: 'Capture',
     expert: 'Expert Information', objects: 'HTTP Objects', creds: 'Credentials', endpoints: 'Endpoints', gotoPkt: 'Go to Packet', findPkt: 'Find Packet', timeFmt: 'Time Display Format', followUdp: 'Follow UDP Stream',
+    sideToggle: 'Show or hide the sidebar', brandSub: 'Wireshark lab', more: 'More', navMain: 'Sections', navMobile: 'Sections (mobile)', themeSwitch: 'Dark mode', langSwitch: 'Language', allModules: 'All modules', levelProg: 'Level progress',
     conv: 'Conversations', hier: 'Protocol Hierarchy', io: 'I/O Graph', interval: 'Interval', filterThis: 'Filter this', filterStream: 'Filter this stream',
     prevStream: 'Previous stream', nextStream: 'Next stream', client: 'Client', server: 'Server', allPackets: 'All packets', matching: 'Match the filter',
     moduleDone: 'Module complete!', badgeEarned: 'You earned the badge', next: 'Next module', back: 'Back', notFound: 'This page does not exist.',
@@ -2640,11 +2767,17 @@ const STRINGS = {
 };
 let LANG = 'es';
 const t = k => (STRINGS[LANG] && STRINGS[LANG][k]) ?? STRINGS.es[k] ?? k;
+/* Texto en línea para lo que solo aparece una vez: L('español', 'English') */
+const L = (es, en) => LANG === 'en' ? en : es;
+/* Campos de módulo con su versión inglesa (title, sub, badge) */
+const mT = (m, k) => (LANG === 'en' && m[`${k}_en`]) || m[k];
 
 /* src/app/10-state.js */
 /* Megalodon · estado y progreso guardados en localStorage («megalodon.v1»). */
 const STORE_KEY = 'megalodon.v1';
 const LEVELS = [[0, 'Alevín'], [80, 'Tintorera'], [200, 'Tiburón martillo'], [380, 'Gran blanco'], [600, 'Megalodón']];
+const LEVELS_EN = ['Shark pup', 'Blue shark', 'Hammerhead', 'Great white', 'Megalodon'];
+const lvName = lv => (LANG === 'en' ? LEVELS_EN[lv.i] : lv.name);
 const XP_BY_HINTS = [10, 8, 6, 5];
 const BONUS_MODULE = 20;
 const S = (() => {
@@ -2748,7 +2881,7 @@ async function copyText(txt, btn) {
     try { ok = document.execCommand('copy'); } catch { ok = false; } ta.remove();
   }
   if (btn) { btn.classList.add('done'); btn.innerHTML = ic(ok ? 'copied' : 'ko'); btn.setAttribute('aria-label', ok ? t('copied') : 'Error'); setTimeout(() => { btn.classList.remove('done'); btn.innerHTML = ic('copy'); btn.setAttribute('aria-label', t('copy')); }, 1400); }
-  toast(ok ? `${t('copied')}: <code>${esc(txt)}</code>` : 'No se pudo copiar', ok ? 'ok' : 'err', ok ? 'copied' : 'ko');
+  toast(ok ? `${t('copied')}: <code>${esc(txt)}</code>` : L('No se pudo copiar', 'Could not copy'), ok ? 'ok' : 'err', ok ? 'copied' : 'ko');
 }
 
 function download(bytes, name, type = 'application/octet-stream') {
@@ -2773,6 +2906,78 @@ function filterFor(node) {
   if (node.field === 'tcp.flags') return `tcp.flags == 0x${Number(v).toString(16).padStart(3, '0')}`;
   return `${node.field} == ${v}`;
 }
+/* Los mensajes del motor de filtros están en español; en inglés se traducen aquí, sin tocar el motor. */
+const FERR_EN = [
+  [/^Falta cerrar las comillas de la cadena$/, 'Missing closing quote in the string'],
+  [/^Un solo «=» no vale: para comparar usa «==»$/, 'A single “=” is not valid: use “==” to compare'],
+  [/^«(.)» suelto no vale: usa «(..)»$/, '“$1” on its own is not valid: use “$2”'],
+  [/^Carácter inesperado «(.*)»$/, 'Unexpected character “$1”'],
+  [/^Se esperaba una expresión regular entre comillas tras «matches»$/, 'Expected a quoted regular expression after “matches”'],
+  [/^Se esperaba un campo dentro de la función$/, 'Expected a field inside the function'],
+  [/^Se esperaba «\)» para cerrar la función$/, 'Expected “)” to close the function'],
+  [/^Se esperaba «\)» para cerrar el paréntesis$/, 'Expected “)” to close the parenthesis'],
+  [/^Se esperaba «\{» después de «in»$/, 'Expected “{” after “in”'],
+  [/^Se esperaba (.*)$/, 'Expected $1'],
+  [/^El filtro termina antes de tiempo: falta un valor$/, 'The filter ends too early: a value is missing'],
+  [/^El filtro termina antes de tiempo$/, 'The filter ends too early'],
+  [/^No se esperaba «(.*)» aquí$/, '“$1” was not expected here'],
+  [/^«(.*)» no es un campo ni un protocolo conocido\. ¿Querías decir «(.*)»\?$/, '“$1” is not a known field or protocol. Did you mean “$2”?'],
+  [/^«(.*)» no es un campo ni un protocolo conocido$/, '“$1” is not a known field or protocol'],
+  [/^«(.*)» necesita algo a su izquierda$/, '“$1” needs something on its left'],
+  [/^Falta «}» para cerrar el conjunto$/, 'Missing “}” to close the set'],
+  [/^Separa los valores del conjunto con comas: \{80, 443\}$/, 'Separate set values with commas: {80, 443}'],
+  [/^El conjunto de «in» está vacío$/, 'The “in” set is empty'],
+  [/^«(.*)» solo funciona con campos de texto; (.*) es numérico$/, '“$1” only works with text fields; $2 is numeric'],
+  [/^La expresión regular no es válida$/, 'The regular expression is not valid'],
+  [/^Falta el texto a buscar tras «contains»$/, 'Missing the text to search for after “contains”'],
+  [/^Falta el valor con el que comparar ?(.*)$/, 'Missing the value to compare $1 with'],
+  [/^«(.*)» no es un número válido para este campo$/, '“$1” is not a valid number for this field'],
+  [/^«(.*)» no es una dirección IPv4 válida \(p\. ej\. (.*) o (.*)\)$/, '“$1” is not a valid IPv4 address (e.g. $2 or $3)'],
+  [/^«(.*)» no es una MAC válida \(p\. ej\. (.*)\)$/, '“$1” is not a valid MAC (e.g. $2)'],
+  [/^Un protocolo no se compara con un valor: escribe solo su nombre, p\. ej\. «http»$/, 'A protocol is not compared with a value: write just its name, e.g. “http”'],
+  [/^Falta un operador lógico \(«&&» o «\|\|»\) antes de «(.*)»$/, 'Missing a logical operator (“&&” or “||”) before “$1”'],
+];
+const fErr = m => { if (LANG !== 'en' || !m) return m; for (const [re, en] of FERR_EN) if (re.test(m)) return m.replace(re, en); return m; };
+/* Árbol de detalle en inglés con las etiquetas que muestra Wireshark (el disector las genera en español). */
+const TREE_EN = [
+  [/^Frame (\d+): (\d+) bytes en el cable \((\d+) bits\), (\d+) bytes capturados$/, 'Frame $1: $2 bytes on wire ($3 bits), $4 bytes captured'],
+  [/^Hora de llegada \(epoch\): /, 'Epoch Arrival Time: '], [/^Longitud de la trama: (.*) bytes$/, 'Frame Length: $1 bytes'], [/^Número de trama: /, 'Frame Number: '],
+  [/^\[Tiempo desde el paquete anterior: /, '[Time delta from previous captured frame: '], [/^\[Tiempo desde el primer paquete: /, '[Time since reference or first frame: '],
+  [/^\[Protocolos en la trama: /, '[Protocols in frame: '], [/^\[Respuesta en la trama: /, '[Response in frame: '],
+  [/^Tipo de contenido: /, 'Content Type: '], [/^Tipo opaco: (.*) ← en TLS (\S+) el tipo real va cifrado dentro$/, 'Opaque Type: $1 ← in TLS $2 the real type is encrypted inside'],
+  [/^Destino: /, 'Destination: '], [/^Origen: /, 'Source: '], [/^Tipo: (.*)Desconocido/, 'Type: $1Unknown'], [/^Tipo: (.*)\(otro\)$/, 'Type: $1(other)'], [/^Tipo: /, 'Type: '],
+  [/= Versión: /, '= Version: '], [/= Longitud de cabecera: /, '= Header Length: '], [/^Longitud total: /, 'Total Length: '], [/^Identificación: /, 'Identification: '],
+  [/^Tiempo de vida \(TTL\): /, 'Time to Live: '], [/^Protocolo: /, 'Protocol: '], [/^Checksum de cabecera: /, 'Header Checksum: '],
+  [/^Dirección de origen: /, 'Source Address: '], [/^Dirección de destino: /, 'Destination Address: '],
+  [/^Puerto de origen: /, 'Source Port: '], [/^Puerto de destino: /, 'Destination Port: '], [/^\[Índice de flujo: /, '[Stream index: '],
+  [/^\[Longitud del segmento TCP: /, '[TCP Segment Len: '], [/^Número de secuencia \(bruto\): /, 'Sequence Number (raw): '],
+  [/^Número de secuencia: (\d+) {4}\(número relativo\)$/, 'Sequence Number: $1    (relative sequence number)'], [/^Número de secuencia: /, 'Sequence Number: '],
+  [/^\[Siguiente número de secuencia: (\d+) {4}\(relativo\)\]$/, '[Next Sequence Number: $1    (relative sequence number)]'], [/^\[Siguiente número de secuencia: /, '[Next Sequence Number: '],
+  [/^Número de acuse \(bruto\): /, 'Acknowledgment number (raw): '], [/^Número de acuse: (\d+) {4}\(relativo\)$/, 'Acknowledgment Number: $1    (relative ack number)'], [/^Número de acuse: /, 'Acknowledgment Number: '],
+  [/<ninguno>/, '<None>'], [/^Ventana: /, 'Window: '], [/^\[Ventana calculada: /, '[Calculated window size: '], [/^Opciones: \((.*) bytes\)$/, 'Options: ($1 bytes)'],
+  [/^SACK permitido$/, 'SACK permitted'], [/\(multiplicar por (\d+)\)$/, '(multiply by $1)'], [/^\[Análisis SEQ\/ACK\]$/, '[SEQ/ACK analysis]'],
+  [/^\[Este segmento es una retransmisión\]$/, '[This frame is a (suspected) retransmission]'], [/^Datos TCP \((.*) bytes\)$/, 'TCP payload ($1 bytes)'],
+  [/^Longitud: /, 'Length: '], [/^Código: /, 'Code: '],
+  [/^Tipo de hardware: /, 'Hardware type: '], [/^Tipo de protocolo: /, 'Protocol type: '], [/^MAC del emisor: /, 'Sender MAC address: '], [/^IP del emisor: /, 'Sender IP address: '],
+  [/^MAC de destino: /, 'Target MAC address: '], [/^IP de destino: /, 'Target IP address: '],
+  [/^ID de transacción: /, 'Transaction ID: '], [/^Flags: Respuesta$/, 'Flags: Response'], [/^Flags: Petición$/, 'Flags: Request'],
+  [/^Preguntas: /, 'Questions: '], [/^Respuestas: /, 'Answer RRs: '], [/^Nombre: /, 'Name: '], [/^TTL: (\d+) \((\d+) segundos\)$/, 'Time to live: $1 ($2 seconds)'],
+  [/^MAC del cliente: /, 'Client MAC address: '], [/^Tu IP \(yiaddr\): /, 'Your (client) IP address: '],
+  [/^Opción \(53\) Tipo de mensaje DHCP: /, 'Option: (53) DHCP Message Type: '], [/^Opción \(50\) IP solicitada: /, 'Option: (50) Requested IP Address: '],
+  [/^Opción \(54\) Servidor DHCP: /, 'Option: (54) DHCP Server Identifier: '], [/^Opción \(12\) Nombre del equipo: /, 'Option: (12) Host Name: '],
+  [/^Opción \((\d+)\)$/, 'Option: ($1)'], [/^Opción (\d+)$/, 'Option $1'], [/^Fin de la lista de opciones \(EOL\)$/, 'End of Option List (EOL)'],
+  [/^Método: /, 'Request Method: '], [/^URI: /, 'Request URI: '], [/^Versión: /, 'Version: '], [/^Código de estado: /, 'Status Code: '], [/^Frase: /, 'Response Phrase: '],
+  [/^\[URI completa pedida: /, '[Full request URI: '], [/^\[URI completa: /, '[Full request URI: '], [/^\[URI pedida: /, '[Request URI: '],
+  [/^\[Petición en la trama: /, '[Request in frame: '], [/^\[Tiempo desde la petición: /, '[Time since request: '], [/^Credenciales: /, 'Credentials: '],
+  [/^Par de cookie: /, 'Cookie pair: '], [/^Cuerpo \((.*) bytes\)$/, 'File Data: $1 bytes'], [/^Elemento del formulario: /, 'Form item: '], [/^Clave: /, 'Key: '], [/^Valor: /, 'Value: '],
+  [/^Orden: ([A-Z]+)$/, 'Request command: $1'], [/^Orden: /, 'Command: '], [/^Argumento: /, 'Request arg: '], [/^Código de respuesta: /, 'Response code: '],
+  [/^Tipo de handshake: /, 'Handshake Type: '], [/^Longitud del Session ID: /, 'Session ID Length: '], [/\(len=(\d+)\)$/, '(len=$1)'], [/^Extension: tipo /, 'Extension: type '],
+  [/^Mensaje Change Cipher Spec$/, 'Change Cipher Spec Message'], [/^Datos de aplicación cifrados: /, 'Encrypted Application Data: '],
+  [/^NetBIOS Session Service \(longitud (\d+)\)$/, 'NetBIOS Session Service (length $1)'], [/^Cabecera SMB2$/, 'SMB2 Header'], [/^Estado NT: /, 'NT Status: '],
+  [/^Identificador NTLMSSP: /, 'NTLMSSP identifier: '], [/^Tipo de mensaje: /, 'NTLM Message Type: '], [/^Dominio: /, 'Domain name: '], [/^Usuario: /, 'User name: '], [/^Equipo: /, 'Host name: '],
+  [/^ENCTYPE \(que acepta el cliente\): /, 'ENCTYPE: '], [/^etype del ticket: /, 'etype (ticket): '], [/^etype de enc-part: /, 'etype (enc-part): '],
+];
+const treeLabel = l => { if (LANG !== 'en') return l; let out = l; for (const [re, en] of TREE_EN) out = out.replace(re, en); return out; };
 const treeKey = (node, depth) => depth + ':' + node.label.split(/[,:(\[]/)[0].trim();
 
 class Workspace {
@@ -2791,22 +2996,22 @@ class Workspace {
       <div class="ws-bar">
         <div class="fbar" data-state="empty">
           <span class="fbar-ic" aria-hidden="true">${ic('filter')}</span>
-          <label class="vh" for="${id}-f">Filtro de visualización</label>
+          <label class="vh" for="${id}-f">${L('Filtro de visualización', 'Display filter')}</label>
           <input id="${id}-f" class="finput mono" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-ac" aria-describedby="${id}-msg" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(t('filterPh'))}">
           <button class="ibtn sm" data-clear type="button" aria-label="${t('clear')}">${ic('x')}</button>
           <button class="btn sm primary" data-apply type="button" aria-label="${t('apply')}">${ic('enter')}<span>${t('apply')}</span></button>
-          <ul class="ac" id="${id}-ac" role="listbox" aria-label="Sugerencias" hidden></ul>
+          <ul class="ac" id="${id}-ac" role="listbox" aria-label="${L('Sugerencias', 'Suggestions')}" hidden></ul>
         </div>
-        <div class="ws-tools" role="toolbar" aria-label="Herramientas">
+        <div class="ws-tools" role="toolbar" aria-label="${L('Herramientas', 'Tools')}">
           <button class="tbtn" data-follow type="button" title="${t('follow')} (F)">${ic('follow')}<span>${t('follow')}</span></button>
           <button class="tbtn" data-stats type="button" title="${t('stats')} (S)">${ic('stats')}<span>${t('stats')}</span></button>
-          <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>Experto</span></button>
-          <button class="tbtn" data-objects type="button" title="Archivo › Exportar objetos › HTTP">${ic('file')}<span>${t('objects')}</span></button>
-          <button class="tbtn" data-creds type="button" title="Herramientas › Credenciales">${ic('lock')}<span>${t('creds')}</span></button>
-          <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>Buscar</span></button>
+          <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>${L('Experto', 'Expert')}</span></button>
+          <button class="tbtn" data-objects type="button" title="${L('Archivo › Exportar objetos › HTTP', 'File › Export Objects › HTTP')}">${ic('file')}<span>${t('objects')}</span></button>
+          <button class="tbtn" data-creds type="button" title="${L('Herramientas › Credenciales', 'Tools › Credentials')}">${ic('lock')}<span>${t('creds')}</span></button>
+          <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>${t('search')}</span></button>
           <button class="tbtn" data-color type="button" aria-pressed="true">${ic('sparkles')}<span>${t('colorize')}</span></button>
           ${imp ? `<button class="tbtn" data-open type="button">${ic('upload')}<span>${t('open')}</span></button><input type="file" class="vh" data-file accept=".pcap,.pcapng,.cap,application/vnd.tcpdump.pcap" tabindex="-1" aria-hidden="true">` : ''}
-          <button class="tbtn" data-export type="button">${ic('download')}<span>Exportar</span></button>
+          <button class="tbtn" data-export type="button">${ic('download')}<span>${L('Exportar', 'Export')}</span></button>
         </div>
       </div>
       <p class="fmsg" id="${id}-msg" aria-live="polite"></p>
@@ -2820,7 +3025,7 @@ class Workspace {
         <div class="pane ptree" aria-label="${t('detail')}" role="region"><ul class="tree" role="tree" aria-label="${t('detail')}" tabindex="0"></ul><p class="pane-empty">${t('noPacket')}</p></div>
         <div class="pane phex" role="region" aria-label="${t('hexView')}" tabindex="0"><div class="hex mono"></div></div>
       </div>
-      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><label class="tfmt"><span>${t('time')}:</span><select data-tfmt aria-label="${t('timeFmt')}"><option value="rel">desde el inicio</option><option value="delta">desde el anterior capturado</option><option value="dview">desde el anterior mostrado</option><option value="abs">hora UTC</option></select></label><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
+      <div class="ws-status"><span data-count></span><span class="dot" aria-hidden="true"></span><label class="tfmt"><span>${t('time')}:</span><select data-tfmt aria-label="${t('timeFmt')}"><option value="rel">${L('desde el inicio', 'since beginning of capture')}</option><option value="delta">${L('desde el anterior capturado', 'since previous captured packet')}</option><option value="dview">${L('desde el anterior mostrado', 'since previous displayed packet')}</option><option value="abs">${L('hora UTC', 'UTC time of day')}</option></select></label><span class="dot" aria-hidden="true"></span><span data-name class="mono"></span><span class="grow"></span><span data-legend class="legend"></span></div>
       ${imp ? `<div class="drop" hidden>${ic('upload')}<span>${t('importDrop')}</span></div>` : ''}
     </section>`;
     const r = this.host;
@@ -2884,27 +3089,27 @@ class Workspace {
   }
   async importFile(f) {
     try {
-      if (f.size > 64 * 1024 * 1024) throw new Error('El archivo pesa más de 64 MB; este laboratorio está pensado para capturas pequeñas.');
+      if (f.size > 64 * 1024 * 1024) throw new Error(L('El archivo pesa más de 64 MB; este laboratorio está pensado para capturas pequeñas.', 'The file is over 64 MB; this lab is meant for small captures.'));
       const raw = readCapture(new Uint8Array(await f.arrayBuffer()));
-      if (!raw.length) throw new Error('La captura no tiene paquetes Ethernet que pueda leer.');
+      if (!raw.length) throw new Error(L('La captura no tiene paquetes Ethernet que pueda leer.', 'The capture has no Ethernet packets I can read.'));
       this.load(raw, f.name, '');
-      toast(`Abierta <strong>${esc(f.name)}</strong>: ${fmtNum(raw.length)} paquetes`, 'ok', 'file');
+      toast(`${L('Abierta', 'Opened')} <strong>${esc(f.name)}</strong>: ${fmtNum(raw.length)} ${L('paquetes', 'packets')}`, 'ok', 'file');
       if (this.opts.onImport) this.opts.onImport(f.name);
-    } catch (err) { toast(esc(err.message || 'No se pudo leer la captura'), 'err'); }
+    } catch (err) { toast(esc(err.message || L('No se pudo leer la captura', 'Could not read the capture')), 'err'); }
   }
   exportDialog() {
     const base = this.name.replace(/\.(pcapng|pcap|cap)$/i, '');
-    const d = openDialog({ title: 'Exportar captura', cls: 'narrow', body: `<p class="muted">Se descarga a tu equipo y la abres tal cual en Wireshark.</p>
+    const d = openDialog({ title: L('Exportar captura', 'Export capture'), cls: 'narrow', body: `<p class="muted">${L('Se descarga a tu equipo y la abres tal cual en Wireshark.', 'It downloads to your device and opens as is in Wireshark.')}</p>
       <div class="stack-sm">
-        <button class="choice" data-k="all-ng">${ic('download')}<span><strong>Captura completa · .pcapng</strong><small>${fmtNum(this.pkts.length)} paquetes, formato moderno</small></span></button>
-        <button class="choice" data-k="all-pcap">${ic('download')}<span><strong>Captura completa · .pcap</strong><small>Formato clásico, lo abre cualquier herramienta</small></span></button>
-        <button class="choice" data-k="view-ng" ${this.view.length === this.pkts.length ? 'disabled' : ''}>${ic('filter')}<span><strong>Solo los mostrados · .pcapng</strong><small>${fmtNum(this.view.length)} paquetes con el filtro actual</small></span></button>
+        <button class="choice" data-k="all-ng">${ic('download')}<span><strong>${L('Captura completa', 'Full capture')} · .pcapng</strong><small>${fmtNum(this.pkts.length)} ${L('paquetes, formato moderno', 'packets, modern format')}</small></span></button>
+        <button class="choice" data-k="all-pcap">${ic('download')}<span><strong>${L('Captura completa', 'Full capture')} · .pcap</strong><small>${L('Formato clásico, lo abre cualquier herramienta', 'Classic format, any tool opens it')}</small></span></button>
+        <button class="choice" data-k="view-ng" ${this.view.length === this.pkts.length ? 'disabled' : ''}>${ic('filter')}<span><strong>${L('Solo los mostrados', 'Displayed only')} · .pcapng</strong><small>${fmtNum(this.view.length)} ${L('paquetes con el filtro actual', 'packets with the current filter')}</small></span></button>
       </div>` });
     $$('[data-k]', d).forEach(b => b.onclick = () => {
       const k = b.dataset.k, subset = k.startsWith('view') ? this.view.map(p => this.raw[p.no - 1]) : this.raw;
       const ng = k.endsWith('ng');
       download(ng ? writePcapng(subset, `Megalodon · ${base}`) : writePcap(subset), `${base}${k.startsWith('view') ? '-filtrado' : ''}.${ng ? 'pcapng' : 'pcap'}`, 'application/vnd.tcpdump.pcap');
-      closeDialog(); toast('Captura exportada', 'ok', 'download');
+      closeDialog(); toast(L('Captura exportada', 'Capture exported'), 'ok', 'download');
     });
   }
 
@@ -2914,7 +3119,7 @@ class Workspace {
     this.$.fbar.dataset.state = r.empty ? 'empty' : r.ok ? 'ok' : 'bad';
     this.$.input.setAttribute('aria-invalid', String(!r.ok));
     this.$.msg.className = 'fmsg ' + (r.ok ? '' : 'bad');
-    this.$.msg.innerHTML = r.ok ? '' : `${ic('ko', 'sm')}<span>${esc(r.error)}</span>`;
+    this.$.msg.innerHTML = r.ok ? '' : `${ic('ko', 'sm')}<span>${esc(fErr(r.error))}</span>`;
     return r;
   }
   apply(silent) {
@@ -3047,7 +3252,7 @@ class Workspace {
       this.flat.push({ id, node: n, depth, key, parentId, kids, open });
       const f = filterFor(n);
       return `<li role="treeitem" id="${id}" aria-level="${depth + 1}" aria-selected="false" ${kids ? `aria-expanded="${open}"` : ''}>
-        <div class="tn" data-id="${id}">${kids ? `<span class="tw" aria-hidden="true">${ic('chevR', 'sm')}</span>` : '<span class="tw"></span>'}<span class="tl">${esc(n.label)}</span>${f ? `<button class="tf" type="button" tabindex="-1" data-f="${esc(f)}" aria-label="${t('applyAsFilter')}: ${esc(f)}" title="${t('applyAsFilter')}: ${esc(f)}">${ic('filter', 'sm')}</button>` : ''}</div>
+        <div class="tn" data-id="${id}">${kids ? `<span class="tw" aria-hidden="true">${ic('chevR', 'sm')}</span>` : '<span class="tw"></span>'}<span class="tl">${esc(treeLabel(n.label))}</span>${f ? `<button class="tf" type="button" tabindex="-1" data-f="${esc(f)}" aria-label="${t('applyAsFilter')}: ${esc(f)}" title="${t('applyAsFilter')}: ${esc(f)}">${ic('filter', 'sm')}</button>` : ''}</div>
         ${kids ? `<ul role="group"${open ? '' : ' hidden'}>${walk(n.kids, depth + 1, id)}</ul>` : ''}</li>`;
     }).join('');
     this.$.tree.innerHTML = walk(p.tree, 0, null);
@@ -3120,7 +3325,7 @@ class Workspace {
     const p = this.selected();
     if (stream === undefined && p && p.tcpStream === undefined && p.f['udp.stream']) return openFollow(this, p.f['udp.stream'][0], 'udp');
     const st = stream ?? (p && p.tcpStream);
-    if (st === undefined || st === null) { toast('Selecciona un paquete TCP o UDP para seguir su flujo.', 'info', 'follow'); return; }
+    if (st === undefined || st === null) { toast(L('Selecciona un paquete TCP o UDP para seguir su flujo.', 'Select a TCP or UDP packet to follow its stream.'), 'info', 'follow'); return; }
     openFollow(this, st);
   }
   destroy() { this.unsub && this.unsub(); this.host.innerHTML = ''; }
@@ -3141,8 +3346,8 @@ function openFollow(ws, stream, kind = 'tcp') {
         <div class="fs-ends"><span class="who cli">${ic('arrowR', 'sm')}${t('client')} <code>${esc(fs.client)}</code></span><span class="who srv">${ic('arrowL', 'sm')}${t('server')} <code>${esc(fs.server)}</code></span></div>
         <div class="row"><button class="ibtn" data-prev ${idx <= 0 ? 'disabled' : ''} aria-label="${t('prevStream')}">${ic('chevL')}</button><span class="mono sm">${kind}.stream eq ${cur}</span><button class="ibtn" data-next ${idx >= streams.length - 1 ? 'disabled' : ''} aria-label="${t('nextStream')}">${ic('chevR')}</button></div>
       </div>
-      <div class="fs-body mono" tabindex="0" aria-label="Contenido del flujo">${fs.chunks.length ? fs.chunks.map(c => `<pre class="${c.client ? 'cli' : 'srv'}"><span class="vh">${c.client ? t('client') : t('server')}: </span>${esc(c.text)}</pre>`).join('') : `<p class="muted">${udp ? 'Este flujo UDP no lleva datos.' : 'Este flujo no lleva datos: solo saludo y cierre (o un RST).'}</p>`}</div>
-      <p class="sm muted fs-sum">${t('client')} → ${t('server')}: <strong>${fmtNum(fs.cBytes)}</strong> bytes · ${t('server')} → ${t('client')}: <strong>${fmtNum(fs.sBytes)}</strong> bytes · ${fs.chunks.length} bloques</p>`;
+      <div class="fs-body mono" tabindex="0" aria-label="${L('Contenido del flujo', 'Stream content')}">${fs.chunks.length ? fs.chunks.map(c => `<pre class="${c.client ? 'cli' : 'srv'}"><span class="vh">${c.client ? t('client') : t('server')}: </span>${esc(c.text)}</pre>`).join('') : `<p class="muted">${udp ? L('Este flujo UDP no lleva datos.', 'This UDP stream carries no data.') : L('Este flujo no lleva datos: solo saludo y cierre (o un RST).', 'This stream carries no data: just handshake and teardown (or an RST).')}</p>`}</div>
+      <p class="sm muted fs-sum">${t('client')} → ${t('server')}: <strong>${fmtNum(fs.cBytes)}</strong> bytes · ${t('server')} → ${t('client')}: <strong>${fmtNum(fs.sBytes)}</strong> bytes · ${fs.chunks.length} ${L('bloques', 'chunks')}</p>`;
     $('[data-prev]', body).onclick = () => { cur = streams[idx - 1]; render(); };
     $('[data-next]', body).onclick = () => { cur = streams[idx + 1]; render(); };
   };
@@ -3180,10 +3385,10 @@ function convPanel(ws, panel) {
   const draw = () => {
     const rows = c[k], ports = k === 'tcp' || k === 'udp';
     const fl = r => k === 'tcp' ? `tcp.stream eq ${r.stream}` : k === 'udp' ? `udp.stream eq ${r.stream}` : k === 'ip' ? `ip.addr == ${r.a} && ip.addr == ${r.b}` : `eth.addr == ${r.a} && eth.addr == ${r.b}`;
-    panel.innerHTML = `<div class="chips" role="group" aria-label="Tipo de conversación">${kinds.map(([x, l]) => `<button class="chip ${x === k ? 'on' : ''}" aria-pressed="${x === k}" data-k="${x}">${l} <span class="num">${c[x].length}</span></button>`).join('')}</div>
-      <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl"><caption class="vh">Conversaciones ${k}</caption><thead><tr><th scope="col">${k === 'eth' ? 'Dirección A' : 'IP A'}</th>${ports ? '<th scope="col" class="n">Puerto A</th>' : ''}<th scope="col">${k === 'eth' ? 'Dirección B' : 'IP B'}</th>${ports ? '<th scope="col" class="n">Puerto B</th>' : ''}<th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">A → B</th><th scope="col" class="n">B → A</th><th scope="col" class="n">Inicio</th><th scope="col" class="n">Duración</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+    panel.innerHTML = `<div class="chips" role="group" aria-label="${L('Tipo de conversación', 'Conversation type')}">${kinds.map(([x, l]) => `<button class="chip ${x === k ? 'on' : ''}" aria-pressed="${x === k}" data-k="${x}">${l} <span class="num">${c[x].length}</span></button>`).join('')}</div>
+      <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl"><caption class="vh">${t('conv')} ${k}</caption><thead><tr><th scope="col">${k === 'eth' ? L('Dirección A', 'Address A') : 'IP A'}</th>${ports ? `<th scope="col" class="n">${L('Puerto A', 'Port A')}</th>` : ''}<th scope="col">${k === 'eth' ? L('Dirección B', 'Address B') : 'IP B'}</th>${ports ? `<th scope="col" class="n">${L('Puerto B', 'Port B')}</th>` : ''}<th scope="col" class="n">${L('Paquetes', 'Packets')}</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">A → B</th><th scope="col" class="n">B → A</th><th scope="col" class="n">${L('Inicio', 'Start')}</th><th scope="col" class="n">${L('Duración', 'Duration')}</th><th scope="col"><span class="vh">${L('Acción', 'Action')}</span></th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr><td class="mono">${esc(r.a)}</td>${ports ? `<td class="n mono">${r.pa}</td>` : ''}<td class="mono">${esc(r.b)}</td>${ports ? `<td class="n mono">${r.pb}</td>` : ''}<td class="n">${r.pkts}</td><td class="n">${fmtNum(r.bytes)}</td><td class="n">${r.ab}</td><td class="n">${r.ba}</td><td class="n mono">${r.start.toFixed(3)}</td><td class="n mono">${r.dur.toFixed(3)}</td><td><button class="ibtn sm" data-f="${esc(fl(r))}" aria-label="${t('filterThis')}: ${esc(fl(r))}" title="${t('filterThis')}">${ic('filter', 'sm')}</button></td></tr>`).join('')}</tbody></table></div>
-      <p class="sm muted">Pista: en un escaneo verás muchas conversaciones TCP de 2 o 3 paquetes desde el mismo origen.</p>`;
+      <p class="sm muted">${L('Pista: en un escaneo verás muchas conversaciones TCP de 2 o 3 paquetes desde el mismo origen.', 'Hint: in a scan you will see many 2- or 3-packet TCP conversations from the same source.')}</p>`;
     $$('[data-k]', panel).forEach(b => b.onclick = () => { k = b.dataset.k; draw(); });
     $$('[data-f]', panel).forEach(b => b.onclick = () => { ws.setFilter(b.dataset.f); closeDialog(); });
   };
@@ -3194,7 +3399,7 @@ function hierPanel(ws, panel) {
   const h = protocolHierarchy(ws.pkts), rows = [];
   const walk = n => { rows.push(n); n.kids.forEach(walk); };
   walk(h);
-  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl hier"><caption class="vh">${t('hier')}</caption><thead><tr><th scope="col">Protocolo</th><th scope="col" class="n">% paquetes</th><th scope="col" class="bar-col"><span class="vh">Barra</span></th><th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl hier"><caption class="vh">${t('hier')}</caption><thead><tr><th scope="col">${L('Protocolo', 'Protocol')}</th><th scope="col" class="n">${L('% paquetes', '% packets')}</th><th scope="col" class="bar-col"><span class="vh">${L('Barra', 'Bar')}</span></th><th scope="col" class="n">${L('Paquetes', 'Packets')}</th><th scope="col" class="n">Bytes</th><th scope="col"><span class="vh">${L('Acción', 'Action')}</span></th></tr></thead>
     <tbody>${rows.map(r => { const name = r.name === 'frame' ? 'Frame' : r.name; const f = r.name === 'frame' ? '' : r.name; return `<tr><td><span class="ind" data-d="${Math.min(r.depth, 8)}">${esc(name)}</span></td><td class="n">${r.pct.toFixed(1)} %</td><td class="bar-col"><span class="bar" data-w="${r.pct}"></span></td><td class="n">${r.pkts}</td><td class="n">${fmtNum(r.bytes)}</td><td>${f && FIELDS[f] ? `<button class="ibtn sm" data-f="${esc(f)}" aria-label="${t('filterThis')}: ${esc(f)}">${ic('filter', 'sm')}</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`;
   $$('.bar', panel).forEach(b => { b.style.width = `${b.dataset.w}%`; });
   $$('.ind', panel).forEach(s => { s.style.paddingInlineStart = `${s.dataset.d * 16}px`; });
@@ -3212,13 +3417,13 @@ function ioPanel(ws, panel) {
     const y = v => H - pb - (v / max) * (H - pb - 10);
     const ticks = [0, Math.ceil(max / 2), max];
     const xl = Math.max(1, Math.ceil(g.buckets.length / 8));
-    panel.innerHTML = `<div class="row between"><div class="row sm"><span class="lgd all"><i></i>${t('allPackets')}</span>${test ? `<span class="lgd hit"><i></i>${t('matching')}: <code>${esc(ws.filterText)}</code></span>` : '<span class="muted">Aplica un filtro para compararlo con el total.</span>'}</div>
+    panel.innerHTML = `<div class="row between"><div class="row sm"><span class="lgd all"><i></i>${t('allPackets')}</span>${test ? `<span class="lgd hit"><i></i>${t('matching')}: <code>${esc(ws.filterText)}</code></span>` : `<span class="muted">${L('Aplica un filtro para compararlo con el total.', 'Apply a filter to compare it with the total.')}</span>`}</div>
       <label class="row sm">${t('interval')} <select data-iv>${(opts.length ? opts : [iv]).map(o => `<option value="${o}" ${o === iv ? 'selected' : ''}>${o} s</option>`).join('')}</select></label></div>
-      <svg class="io" viewBox="0 0 ${W} ${H}" role="img" aria-label="Paquetes por intervalo de ${iv} segundos: máximo ${max}">
+      <svg class="io" viewBox="0 0 ${W} ${H}" role="img" aria-label="${L(`Paquetes por intervalo de ${iv} segundos: máximo ${max}`, `Packets per ${iv}-second interval: maximum ${max}`)}">
         ${ticks.map(v => `<line class="gl" x1="${pl}" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('')}
-        ${g.buckets.map((b, i) => `<rect class="b-all" x="${pl + i * bw + bw * 0.12}" y="${y(b.all)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.all)}" rx="${Math.min(3, bw / 4)}"><title>${b.t} s: ${b.all} paquetes${test ? `, ${b.hit} cumplen el filtro` : ''}</title></rect>${test && b.hit ? `<rect class="b-hit" x="${pl + i * bw + bw * 0.12}" y="${y(b.hit)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.hit)}" rx="${Math.min(3, bw / 4)}"/>` : ''}`).join('')}
+        ${g.buckets.map((b, i) => `<rect class="b-all" x="${pl + i * bw + bw * 0.12}" y="${y(b.all)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.all)}" rx="${Math.min(3, bw / 4)}"><title>${b.t} s: ${b.all} ${L('paquetes', 'packets')}${test ? `, ${b.hit} ${L('cumplen el filtro', 'match the filter')}` : ''}</title></rect>${test && b.hit ? `<rect class="b-hit" x="${pl + i * bw + bw * 0.12}" y="${y(b.hit)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.hit)}" rx="${Math.min(3, bw / 4)}"/>` : ''}`).join('')}
         ${g.buckets.map((b, i) => i % xl === 0 ? `<text class="ax" x="${pl + i * bw + bw / 2}" y="${H - 8}" text-anchor="middle">${+b.t.toFixed(2)}</text>` : '').join('')}
-      </svg><p class="sm muted">Eje horizontal: segundos desde el primer paquete. Un pico que se repite a intervalos fijos puede ser un beacon.</p>`;
+      </svg><p class="sm muted">${L('Eje horizontal: segundos desde el primer paquete. Un pico que se repite a intervalos fijos puede ser un beacon.', 'Horizontal axis: seconds since the first packet. A spike that repeats at fixed intervals may be a beacon.')}</p>`;
     $('[data-iv]', panel).onchange = e => { iv = +e.target.value; draw(); };
   };
   draw();
@@ -3228,22 +3433,23 @@ function ioPanel(ws, panel) {
 /* ---------- Endpoints (Estadísticas › Endpoints › IPv4) ---------- */
 function endsPanel(ws, panel) {
   const rows = endpoints(ws.pkts);
-  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('endpoints')}"><table class="tbl"><caption class="vh">${t('endpoints')} IPv4</caption><thead><tr><th scope="col">Dirección</th><th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">Enviados</th><th scope="col" class="n">Recibidos</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('endpoints')}"><table class="tbl"><caption class="vh">${t('endpoints')} IPv4</caption><thead><tr><th scope="col">${L('Dirección', 'Address')}</th><th scope="col" class="n">${L('Paquetes', 'Packets')}</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">${L('Enviados', 'Sent')}</th><th scope="col" class="n">${L('Recibidos', 'Received')}</th><th scope="col"><span class="vh">${L('Acción', 'Action')}</span></th></tr></thead>
     <tbody>${rows.map(e => `<tr><td class="mono">${esc(e.addr)}</td><td class="n">${fmtNum(e.pkts)}</td><td class="n">${fmtNum(e.bytes)}</td><td class="n">${fmtNum(e.tx)}</td><td class="n">${fmtNum(e.rx)}</td><td><button class="btn sm ghost" type="button" data-f="ip.addr == ${esc(e.addr)}">${ic('filter', 'sm')}${t('filterThis')}</button></td></tr>`).join('')}</tbody></table></div>
-    <p class="sm muted">Cada IP que aparece en la captura. Un equipo que solo recibe, o uno que habla con muchos, suele ser el primer hilo del que tirar.</p>`;
+    <p class="sm muted">${L('Cada IP que aparece en la captura. Un equipo que solo recibe, o uno que habla con muchos, suele ser el primer hilo del que tirar.', 'Every IP in the capture. A host that only receives, or one that talks to many, is usually the first thread to pull.')}</p>`;
   $$('[data-f]', panel).forEach(b => b.onclick = () => { ws.setFilter(b.dataset.f); closeDialog(); });
 }
 
 /* ---------- Analizar › Información experta ---------- */
-const SEV_LABEL = { error: 'Error', warn: 'Aviso', note: 'Nota', chat: 'Conversación' };
+const SEV_LABELS = { es: { error: 'Error', warn: 'Aviso', note: 'Nota', chat: 'Conversación' }, en: { error: 'Error', warn: 'Warning', note: 'Note', chat: 'Chat' } };
+const sevLabel = k => SEV_LABELS[LANG === 'en' ? 'en' : 'es'][k];
 function openExpert(ws) {
   const ex = expertInfo(ws.pkts), body = document.createElement('div');
-  body.innerHTML = `<p class="muted sm">Wireshark resume aquí lo que le llama la atención de cada paquete, de más grave a más rutinario. Los mensajes se muestran en inglés, como en Wireshark, para que los reconozcas.</p>
-    <div class="ex-sum">${EXPERT_SEV.map(([k, en]) => `<span class="ex-chip sev-${k}"><strong>${fmtNum(ex.count[k])}</strong> ${SEV_LABEL[k]} <small>(${en})</small></span>`).join('')}</div>
-    ${ex.items.length ? `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('expert')}"><table class="tbl ex"><caption class="vh">${t('expert')}</caption><thead><tr><th scope="col">Severidad</th><th scope="col">Resumen</th><th scope="col">Protocolo</th><th scope="col" class="n">Cantidad</th><th scope="col">Paquetes</th></tr></thead>
-    <tbody>${ex.items.map((it, i) => `<tr><td><span class="ex-chip sev-${it.sev}">${SEV_LABEL[it.sev]}</span></td><td class="mono">${esc(it.summary)}</td><td>${esc(it.proto)}</td><td class="n">${fmtNum(it.nos.length)}</td>
-      <td><div class="ex-nos">${it.nos.slice(0, 8).map(n => `<button class="btn sm ghost mono" type="button" data-no="${n}" aria-label="Ir al paquete ${n}">${n}</button>`).join('')}${it.nos.length > 1 ? `<button class="btn sm ghost" type="button" data-show="${i}">${ic('filter', 'sm')}Mostrar</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>`
-      : '<p class="muted">No hay entradas: esta captura no tiene TCP ni HTTP que comentar.</p>'}`;
+  body.innerHTML = `<p class="muted sm">${L('Wireshark resume aquí lo que le llama la atención de cada paquete, de más grave a más rutinario. Los mensajes se muestran en inglés, como en Wireshark, para que los reconozcas.', 'Wireshark sums up here what catches its eye in each packet, from most serious to most routine.')}</p>
+    <div class="ex-sum">${EXPERT_SEV.map(([k, en]) => `<span class="ex-chip sev-${k}"><strong>${fmtNum(ex.count[k])}</strong> ${sevLabel(k)}${LANG === 'en' ? '' : ` <small>(${en})</small>`}</span>`).join('')}</div>
+    ${ex.items.length ? `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('expert')}"><table class="tbl ex"><caption class="vh">${t('expert')}</caption><thead><tr><th scope="col">${L('Severidad', 'Severity')}</th><th scope="col">${L('Resumen', 'Summary')}</th><th scope="col">${L('Protocolo', 'Protocol')}</th><th scope="col" class="n">${L('Cantidad', 'Count')}</th><th scope="col">${L('Paquetes', 'Packets')}</th></tr></thead>
+    <tbody>${ex.items.map((it, i) => `<tr><td><span class="ex-chip sev-${it.sev}">${sevLabel(it.sev)}</span></td><td class="mono">${esc(it.summary)}</td><td>${esc(it.proto)}</td><td class="n">${fmtNum(it.nos.length)}</td>
+      <td><div class="ex-nos">${it.nos.slice(0, 8).map(n => `<button class="btn sm ghost mono" type="button" data-no="${n}" aria-label="${L('Ir al paquete', 'Go to packet')} ${n}">${n}</button>`).join('')}${it.nos.length > 1 ? `<button class="btn sm ghost" type="button" data-show="${i}">${ic('filter', 'sm')}${L('Mostrar', 'Show')}</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>`
+      : `<p class="muted">${L('No hay entradas: esta captura no tiene TCP ni HTTP que comentar.', 'No entries: this capture has no TCP or HTTP worth commenting on.')}</p>`}`;
   openDialog({ title: `${ic('alert')} ${t('expert')}`, body, wide: true });
   $$('[data-no]', body).forEach(b => b.onclick = () => { closeDialog(); ws.select(+b.dataset.no, { focusList: true }); });
   $$('[data-show]', body).forEach(b => b.onclick = () => { closeDialog(); ws.setFilter(`frame.number in {${ex.items[+b.dataset.show].nos.join(', ')}}`); });
@@ -3253,18 +3459,18 @@ function openExpert(ws) {
 function openObjects(ws) {
   const objs = httpObjects(ws.pkts), body = document.createElement('div');
   const isText = o => /^(text\/|application\/(json|javascript|xml|x-www-form-urlencoded))/i.test(o.type);
-  body.innerHTML = objs.length ? `<p class="muted sm">Los cuerpos HTTP reconstruidos de la captura: páginas, scripts, JSON, formularios y ficheros. Así se recupera lo que se descargó (o se robó) por HTTP sin cifrar.</p>
-    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('objects')}"><table class="tbl"><caption class="vh">${t('objects')}</caption><thead><tr><th scope="col" class="n">Paquete</th><th scope="col">Host</th><th scope="col">Tipo de contenido</th><th scope="col" class="n">Tamaño</th><th scope="col">Nombre</th><th scope="col"><span class="vh">Acciones</span></th></tr></thead>
-    <tbody>${objs.map((o, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-no="${o.no}" aria-label="Ir al paquete ${o.no}">${o.no}</button></td><td class="mono">${esc(o.host)}</td><td class="mono sm">${esc(o.type || '—')}</td><td class="n">${fmtNum(o.size)} B</td><td class="mono">${esc(o.name)}</td>
-      <td><div class="row">${isText(o) ? `<button class="btn sm ghost" type="button" data-view="${i}" aria-label="Ver ${esc(o.name)}">${ic('eye', 'sm')}Ver</button>` : ''}<button class="btn sm ghost" type="button" data-save="${i}" aria-label="Guardar ${esc(o.name)}">${ic('download', 'sm')}Guardar</button></div></td></tr>`).join('')}</tbody></table></div>
+  body.innerHTML = objs.length ? `<p class="muted sm">${L('Los cuerpos HTTP reconstruidos de la captura: páginas, scripts, JSON, formularios y ficheros. Así se recupera lo que se descargó (o se robó) por HTTP sin cifrar.', 'HTTP bodies rebuilt from the capture: pages, scripts, JSON, forms and files. This is how you recover what was downloaded (or stolen) over plain HTTP.')}</p>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('objects')}"><table class="tbl"><caption class="vh">${t('objects')}</caption><thead><tr><th scope="col" class="n">${L('Paquete', 'Packet')}</th><th scope="col">Host</th><th scope="col">${L('Tipo de contenido', 'Content type')}</th><th scope="col" class="n">${L('Tamaño', 'Size')}</th><th scope="col">${L('Nombre', 'Filename')}</th><th scope="col"><span class="vh">${L('Acciones', 'Actions')}</span></th></tr></thead>
+    <tbody>${objs.map((o, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-no="${o.no}" aria-label="${L('Ir al paquete', 'Go to packet')} ${o.no}">${o.no}</button></td><td class="mono">${esc(o.host)}</td><td class="mono sm">${esc(o.type || '—')}</td><td class="n">${fmtNum(o.size)} B</td><td class="mono">${esc(o.name)}</td>
+      <td><div class="row">${isText(o) ? `<button class="btn sm ghost" type="button" data-view="${i}" aria-label="${L('Ver', 'View')} ${esc(o.name)}">${ic('eye', 'sm')}${L('Ver', 'View')}</button>` : ''}<button class="btn sm ghost" type="button" data-save="${i}" aria-label="${L('Guardar', 'Save')} ${esc(o.name)}">${ic('download', 'sm')}${L('Guardar', 'Save')}</button></div></td></tr>`).join('')}</tbody></table></div>
     <div class="ob-prev" hidden><p class="sm"><strong data-pn></strong></p><pre class="mono" tabindex="0"></pre></div>`
-    : '<p class="muted">Esta captura no lleva objetos HTTP. Prueba con los módulos 2, 3 o 6.</p>';
+    : `<p class="muted">${L('Esta captura no lleva objetos HTTP. Prueba con los módulos 2, 3 o 6.', 'This capture carries no HTTP objects. Try modules 2, 3 or 6.')}</p>`;
   openDialog({ title: `${ic('file')} ${t('objects')}`, body, wide: true });
   $$('[data-no]', body).forEach(b => b.onclick = () => { closeDialog(); ws.select(+b.dataset.no, { focusList: true }); });
-  $$('[data-save]', body).forEach(b => b.onclick = () => { const o = objs[+b.dataset.save]; download(o.data, o.name, 'application/octet-stream'); toast(`Guardado: <code>${esc(o.name)}</code>`, 'ok', 'download'); });
+  $$('[data-save]', body).forEach(b => b.onclick = () => { const o = objs[+b.dataset.save]; download(o.data, o.name, 'application/octet-stream'); toast(`${L('Guardado', 'Saved')}: <code>${esc(o.name)}</code>`, 'ok', 'download'); });
   $$('[data-view]', body).forEach(b => b.onclick = () => {
     const o = objs[+b.dataset.view], pv = $('.ob-prev', body);
-    pv.hidden = false; $('[data-pn]', pv).textContent = `${o.name} · paquete ${o.no}`;
+    pv.hidden = false; $('[data-pn]', pv).textContent = `${o.name} · ${L('paquete', 'packet')} ${o.no}`;
     $('pre', pv).textContent = new TextDecoder().decode(o.data);                 // texto, nunca HTML interpretado
     $('pre', pv).focus();
   });
@@ -3273,11 +3479,11 @@ function openObjects(ws) {
 /* ---------- Herramientas › Credenciales ---------- */
 function openCreds(ws) {
   const cr = credentials(ws.pkts), body = document.createElement('div');
-  body.innerHTML = cr.length ? `<p class="muted sm">Usuarios que viajan por protocolos que Wireshark sabe leer (HTTP Basic, FTP, NTLMSSP). Pulsa el paquete para ir al campo exacto del árbol.</p>
-    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('creds')}"><table class="tbl"><caption class="vh">${t('creds')}</caption><thead><tr><th scope="col" class="n">Paquete</th><th scope="col">Protocolo</th><th scope="col">Usuario</th><th scope="col">Información</th></tr></thead>
-    <tbody>${cr.map((c, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-i="${i}" aria-label="Ir al paquete ${c.no}">${c.no}</button></td><td>${esc(c.proto)}</td><td class="mono">${esc(c.user)}</td><td class="sm">${esc(c.info)}</td></tr>`).join('')}</tbody></table></div>
-    <p class="sm muted">Wireshark no muestra aquí los formularios POST: esos los buscas tú con <code>http.request.method == "POST"</code>.</p>`
-    : '<p class="muted">No hay credenciales en esta captura. Las encontrarás en los módulos 3 (HTTP Basic y FTP) y 7 (NTLMSSP).</p>';
+  body.innerHTML = cr.length ? `<p class="muted sm">${L('Usuarios que viajan por protocolos que Wireshark sabe leer (HTTP Basic, FTP, NTLMSSP). Pulsa el paquete para ir al campo exacto del árbol.', 'Usernames carried by protocols Wireshark can read (HTTP Basic, FTP, NTLMSSP). Click the packet to jump to the exact field in the tree.')}</p>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('creds')}"><table class="tbl"><caption class="vh">${t('creds')}</caption><thead><tr><th scope="col" class="n">${L('Paquete', 'Packet')}</th><th scope="col">${L('Protocolo', 'Protocol')}</th><th scope="col">${L('Usuario', 'Username')}</th><th scope="col">${L('Información', 'Info')}</th></tr></thead>
+    <tbody>${cr.map((c, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-i="${i}" aria-label="${L('Ir al paquete', 'Go to packet')} ${c.no}">${c.no}</button></td><td>${esc(c.proto)}</td><td class="mono">${esc(c.user)}</td><td class="sm">${esc(c.info)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="sm muted">${L('Wireshark no muestra aquí los formularios POST: esos los buscas tú con', 'Wireshark does not list POST forms here: find those yourself with')} <code>http.request.method == "POST"</code>.</p>`
+    : `<p class="muted">${L('No hay credenciales en esta captura. Las encontrarás en los módulos 3 (HTTP Basic y FTP) y 7 (NTLMSSP).', 'No credentials in this capture. You will find them in modules 3 (HTTP Basic and FTP) and 7 (NTLMSSP).')}</p>`;
   openDialog({ title: `${ic('lock')} ${t('creds')}`, body, wide: true });
   $$('[data-i]', body).forEach(b => b.onclick = () => { const c = cr[+b.dataset.i]; closeDialog(); ws.revealField(c.no, c.field); });
 }
@@ -3287,14 +3493,14 @@ function openFind(ws, mode = 'find') {
   const body = document.createElement('div');
   body.innerHTML = `<div class="seg" role="tablist" aria-label="${t('findPkt')}"><button role="tab" id="fd-find" aria-selected="${mode === 'find'}" data-m="find">${ic('search', 'sm')}${t('findPkt')}</button><button role="tab" id="fd-goto" aria-selected="${mode === 'goto'}" data-m="goto">${ic('target', 'sm')}${t('gotoPkt')}</button></div>
     <form class="fd" data-p="find" ${mode === 'find' ? '' : 'hidden'} aria-labelledby="fd-find">
-      <div class="row wrap"><label class="sm" for="fd-k">Buscar por</label><select id="fd-k" class="sel"><option value="filter">Filtro de visualización</option><option value="str">Cadena en los bytes</option><option value="hex">Valor hexadecimal</option></select>
-      <label class="row sm"><input type="checkbox" id="fd-c"> Distinguir mayúsculas</label></div>
-      <label class="vh" for="fd-q">Qué buscar</label><input id="fd-q" class="tinput mono" type="text" autocomplete="off" spellcheck="false" placeholder="p. ej. http.cookie, password o 50 4b 03 04">
-      <div class="row"><button class="btn primary sm" type="submit">${ic('search', 'sm')}Buscar siguiente</button><span class="sm" data-msg aria-live="polite"></span></div>
+      <div class="row wrap"><label class="sm" for="fd-k">${L('Buscar por', 'Search by')}</label><select id="fd-k" class="sel"><option value="filter">${L('Filtro de visualización', 'Display filter')}</option><option value="str">${L('Cadena en los bytes', 'String in bytes')}</option><option value="hex">${L('Valor hexadecimal', 'Hex value')}</option></select>
+      <label class="row sm"><input type="checkbox" id="fd-c"> ${L('Distinguir mayúsculas', 'Case sensitive')}</label></div>
+      <label class="vh" for="fd-q">${L('Qué buscar', 'What to find')}</label><input id="fd-q" class="tinput mono" type="text" autocomplete="off" spellcheck="false" placeholder="${L('p. ej. http.cookie, password o 50 4b 03 04', 'e.g. http.cookie, password or 50 4b 03 04')}">
+      <div class="row"><button class="btn primary sm" type="submit">${ic('search', 'sm')}${L('Buscar siguiente', 'Find next')}</button><span class="sm" data-msg aria-live="polite"></span></div>
     </form>
     <form class="fd" data-p="goto" ${mode === 'goto' ? '' : 'hidden'} aria-labelledby="fd-goto">
-      <label class="sm" for="fd-n">Número de paquete (1 a ${fmtNum(ws.pkts.length)})</label><input id="fd-n" class="tinput mono" type="number" min="1" max="${ws.pkts.length}" inputmode="numeric">
-      <div class="row"><button class="btn primary sm" type="submit">${ic('target', 'sm')}Ir</button><span class="sm" data-msg2 aria-live="polite"></span></div>
+      <label class="sm" for="fd-n">${L('Número de paquete', 'Packet number')} (1 ${L('a', 'to')} ${fmtNum(ws.pkts.length)})</label><input id="fd-n" class="tinput mono" type="number" min="1" max="${ws.pkts.length}" inputmode="numeric">
+      <div class="row"><button class="btn primary sm" type="submit">${ic('target', 'sm')}${L('Ir', 'Go')}</button><span class="sm" data-msg2 aria-live="polite"></span></div>
     </form>`;
   openDialog({ title: `${ic('search')} ${t('findPkt')}`, body, cls: 'narrow' });
   const show = m => { $$('[role=tab]', body).forEach(b => b.setAttribute('aria-selected', String(b.dataset.m === m))); $$('form', body).forEach(f => { f.hidden = f.dataset.p !== m; }); $(m === 'find' ? '#fd-q' : '#fd-n', body).focus(); };
@@ -3309,20 +3515,20 @@ function openFind(ws, mode = 'find') {
   $('[data-p=goto]', body).onsubmit = e => {
     e.preventDefault();
     const n = +$('#fd-n', body).value, m2 = $('[data-msg2]', body);
-    if (!ws.byNo.has(n)) { m2.className = 'sm bad'; m2.textContent = `No existe el paquete ${n}.`; return; }
-    if (!ws.view.some(p => p.no === n)) { m2.className = 'sm bad'; m2.textContent = `El paquete ${n} está oculto por el filtro actual. Bórralo para verlo.`; return; }
+    if (!ws.byNo.has(n)) { m2.className = 'sm bad'; m2.textContent = L(`No existe el paquete ${n}.`, `Packet ${n} does not exist.`); return; }
+    if (!ws.view.some(p => p.no === n)) { m2.className = 'sm bad'; m2.textContent = L(`El paquete ${n} está oculto por el filtro actual. Bórralo para verlo.`, `Packet ${n} is hidden by the current filter. Clear it to see it.`); return; }
     closeDialog(); ws.select(n, { focusList: true });
   };
 }
 /* Busca el siguiente paquete mostrado, tras el seleccionado y dando la vuelta, como Wireshark. */
 function findPacket(ws, kind, q, cs) {
   q = String(q || '');
-  if (!q.trim()) return { ok: false, msg: 'Escribe qué buscar.' };
+  if (!q.trim()) return { ok: false, msg: L('Escribe qué buscar.', 'Type what to find.') };
   let test;
-  if (kind === 'filter') { const r = parseFilter(q); if (!r.ok) return { ok: false, msg: r.error || 'El filtro no es válido.' }; test = r.test; }
+  if (kind === 'filter') { const r = parseFilter(q); if (!r.ok) return { ok: false, msg: fErr(r.error) || L('El filtro no es válido.', 'The filter is not valid.') }; test = r.test; }
   else if (kind === 'hex') {
     const h = q.replace(/0x|[\s:.-]/gi, '');
-    if (!/^([0-9a-f]{2})+$/i.test(h)) return { ok: false, msg: 'Escribe bytes en hexadecimal, por pares: 50 4b 03 04' };
+    if (!/^([0-9a-f]{2})+$/i.test(h)) return { ok: false, msg: L('Escribe bytes en hexadecimal, por pares: 50 4b 03 04', 'Type bytes in hex, in pairs: 50 4b 03 04') };
     const nd = h.match(/../g).map(x => parseInt(x, 16));
     test = p => { const b = p.b; outer: for (let i = 0; i + nd.length <= b.length; i++) { for (let j = 0; j < nd.length; j++) if (b[i + j] !== nd[j]) continue outer; return true; } return false; };
   } else {
@@ -3332,31 +3538,31 @@ function findPacket(ws, kind, q, cs) {
   const v = ws.view, start = Math.max(-1, v.findIndex(p => p.no === ws.sel));
   for (let k = 1; k <= v.length; k++) {
     const p = v[(start + k) % v.length];
-    if (test(p)) { ws.select(p.no); return { ok: true, msg: `Encontrado en el paquete ${p.no}${(start + k) >= v.length && start >= 0 ? ' (se ha dado la vuelta)' : ''}.` }; }
+    if (test(p)) { ws.select(p.no); return { ok: true, msg: `${L('Encontrado en el paquete', 'Found in packet')} ${p.no}${(start + k) >= v.length && start >= 0 ? L(' (se ha dado la vuelta)', ' (wrapped around)') : ''}.` }; }
   }
-  return { ok: false, msg: 'No aparece en ningún paquete mostrado.' };
+  return { ok: false, msg: L('No aparece en ningún paquete mostrado.', 'Not found in any displayed packet.') };
 }
 
 /* src/app/45-ladder.js */
 /* Megalodon · diagrama de escalera animado de un flujo TCP (módulo 1). Cada flecha es un paquete; al pulsarla se selecciona en Wireshark. */
 function ladderSVG(pkts, stream, onPick) {
-  const L = flowLadder(pkts, stream); if (!L) return document.createElement('div');
-  const W = 560, ax = 150, bx = 470, top = 64, rh = 40, H = top + L.steps.length * rh + 16;
-  const phase = s => s.flags.includes('SYN') ? 'hs' : s.flags.includes('FIN') || s.flags.includes('RST') || (s.len === 0 && L.steps.some(x => x.flags.includes('FIN') && x.no < s.no)) ? 'fin' : 'data';
-  const names = { hs: 'Saludo', data: 'Datos', fin: 'Cierre' };
+  const LD = flowLadder(pkts, stream); if (!LD) return document.createElement('div');
+  const W = 560, ax = 150, bx = 470, top = 64, rh = 40, H = top + LD.steps.length * rh + 16;
+  const phase = s => s.flags.includes('SYN') ? 'hs' : s.flags.includes('FIN') || s.flags.includes('RST') || (s.len === 0 && LD.steps.some(x => x.flags.includes('FIN') && x.no < s.no)) ? 'fin' : 'data';
+  const names = LANG === 'en' ? { hs: 'Handshake', data: 'Data', fin: 'Teardown' } : { hs: 'Saludo', data: 'Datos', fin: 'Cierre' };
   const groups = [];
-  L.steps.forEach((s, i) => { const ph = phase(s); if (!groups.length || groups[groups.length - 1].ph !== ph) groups.push({ ph, a: i, b: i }); else groups[groups.length - 1].b = i; });
+  LD.steps.forEach((s, i) => { const ph = phase(s); if (!groups.length || groups[groups.length - 1].ph !== ph) groups.push({ ph, a: i, b: i }); else groups[groups.length - 1].b = i; });
   const wrap = document.createElement('figure');
   wrap.className = 'ladder';
-  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="Diagrama del flujo TCP ${stream}: ${L.steps.length} paquetes entre ${L.a}:${L.pa} y ${L.b}:${L.pb}">
-    <text class="lh" x="${ax}" y="20" text-anchor="middle">Kali</text><text class="lh2" x="${ax}" y="38" text-anchor="middle">${L.a}:${L.pa}</text>
-    <text class="lh" x="${bx}" y="20" text-anchor="middle">Servidor web</text><text class="lh2" x="${bx}" y="38" text-anchor="middle">${L.b}:${L.pb}</text>
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="group" aria-label="${L(`Diagrama del flujo TCP ${stream}: ${LD.steps.length} paquetes entre ${LD.a}:${LD.pa} y ${LD.b}:${LD.pb}`, `TCP stream ${stream} diagram: ${LD.steps.length} packets between ${LD.a}:${LD.pa} and ${LD.b}:${LD.pb}`)}">
+    <text class="lh" x="${ax}" y="20" text-anchor="middle">Kali</text><text class="lh2" x="${ax}" y="38" text-anchor="middle">${LD.a}:${LD.pa}</text>
+    <text class="lh" x="${bx}" y="20" text-anchor="middle">${L('Servidor web', 'Web server')}</text><text class="lh2" x="${bx}" y="38" text-anchor="middle">${LD.b}:${LD.pb}</text>
     <line class="life" x1="${ax}" x2="${ax}" y1="48" y2="${H - 6}"/><line class="life" x1="${bx}" x2="${bx}" y1="48" y2="${H - 6}"/>
     ${groups.map(g => `<g class="ph ph-${g.ph}"><rect x="8" y="${top + g.a * rh - 12}" width="74" height="${(g.b - g.a + 1) * rh - 8}" rx="8"/><text x="45" y="${top + ((g.a + g.b) / 2) * rh + 8}" text-anchor="middle">${names[g.ph]}</text></g>`).join('')}
-    ${L.steps.map((s, i) => {
+    ${LD.steps.map((s, i) => {
       const y = top + i * rh, x1 = s.fromA ? ax : bx, x2 = s.fromA ? bx : ax, dir = s.fromA ? 1 : -1, mid = (ax + bx) / 2;
       const lab = s.flags.join(', ') + (s.app ? ` · ${s.app}` : '');
-      return `<g class="step ${s.flags.includes('RST') ? 'rst' : ''} ${s.app ? 'app' : ''}" data-no="${s.no}" data-i="${i}" tabindex="0" role="button" aria-label="Paquete ${s.no}: ${esc(lab)}, Seq ${s.seq}, Ack ${s.ack}, Len ${s.len}">
+      return `<g class="step ${s.flags.includes('RST') ? 'rst' : ''} ${s.app ? 'app' : ''}" data-no="${s.no}" data-i="${i}" tabindex="0" role="button" aria-label="${L('Paquete', 'Packet')} ${s.no}: ${esc(lab)}, Seq ${s.seq}, Ack ${s.ack}, Len ${s.len}">
         <line class="ar" x1="${x1}" y1="${y}" x2="${x2 - dir * 7}" y2="${y + 12}" pathLength="1"/>
         <path class="hd" d="M ${x2} ${y + 12.3} l ${-dir * 10} -7 l 0 9 z"/>
         <text class="sl" x="${mid}" y="${y - 3}" text-anchor="middle">${esc(lab)}</text>
@@ -3364,7 +3570,7 @@ function ladderSVG(pkts, stream, onPick) {
       </g>`;
     }).join('')}
   </svg>
-  <figcaption class="row between"><span class="sm muted">Pulsa una flecha para abrir ese paquete en Wireshark.</span><button class="btn sm ghost" type="button" data-replay>${ic('reset', 'sm')}Repetir animación</button></figcaption>`;
+  <figcaption class="row between"><span class="sm muted">${L('Pulsa una flecha para abrir ese paquete en Wireshark.', 'Click an arrow to open that packet in Wireshark.')}</span><button class="btn sm ghost" type="button" data-replay>${ic('reset', 'sm')}${L('Repetir animación', 'Replay animation')}</button></figcaption>`;
   const steps = $$('.step', wrap);
   steps.forEach((g, i) => { g.style.setProperty('--d', `${i * 110}ms`); });
   const play = () => { if (REDUCED.matches) return; wrap.classList.remove('play'); void wrap.offsetWidth; wrap.classList.add('play'); };
@@ -3688,12 +3894,12 @@ const tD0 = u => ZC(u) + HT(u);
 const ANCHORS = [
   { id: 'hoc', p: bodyPt(.03, 1.75), w: 0, t: ['Hocico', 'ampollas de Lorenzini'] },
   { id: 'ojo', p: bodyPt(.088, 1.03), w: 0, t: ['Ojo', 'tapetum lucidum'] },
-  { id: 'die', p: lerp3(bodyPt(.1, phiM(.1)), center(.1), .1), w: 1, t: ['Dientes aserrados', '2 filas · reemplazo continuo'] },
-  { id: 'bra', p: bodyPt(.215, 1.45), w: 0, t: ['Hendiduras branquiales', '5 por lado'] },
-  { id: 'dor', p: [X(.445), tD0(.445) + .122, 0], w: 0, t: ['Primera dorsal', 'estabiliza el balanceo'] },
-  { id: 'pec', p: add(inward(.258, 2.16, .86), [-.14, -.095, .15]), w: 0, t: ['Aleta pectoral', 'sustentación y giro'] },
-  { id: 'qui', p: bodyPt(.875, Math.PI / 2), w: 0, t: ['Quilla del pedúnculo', 'reduce la resistencia'] },
-  { id: 'cau', p: [X(1.105), .205, 0], w: 0, t: ['Caudal semilunar', 'nado carangiforme'] },
+  { id: 'die', p: lerp3(bodyPt(.1, phiM(.1)), center(.1), .1), w: 1, t: ['Dientes aserrados', '2 filas · reemplazo continuo'], te: ['Serrated teeth', '2 rows · constant replacement'] },
+  { id: 'bra', p: bodyPt(.215, 1.45), w: 0, t: ['Hendiduras branquiales', '5 por lado'], te: ['Gill slits', '5 per side'] },
+  { id: 'dor', p: [X(.445), tD0(.445) + .122, 0], w: 0, t: ['Primera dorsal', 'estabiliza el balanceo'], te: ['First dorsal', 'steadies the roll'] },
+  { id: 'pec', p: add(inward(.258, 2.16, .86), [-.14, -.095, .15]), w: 0, t: ['Aleta pectoral', 'sustentación y giro'], te: ['Pectoral fin', 'lift and turning'] },
+  { id: 'qui', p: bodyPt(.875, Math.PI / 2), w: 0, t: ['Quilla del pedúnculo', 'reduce la resistencia'], te: ['Caudal keel', 'cuts drag'] },
+  { id: 'cau', p: [X(1.105), .205, 0], w: 0, t: ['Caudal semilunar', 'nado carangiforme'], te: ['Lunate tail', 'carangiform swimming'] },
 ];
 
 
@@ -4295,8 +4501,8 @@ function callouts(s) {
       const pl = document.createElementNS(NS_SVG, 'polyline'); pl.setAttribute('class', 'ld');
       const rc = document.createElementNS(NS_SVG, 'rect'); rc.setAttribute('class', 'plate'); rc.setAttribute('rx', 6);
       const dt = document.createElementNS(NS_SVG, 'circle'); dt.setAttribute('class', 'dot'); dt.setAttribute('r', 3);
-      const t1 = document.createElementNS(NS_SVG, 'text'); t1.setAttribute('class', 'k'); t1.textContent = a.t[0];
-      const t2 = document.createElementNS(NS_SVG, 'text'); t2.textContent = a.t[1];
+      const t1 = document.createElementNS(NS_SVG, 'text'); t1.setAttribute('class', 'k'); t1.textContent = (LANG === 'en' ? a.te : a.t)[0];
+      const t2 = document.createElementNS(NS_SVG, 'text'); t2.textContent = (LANG === 'en' ? a.te : a.t)[1];
       g.append(pl, rc, dt, t1, t2); svg.append(g);
       return { a, g, pl, rc, dt, t1, t2, w: 0 };
     });
@@ -4362,7 +4568,7 @@ function ensureGL() {
   cv = document.createElement('canvas');
   cv.className = 'shark-cv';
   cv.setAttribute('role', 'img');
-  cv.setAttribute('aria-label', 'Un megalodón realista nada entre rayos de luz. Cada pocos segundos muerde: eleva el hocico, abre la boca en herradura y adelanta la mandíbula superior enseñando la encía y los dientes aserrados.');
+  cv.setAttribute('aria-label', LANG === 'en' ? 'A realistic megalodon swims through shafts of light. Every few seconds it bites: it lifts its snout, opens its horseshoe mouth and thrusts the upper jaw forward, showing the gum and the serrated teeth.' : 'Un megalodón realista nada entre rayos de luz. Cada pocos segundos muerde: eleva el hocico, abre la boca en herradura y adelanta la mandíbula superior enseñando la encía y los dientes aserrados.');
   gl = cv.getContext('webgl2', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
   if (!gl) return (glOk = false);
   try {
@@ -4383,14 +4589,14 @@ function mount(slot) {
   const hud = document.createElement('div');
   hud.className = 'shark-hud';
   hud.setAttribute('role', 'group');
-  hud.setAttribute('aria-label', 'Megalodón 3D');
-  hud.innerHTML = `<button type="button" class="btn ghost sm" data-shark-mode aria-pressed="false">${ic('layers', 'sm')}Plano técnico</button><button type="button" class="ibtn" data-shark-pause>${ic('pause')}</button>`;
+  hud.setAttribute('aria-label', LANG === 'en' ? '3D megalodon' : 'Megalodón 3D');
+  hud.innerHTML = `<button type="button" class="btn ghost sm" data-shark-mode aria-pressed="false">${ic('layers', 'sm')}${LANG === 'en' ? 'Blueprint' : 'Plano técnico'}</button><button type="button" class="ibtn" data-shark-pause>${ic('pause')}</button>`;
   host.append(hud);
   const modeBtn = hud.querySelector('[data-shark-mode]'), pauseBtn = hud.querySelector('[data-shark-pause]');
   const sync = () => {
     const still = isStill();
     pauseBtn.innerHTML = ic(still ? 'play' : 'pause');
-    pauseBtn.setAttribute('aria-label', still ? 'Reanudar la animación del megalodón' : 'Pausar la animación del megalodón');
+    pauseBtn.setAttribute('aria-label', LANG === 'en' ? (still ? 'Resume the megalodon animation' : 'Pause the megalodon animation') : (still ? 'Reanudar la animación del megalodón' : 'Pausar la animación del megalodón'));
     modeBtn.setAttribute('aria-pressed', String(st.blueTo > .5));
   };
   modeBtn.onclick = () => { st.blueTo = st.blueTo > .5 ? 0 : 1; sync(); if (!running) settle(); };
@@ -4435,7 +4641,7 @@ let CUR_WS = null;
 const CAP_CACHE = {};
 const capPkts = k => CAP_CACHE[k] || (CAP_CACHE[k] = dissectAll(SCENARIOS[k]()).pkts);
 const capName = k => `${SCENARIO_FILES[k] || k}.pcapng`;
-const TASK_TYPES = { filter: ['Filtro', 'filter'], packet: ['Paquete', 'target'], text: ['Respuesta', 'terminal'], choice: ['Test', 'list'] };
+const TASK_TYPES = { filter: [['Filtro', 'Filter'], 'filter'], packet: [['Paquete', 'Packet'], 'target'], text: [['Respuesta', 'Answer'], 'terminal'], choice: [['Test', 'Quiz'], 'list'] };
 const norm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const plain = s => String(s).replace(/[`*]/g, '');
 const isNarrow = () => matchMedia('(max-width: 1023px)').matches;
@@ -4448,35 +4654,35 @@ function viewHome(main) {
   main.innerHTML = `
   <section class="hero" aria-labelledby="hero-t">
     <div class="hero-art" id="hero-slot">
-      <picture><source type="image/avif" srcset="${HERO_IMG.avif}"><img class="hero-img" src="${HERO_IMG.webp}" width="${HERO_IMG.w}" height="${HERO_IMG.h}" alt="Megalodón dibujado como un plano técnico azul" decoding="async" fetchpriority="high"></picture>
+      <picture><source type="image/avif" srcset="${HERO_IMG.avif}"><img class="hero-img" src="${HERO_IMG.webp}" width="${HERO_IMG.w}" height="${HERO_IMG.h}" alt="${L('Megalodón dibujado como un plano técnico azul', 'Megalodon drawn as a blue technical blueprint')}" decoding="async" fetchpriority="high"></picture>
     </div>
     <div class="hero-copy">
-      <p class="eyebrow">Laboratorio de Wireshark · eWPT</p>
+      <p class="eyebrow">${L('Laboratorio de Wireshark', 'Wireshark lab')} · eWPT</p>
       <h1 id="hero-t">Megalodon</h1>
-      <p class="lead">Aprende a leer la red como un pentester: capturas de un ataque real en miniatura, filtros que se validan mientras escribes y retos guiados desde el saludo TCP hasta la inyección SQL.</p>
+      <p class="lead">${L('Aprende a leer la red como un pentester: capturas de un ataque real en miniatura, filtros que se validan mientras escribes y retos guiados desde el saludo TCP hasta la inyección SQL.', 'Learn to read the network like a pentester: miniature captures of a real attack, filters validated as you type and guided challenges from the TCP handshake to SQL injection.')}</p>
       <div class="row cta">
-        <a class="btn primary lg" href="#/m/${next.id}">${ic('play')}${started ? `${t('continue')}: módulo ${next.n}` : 'Empezar por el módulo 1'}</a>
-        <a class="btn ghost lg" href="#/lab">${ic('flask')}Laboratorio libre</a>
+        <a class="btn primary lg" href="#/m/${next.id}">${ic('play')}${started ? `${t('continue')}: ${L('módulo', 'module')} ${next.n}` : L('Empezar por el módulo 1', 'Start with module 1')}</a>
+        <a class="btn ghost lg" href="#/lab">${ic('flask')}${L('Laboratorio libre', 'Free lab')}</a>
       </div>
     </div>
   </section>
   <section class="wrap stats3" aria-label="${t('progress')}">
-    <div class="stat card"><span class="stat-ic ok">${ic('trophy')}</span><div><p class="stat-v"><span class="num">${xp}</span> XP</p><p class="stat-l">${t('level')}: <strong>${lv.name}</strong>${lv.next ? ` · ${lv.next - xp} XP para el siguiente` : ''}</p>${lv.next ? `<div class="meter" role="progressbar" aria-label="Progreso de nivel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(100 * (xp - lv.min) / (lv.next - lv.min))}"><i data-w="${100 * (xp - lv.min) / (lv.next - lv.min)}"></i></div>` : ''}</div></div>
-    <div class="stat card"><span class="stat-ic">${ic('target')}</span><div><p class="stat-v"><span class="num">${solved}</span> / ${total}</p><p class="stat-l">retos resueltos</p></div></div>
-    <div class="stat card"><span class="stat-ic">${ic('award')}</span><div><p class="stat-v"><span class="num">${badges}</span> / ${MODULES.length}</p><p class="stat-l">insignias</p></div></div>
+    <div class="stat card"><span class="stat-ic ok">${ic('trophy')}</span><div><p class="stat-v"><span class="num">${xp}</span> XP</p><p class="stat-l">${t('level')}: <strong>${lvName(lv)}</strong>${lv.next ? ` · ${lv.next - xp} XP ${L('para el siguiente', 'to the next one')}` : ''}</p>${lv.next ? `<div class="meter" role="progressbar" aria-label="${t('levelProg')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(100 * (xp - lv.min) / (lv.next - lv.min))}"><i data-w="${100 * (xp - lv.min) / (lv.next - lv.min)}"></i></div>` : ''}</div></div>
+    <div class="stat card"><span class="stat-ic">${ic('target')}</span><div><p class="stat-v"><span class="num">${solved}</span> / ${total}</p><p class="stat-l">${L('retos resueltos', 'challenges solved')}</p></div></div>
+    <div class="stat card"><span class="stat-ic">${ic('award')}</span><div><p class="stat-v"><span class="num">${badges}</span> / ${MODULES.length}</p><p class="stat-l">${L('insignias', 'badges')}</p></div></div>
   </section>
   <section class="wrap" aria-labelledby="mods-t">
-    <div class="sec-h"><h2 id="mods-t">Módulos</h2><p class="muted">Del primer SYN a los ataques web. Cada módulo trae su captura, una lección corta y retos con pistas.</p></div>
+    <div class="sec-h"><h2 id="mods-t">${t('modules')}</h2><p class="muted">${L('Del primer SYN a los ataques web. Cada módulo trae su captura, una lección corta y retos con pistas.', 'From the first SYN to web attacks. Every module brings its own capture, a short lesson and challenges with hints.')}</p></div>
     <div class="mgrid">${MODULES.filter(m => !m.extra).map(modCard).join('')}</div>
-    <div class="sec-h sub"><h3>${t('extra')}: SOC, DFIR y Directorio Activo</h3><p class="muted">Para cuando termines los seis primeros.</p></div>
+    <div class="sec-h sub"><h3>${t('extra')}: ${L('SOC, DFIR y Directorio Activo', 'SOC, DFIR and Active Directory')}</h3><p class="muted">${L('Para cuando termines los seis primeros.', 'For when you finish the first six.')}</p></div>
     <div class="mgrid">${MODULES.filter(m => m.extra).map(modCard).join('')}</div>
   </section>
   <section class="wrap how" aria-labelledby="how-t">
-    <h2 id="how-t">Cómo funciona</h2>
+    <h2 id="how-t">${L('Cómo funciona', 'How it works')}</h2>
     <ol class="steps3">
-      <li class="card"><span class="stepn">1</span><h3>Lee y prueba</h3><p>Cada lección es corta y trae botones «Pruébalo» que aplican el filtro en la captura.</p></li>
-      <li class="card"><span class="stepn">2</span><h3>Resuelve</h3><p>Escribe filtros, selecciona paquetes o responde. Se comprueba contra la captura al instante.</p></li>
-      <li class="card"><span class="stepn">3</span><h3>Llévatelo</h3><p>Exporta cada captura en .pcapng y repite el reto en tu Wireshark de verdad.</p></li>
+      <li class="card"><span class="stepn">1</span><h3>${L('Lee y prueba', 'Read and try')}</h3><p>${L('Cada lección es corta y trae botones «Pruébalo» que aplican el filtro en la captura.', 'Each lesson is short and has “Try it” buttons that apply the filter to the capture.')}</p></li>
+      <li class="card"><span class="stepn">2</span><h3>${L('Resuelve', 'Solve')}</h3><p>${L('Escribe filtros, selecciona paquetes o responde. Se comprueba contra la captura al instante.', 'Write filters, pick packets or answer. It is checked against the capture instantly.')}</p></li>
+      <li class="card"><span class="stepn">3</span><h3>${L('Llévatelo', 'Take it with you')}</h3><p>${L('Exporta cada captura en .pcapng y repite el reto en tu Wireshark de verdad.', 'Export each capture as .pcapng and repeat the challenge in your real Wireshark.')}</p></li>
     </ol>
   </section>
   ${siteFooter()}`;
@@ -4487,17 +4693,17 @@ function viewHome(main) {
 function modCard(m) {
   const p = modProgress(m), earned = S.get().badges[m.id];
   return `<a class="mcard card" href="#/m/${m.id}">
-    <div class="row between"><span class="mic">${ic(m.icon)}</span>${earned ? `<span class="pill ok">${ic('award', 'sm')}${esc(m.badge)}</span>` : `<span class="pill">${m.mins} ${t('minutes')}</span>`}</div>
-    <p class="eyebrow">Módulo ${m.n}</p><h3>${esc(m.title)}</h3><p class="muted sm">${esc(m.sub)}</p>
-    <div class="mfoot"><div class="meter ${p.done === p.total ? 'full' : ''}" role="progressbar" aria-label="Retos de ${esc(m.title)}" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.done}"><i></i></div><span class="sm ${p.done === p.total ? 'okt' : 'muted'}">${p.done}/${p.total}</span></div>
+    <div class="row between"><span class="mic">${ic(m.icon)}</span>${earned ? `<span class="pill ok">${ic('award', 'sm')}${esc(mT(m, 'badge'))}</span>` : `<span class="pill">${m.mins} ${t('minutes')}</span>`}</div>
+    <p class="eyebrow">${L('Módulo', 'Module')} ${m.n}</p><h3>${esc(mT(m, 'title'))}</h3><p class="muted sm">${esc(mT(m, 'sub'))}</p>
+    <div class="mfoot"><div class="meter ${p.done === p.total ? 'full' : ''}" role="progressbar" aria-label="${L('Retos de', 'Challenges in')} ${esc(mT(m, 'title'))}" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.done}"><i></i></div><span class="sm ${p.done === p.total ? 'okt' : 'muted'}">${p.done}/${p.total}</span></div>
   </a>`;
 }
 function siteFooter() {
-  return `<footer class="foot wrap"><p>Megalodon · laboratorio de Wireshark sin conexión. Contenido basado en la <a href="https://www.wireshark.org/docs/" target="_blank" rel="noopener noreferrer">documentación pública de Wireshark</a>; las capturas son sintéticas y los dominios, de prueba.</p><p>Yoandy Ramírez Delgado · Huelva, España</p></footer>`;
+  return `<footer class="foot wrap"><p>${L('Megalodon · laboratorio de Wireshark sin conexión. Contenido basado en la', 'Megalodon · offline Wireshark lab. Content based on the')} <a href="https://www.wireshark.org/docs/" target="_blank" rel="noopener noreferrer">${L('documentación pública de Wireshark', 'public Wireshark documentation')}</a>${L('; las capturas son sintéticas y los dominios, de prueba.', '; captures are synthetic and domains are test domains.')}</p><p>Yoandy Ramírez Delgado · Huelva, ${L('España', 'Spain')}</p></footer>`;
 }
 function viewModules(main) {
-  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('modules')}</p><h1>Ruta de aprendizaje</h1><p class="muted">Seis módulos principales para el eWPT y dos extra de SOC y Directorio Activo.</p></div>
-    <h2 class="vh">Módulos principales</h2><div class="mgrid">${MODULES.filter(m => !m.extra).map(modCard).join('')}</div>
+  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('modules')}</p><h1>${L('Ruta de aprendizaje', 'Learning path')}</h1><p class="muted">${L('Seis módulos principales para el eWPT y dos extra de SOC y Directorio Activo.', 'Six core modules for the eWPT and two extra ones on SOC and Active Directory.')}</p></div>
+    <h2 class="vh">${L('Módulos principales', 'Core modules')}</h2><div class="mgrid">${MODULES.filter(m => !m.extra).map(modCard).join('')}</div>
     <div class="sec-h sub"><h2>${t('extra')}</h2></div><div class="mgrid">${MODULES.filter(m => m.extra).map(modCard).join('')}</div></div>${siteFooter()}`;
 }
 
@@ -4510,12 +4716,12 @@ function viewModule(main, { id, q }) {
   main.innerHTML = `<div class="mod">
     <header class="mod-h wrap-wide">
       <a class="back sm" href="#/modulos">${ic('chevL', 'sm')}${t('modules')}</a>
-      <div class="mod-title"><span class="mic lg">${ic(m.icon)}</span><div><p class="eyebrow">Módulo ${m.n}${m.extra ? ` · ${t('extra')}` : ''} · ${m.mins} ${t('minutes')}</p><h1>${esc(m.title)}</h1></div></div>
-      <div class="mod-prog"><div class="meter ${p.done === p.total ? 'full' : ''}" role="progressbar" aria-label="Retos resueltos" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.done}"><i></i></div><span class="sm" data-prog>${p.done}/${p.total} ${t('tasks').toLowerCase()}</span><span class="pill ${S.get().badges[m.id] ? 'ok' : ''}" data-badge>${ic('award', 'sm')}${esc(m.badge)}</span></div>
+      <div class="mod-title"><span class="mic lg">${ic(m.icon)}</span><div><p class="eyebrow">${L('Módulo', 'Module')} ${m.n}${m.extra ? ` · ${t('extra')}` : ''} · ${m.mins} ${t('minutes')}</p><h1>${esc(mT(m, 'title'))}</h1></div></div>
+      <div class="mod-prog"><div class="meter ${p.done === p.total ? 'full' : ''}" role="progressbar" aria-label="${L('Retos resueltos', 'Challenges solved')}" aria-valuemin="0" aria-valuemax="${p.total}" aria-valuenow="${p.done}"><i></i></div><span class="sm" data-prog>${p.done}/${p.total} ${t('tasks').toLowerCase()}</span><span class="pill ${S.get().badges[m.id] ? 'ok' : ''}" data-badge>${ic('award', 'sm')}${esc(mT(m, 'badge'))}</span></div>
     </header>
     <div class="mod-grid wrap-wide">
       <div class="mod-side">
-        <div class="seg" role="tablist" aria-label="Secciones del módulo">
+        <div class="seg" role="tablist" aria-label="${L('Secciones del módulo', 'Module sections')}">
           <button role="tab" id="tab-lesson" aria-controls="pan-lesson" data-tab="lesson">${ic('book', 'sm')}${t('lesson')}</button>
           <button role="tab" id="tab-tasks" aria-controls="pan-tasks" data-tab="tasks">${ic('target', 'sm')}${t('tasks')} <span class="num" data-tc>${p.done}/${p.total}</span></button>
           <button role="tab" id="tab-ws" aria-controls="pan-ws" data-tab="ws" class="only-narrow">${ic('rows', 'sm')}${t('wireshark')}</button>
@@ -4524,11 +4730,11 @@ function viewModule(main, { id, q }) {
           ${t('lessonsInSpanish') ? `<p class="note sm">${ic('lang', 'sm')}${t('lessonsInSpanish')}</p>` : ''}
           <p class="intro">${md(m.intro)}</p>
           ${m.lessons.map((l, i) => `<section class="lcard card" id="l-${i}" aria-labelledby="lh-${i}"><h2 id="lh-${i}"><span class="ln">${i + 1}</span>${esc(l.h)}</h2>${l.p.map(x => `<p>${md(x)}</p>`).join('')}${l.ladder !== undefined ? `<div class="ladder-slot" data-stream="${l.ladder}"></div>` : ''}${l.try ? `<div class="tries"><p class="tries-h">${ic('play', 'sm')}${t('tryIt')}</p>${l.try.map(([f, d]) => `<button class="try" type="button" data-f="${esc(f)}"><code>${esc(f)}</code><span>${esc(d)}</span></button>`).join('')}</div>` : ''}</section>`).join('')}
-          <button class="btn primary" data-go-tasks type="button">${ic('target')}Ir a los retos</button>
+          <button class="btn primary" data-go-tasks type="button">${ic('target')}${L('Ir a los retos', 'Go to the challenges')}</button>
         </div>
         <div id="pan-tasks" role="tabpanel" aria-labelledby="tab-tasks" class="pan tasks" tabindex="-1">
           ${m.tasks.map((x, i) => taskCard(x, i)).join('')}
-          <div class="mod-end card ${p.done === p.total ? '' : 'hide'}" data-end>${ic('award')}<div><h2>${t('moduleDone')}</h2><p>${t('badgeEarned')} <strong class="okt">${esc(m.badge)}</strong>.</p></div>${nextM ? `<a class="btn primary" href="#/m/${nextM.id}">${t('next')}${ic('arrowR')}</a>` : ''}</div>
+          <div class="mod-end card ${p.done === p.total ? '' : 'hide'}" data-end>${ic('award')}<div><h2>${t('moduleDone')}</h2><p>${t('badgeEarned')} <strong class="okt">${esc(mT(m, 'badge'))}</strong>.</p></div>${nextM ? `<a class="btn primary" href="#/m/${nextM.id}">${t('next')}${ic('arrowR')}</a>` : ''}</div>
         </div>
       </div>
       <div class="mod-ws" id="pan-ws" role="tabpanel" aria-labelledby="tab-ws"></div>
@@ -4564,8 +4770,8 @@ function viewModule(main, { id, q }) {
   if (q.get('t')) { const el = $(`#task-${q.get('t')}`, main); if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 30); }
 
   /* retos */
-  refreshFilterPreview = () => $$('[data-curf]', main).forEach(el => { el.innerHTML = ws.filterText ? `<code>${esc(ws.filterText)}</code> · ${ws.view.length} paquetes` : `<span class="muted">${t('none')}</span>`; });
-  refreshSelPreview = () => { const p = ws.selected(); $$('[data-cursel]', main).forEach(el => { el.innerHTML = p ? `<strong>n.º ${p.no}</strong> · <span class="mono">${esc(p.info.slice(0, 64))}</span>` : `<span class="muted">${t('none')}</span>`; }); };
+  refreshFilterPreview = () => $$('[data-curf]', main).forEach(el => { el.innerHTML = ws.filterText ? `<code>${esc(ws.filterText)}</code> · ${ws.view.length} ${L('paquetes', 'packets')}` : `<span class="muted">${t('none')}</span>`; });
+  refreshSelPreview = () => { const p = ws.selected(); $$('[data-cursel]', main).forEach(el => { el.innerHTML = p ? `<strong>${L('n.º', 'No.')} ${p.no}</strong> · <span class="mono">${esc(p.info.slice(0, 64))}</span>` : `<span class="muted">${t('none')}</span>`; }); };
   refreshFilterPreview(); refreshSelPreview();
   const fb = (card, kind, html) => { const el = $('.task-fb', card); el.className = `task-fb ${kind}`; el.innerHTML = html; if (kind === 'bad') { card.classList.remove('nope'); void card.offsetWidth; card.classList.add('nope'); } };
   const succeed = (task, card) => {
@@ -4594,36 +4800,36 @@ function viewModule(main, { id, q }) {
     hintBtn.onclick = () => { S.useHint(task.id); renderHints(); const last = $$('.hint', card).pop(); if (last) last.classList.add('new'); };
     renderHints();
     if (task.type === 'filter') $('[data-check]', card).onclick = () => {
-      if (!ws.filterText) return fb(card, 'bad', `${ic('info')}<span>Escribe un filtro en la barra de Wireshark y pulsa ${t('apply')} (o Enter).</span>`);
+      if (!ws.filterText) return fb(card, 'bad', `${ic('info')}<span>${L('Escribe un filtro en la barra de Wireshark y pulsa', 'Type a filter in the Wireshark bar and press')} ${t('apply')} ${L('(o Enter).', '(or Enter).')}</span>`);
       const mine = new Set(ws.view.map(p => p.no)), ref = new Set(applyFilter(ws.pkts, task.ref).map(p => p.no));
       const allow = task.mode === 'covers' ? new Set(applyFilter(ws.pkts, task.allow).map(p => p.no)) : ref;
       const missing = [...ref].filter(n => !mine.has(n)), extra = [...mine].filter(n => !allow.has(n));
       if (!missing.length && !extra.length) return succeed(task, card);
-      const parts = [`Tu filtro muestra <strong>${mine.size}</strong> paquetes${task.mode === 'covers' ? '' : `; la solución, <strong>${ref.size}</strong>`}.`];
-      if (missing.length) parts.push(`Te faltan ${missing.length}.`);
-      if (extra.length) parts.push(`Te sobran ${extra.length} (por ejemplo, el n.º ${extra[0]}).`);
+      const parts = [L(`Tu filtro muestra <strong>${mine.size}</strong> paquetes${task.mode === 'covers' ? '' : `; la solución, <strong>${ref.size}</strong>`}.`, `Your filter shows <strong>${mine.size}</strong> packets${task.mode === 'covers' ? '' : `; the solution, <strong>${ref.size}</strong>`}.`)];
+      if (missing.length) parts.push(L(`Te faltan ${missing.length}.`, `${missing.length} missing.`));
+      if (extra.length) parts.push(L(`Te sobran ${extra.length} (por ejemplo, el n.º ${extra[0]}).`, `${extra.length} too many (for example, No. ${extra[0]}).`));
       fb(card, 'bad', `${ic('ko')}<span>${parts.join(' ')}</span>`);
     };
     if (task.type === 'packet') $('[data-check]', card).onclick = () => {
       const p = ws.selected();
-      if (!p) return fb(card, 'bad', `${ic('info')}<span>Selecciona un paquete en la lista.</span>`);
+      if (!p) return fb(card, 'bad', `${ic('info')}<span>${L('Selecciona un paquete en la lista.', 'Select a packet in the list.')}</span>`);
       const r = parseFilter(task.match);
-      if (r.test(p)) succeed(task, card); else fb(card, 'bad', `${ic('ko')}<span>El n.º ${p.no} no es el que buscamos. Fíjate en la columna Info.</span>`);
+      if (r.test(p)) succeed(task, card); else fb(card, 'bad', `${ic('ko')}<span>${L(`El n.º ${p.no} no es el que buscamos. Fíjate en la columna Info.`, `No. ${p.no} is not the one we are after. Look at the Info column.`)}</span>`);
     };
     if (task.type === 'text') {
       const inp = $('input', card);
       const check = () => {
         const v = inp.value.trim();
-        if (!v) return fb(card, 'bad', `${ic('info')}<span>Escribe tu respuesta.</span>`);
+        if (!v) return fb(card, 'bad', `${ic('info')}<span>${L('Escribe tu respuesta.', 'Type your answer.')}</span>`);
         const ok = task.ans.some(a => task.list ? v.split(/[\s,;]+/).filter(Boolean).map(Number).sort((x, y) => x - y).join(',') === a : task.exact ? v === a : norm(v) === norm(a));
-        if (ok) succeed(task, card); else fb(card, 'bad', `${ic('ko')}<span>${task.exact && task.ans.some(a => norm(a) === norm(v)) ? 'Casi: revisa mayúsculas y símbolos, las contraseñas se copian exactas.' : 'No es eso. Vuelve a mirar la captura o pide una pista.'}</span>`);
+        if (ok) succeed(task, card); else fb(card, 'bad', `${ic('ko')}<span>${task.exact && task.ans.some(a => norm(a) === norm(v)) ? L('Casi: revisa mayúsculas y símbolos, las contraseñas se copian exactas.', 'Almost: check case and symbols, passwords are copied exactly.') : L('No es eso. Vuelve a mirar la captura o pide una pista.', 'Not quite. Look at the capture again or ask for a hint.')}</span>`);
       };
       $('[data-check]', card).onclick = check;
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
     }
     if (task.type === 'choice') $$('[data-opt]', card).forEach(b => b.onclick = () => {
       if (+b.dataset.opt === task.ans) { b.classList.add('right'); b.setAttribute('aria-checked', 'true'); succeed(task, card); }
-      else { b.classList.add('wrong'); b.disabled = true; fb(card, 'bad', `${ic('ko')}<span>No es esa. Descártala y prueba otra.</span>`); }
+      else { b.classList.add('wrong'); b.disabled = true; fb(card, 'bad', `${ic('ko')}<span>${L('No es esa. Descártala y prueba otra.', 'Not that one. Rule it out and try another.')}</span>`); }
     });
     if (S.isDone(task.id)) { $$('input, .task-act button', card).forEach(el => { el.disabled = true; }); if (task.type === 'choice') { const r = $(`[data-opt="${task.ans}"]`, card); r.classList.add('right'); r.setAttribute('aria-checked', 'true'); } }
   });
@@ -4639,8 +4845,8 @@ function taskCard(x, i) {
         : `<div class="opts" role="radiogroup" aria-labelledby="q-${x.id}">${x.opts.map((o, j) => `<button class="opt" type="button" role="radio" aria-checked="false" data-opt="${j}"><span class="ob" aria-hidden="true"></span>${esc(o)}</button>`).join('')}</div>`;
   const xp = done ? S.get().done[x.id].xp : XP_BY_HINTS[Math.min(3, S.hintsUsed(x.id))];
   return `<article class="task card" id="task-${x.id}" data-id="${x.id}" data-state="${done ? 'done' : 'todo'}" aria-labelledby="q-${x.id}">
-    <div class="task-h"><span class="tnum" aria-hidden="true"><span class="tn-n">${i + 1}</span><span class="tn-ok">${ic('check', 'sm')}</span></span><span class="ttype">${ic(ti, 'sm')}${tl}</span><span class="txp">${done ? `${ic('check', 'sm')}+${xp} XP` : `+${xp} XP`}</span></div>
-    <p class="tq" id="q-${x.id}"><span class="vh">Reto ${i + 1}${done ? ', resuelto' : ''}: </span>${md(x.q)}</p>
+    <div class="task-h"><span class="tnum" aria-hidden="true"><span class="tn-n">${i + 1}</span><span class="tn-ok">${ic('check', 'sm')}</span></span><span class="ttype">${ic(ti, 'sm')}${L(...tl)}</span><span class="txp">${done ? `${ic('check', 'sm')}+${xp} XP` : `+${xp} XP`}</span></div>
+    <p class="tq" id="q-${x.id}"><span class="vh">${L('Reto', 'Challenge')} ${i + 1}${done ? L(', resuelto', ', solved') : ''}: </span>${md(x.q)}</p>
     <div class="task-act">${act}</div>
     <div class="task-fb ${done ? 'ok' : ''}" aria-live="polite">${done ? `${ic('ok')}<span>${md(x.ok)}</span>` : ''}</div>
     <div class="task-hints"></div>
@@ -4648,7 +4854,7 @@ function taskCard(x, i) {
   </article>`;
 }
 function celebrate(m, nextM) {
-  const d = openDialog({ title: t('moduleDone'), cls: 'narrow celebrate', body: `<div class="badge-big" aria-hidden="true">${ic('award')}</div><p class="center">${t('badgeEarned')}</p><p class="center badge-name">${esc(m.badge)}</p><p class="center muted sm">+${BONUS_MODULE} XP de bonus · ${S.xp()} XP en total · ${t('level')}: ${S.level().name}</p>`,
+  const d = openDialog({ title: t('moduleDone'), cls: 'narrow celebrate', body: `<div class="badge-big" aria-hidden="true">${ic('award')}</div><p class="center">${t('badgeEarned')}</p><p class="center badge-name">${esc(mT(m, 'badge'))}</p><p class="center muted sm">+${BONUS_MODULE} XP ${L('de bonus', 'bonus')} · ${S.xp()} XP ${L('en total', 'in total')} · ${t('level')}: ${lvName(S.level())}</p>`,
     footer: `<button class="btn ghost" data-close>${t('close')}</button>${nextM ? `<a class="btn primary" href="#/m/${nextM.id}" data-next>${t('next')}${ic('arrowR')}</a>` : ''}` });
   $('[data-close]', d).onclick = () => closeDialog();
   const n = $('[data-next]', d); if (n) n.onclick = () => closeDialog(true);
@@ -4660,13 +4866,13 @@ function viewLab(main, { q }) {
   const f = q.get('f') || '';
   if (f && !q.get('cap')) { const r = parseFilter(f); if (r.ok) cap = Object.keys(SCENARIOS).find(k => capPkts(k).some(r.test)) || cap; }
   main.innerHTML = `<div class="lab">
-    <div class="lab-h wrap-wide"><div><p class="eyebrow">${t('lab')}</p><h1>Laboratorio libre</h1></div>
-      <div class="row"><label class="sm" for="lab-cap">${t('captures')}</label><select id="lab-cap" class="sel">${MODULES.map(m => `<option value="${m.cap}" ${m.cap === cap ? 'selected' : ''}>${m.n}. ${esc(m.title)} (${capName(m.cap)})</option>`).join('')}<option value="__own" hidden>Tu captura</option></select></div>
+    <div class="lab-h wrap-wide"><div><p class="eyebrow">${t('lab')}</p><h1>${L('Laboratorio libre', 'Free lab')}</h1></div>
+      <div class="row"><label class="sm" for="lab-cap">${t('captures')}</label><select id="lab-cap" class="sel">${MODULES.map(m => `<option value="${m.cap}" ${m.cap === cap ? 'selected' : ''}>${m.n}. ${esc(mT(m, 'title'))} (${capName(m.cap)})</option>`).join('')}<option value="__own" hidden>${L('Tu captura', 'Your capture')}</option></select></div>
     </div>
     <div class="lab-ws wrap-wide"></div>
   </div>`;
   const sel = $('#lab-cap', main);
-  const ws = new Workspace($('.lab-ws', main), { raw: SCENARIOS[cap](), name: capName(cap), filter: f, allowImport: true, onImport: name => { const o = sel.querySelector('[value=__own]'); o.hidden = false; o.textContent = `Tu captura: ${name}`; sel.value = '__own'; } });
+  const ws = new Workspace($('.lab-ws', main), { raw: SCENARIOS[cap](), name: capName(cap), filter: f, allowImport: true, onImport: name => { const o = sel.querySelector('[value=__own]'); o.hidden = false; o.textContent = `${L('Tu captura', 'Your capture')}: ${name}`; sel.value = '__own'; } });
   CUR_WS = ws;
   sel.onchange = () => { if (sel.value !== '__own') { ws.load(SCENARIOS[sel.value](), capName(sel.value)); history.replaceState(null, '', `#/lab?cap=${sel.value}`); } };
   return () => { ws.destroy(); CUR_WS = null; };
@@ -4674,25 +4880,25 @@ function viewLab(main, { q }) {
 
 /* ---------- Chuleta ---------- */
 function viewCheat(main) {
-  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('cheat')}</p><h1>Chuleta de filtros</h1><p class="muted">Los filtros de visualización que más vas a usar. Cópialos o pruébalos directamente en el laboratorio.</p></div>
-    <div class="cgrid">${CHEATS.map(g => `<section class="card cs" aria-labelledby="cs-${esc(norm(g.h).replace(/\W+/g, '-'))}"><h2 id="cs-${esc(norm(g.h).replace(/\W+/g, '-'))}">${esc(g.h)}</h2><ul>${g.items.map(([f, d]) => {
+  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('cheat')}</p><h1>${L('Chuleta de filtros', 'Filter cheat sheet')}</h1><p class="muted">${L('Los filtros de visualización que más vas a usar. Cópialos o pruébalos directamente en el laboratorio.', 'The display filters you will use most. Copy them or try them straight in the lab.')}${LANG === 'en' ? ' Descriptions are in Spanish.' : ''}</p></div>
+    <div class="cgrid">${CHEATS.map(g => `<section class="card cs" aria-labelledby="cs-${esc(norm(g.h).replace(/\W+/g, '-'))}"><h2 id="cs-${esc(norm(g.h).replace(/\W+/g, '-'))}">${esc(mT(g, 'h'))}</h2><ul>${g.items.map(([f, d]) => {
       const real = !/\s{3}| vs /.test(f);
-      return `<li><div class="cs-f"><code>${esc(f)}</code><p>${esc(d)}</p></div><div class="cs-a">${real ? `<button class="ibtn sm" type="button" data-copy="${esc(f)}" aria-label="${t('copy')}: ${esc(f)}">${ic('copy')}</button><a class="ibtn sm" href="#/lab?f=${encodeURIComponent(f)}" aria-label="Probar en el laboratorio: ${esc(f)}">${ic('play')}</a>` : ''}</div></li>`;
+      return `<li><div class="cs-f"><code>${esc(f)}</code><p>${esc(d)}</p></div><div class="cs-a">${real ? `<button class="ibtn sm" type="button" data-copy="${esc(f)}" aria-label="${t('copy')}: ${esc(f)}">${ic('copy')}</button><a class="ibtn sm" href="#/lab?f=${encodeURIComponent(f)}" aria-label="${L('Probar en el laboratorio', 'Try in the lab')}: ${esc(f)}">${ic('play')}</a>` : ''}</div></li>`;
     }).join('')}</ul></section>`).join('')}</div>
-    <section class="card cs fields"><h2>Todos los campos del laboratorio</h2><p class="muted sm">Escribe cualquiera en la barra de filtros: el autocompletado los conoce todos.</p>
-      <div class="tbl-wrap" tabindex="0" role="region" aria-label="Campos de filtro"><table class="tbl"><caption class="vh">Campos de filtro</caption><thead><tr><th scope="col">Campo</th><th scope="col">Tipo</th><th scope="col">Qué es</th></tr></thead><tbody>${FIELD_DEFS.map(([n, ty, d]) => `<tr><td><code>${n}</code></td><td class="sm muted">${({ p: 'protocolo', u: 'número', b: 'booleano', s: 'texto', ip: 'IPv4', mac: 'MAC', f: 'decimal' })[ty]}</td><td>${esc(d)}</td></tr>`).join('')}</tbody></table></div></section>
+    <section class="card cs fields"><h2>${L('Todos los campos del laboratorio', 'Every field in the lab')}</h2><p class="muted sm">${L('Escribe cualquiera en la barra de filtros: el autocompletado los conoce todos.', 'Type any of them in the filter bar: autocomplete knows them all.')}</p>
+      <div class="tbl-wrap" tabindex="0" role="region" aria-label="${L('Campos de filtro', 'Filter fields')}"><table class="tbl"><caption class="vh">${L('Campos de filtro', 'Filter fields')}</caption><thead><tr><th scope="col">${L('Campo', 'Field')}</th><th scope="col">${L('Tipo', 'Type')}</th><th scope="col">${L('Qué es', 'What it is')}</th></tr></thead><tbody>${FIELD_DEFS.map(([n, ty, d]) => `<tr><td><code>${n}</code></td><td class="sm muted">${(LANG === 'en' ? { p: 'protocol', u: 'number', b: 'boolean', s: 'text', ip: 'IPv4', mac: 'MAC', f: 'decimal' } : { p: 'protocolo', u: 'número', b: 'booleano', s: 'texto', ip: 'IPv4', mac: 'MAC', f: 'decimal' })[ty]}</td><td>${esc(d)}</td></tr>`).join('')}</tbody></table></div></section>
   </div>${siteFooter()}`;
   $$('[data-copy]', main).forEach(b => b.onclick = () => copyText(b.dataset.copy, b));
 }
 
 /* ---------- Glosario ---------- */
 function viewGlossary(main, { q }) {
-  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('glossary')}</p><h1>Glosario</h1><p class="muted">${GLOSSARY.length} términos de redes y pentesting explicados sin rodeos.</p></div>
-    <div class="gsearch"><span aria-hidden="true">${ic('search')}</span><label class="vh" for="g-q">Buscar en el glosario</label><input id="g-q" type="search" class="tinput" placeholder="Filtra términos…" autocomplete="off"></div>
+  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('glossary')}</p><h1>${t('glossary')}</h1><p class="muted">${L(`${GLOSSARY.length} términos de redes y pentesting explicados sin rodeos.`, `${GLOSSARY.length} networking and pentesting terms explained plainly (in Spanish).`)}</p></div>
+    <div class="gsearch"><span aria-hidden="true">${ic('search')}</span><label class="vh" for="g-q">${L('Buscar en el glosario', 'Search the glossary')}</label><input id="g-q" type="search" class="tinput" placeholder="${L('Filtra términos…', 'Filter terms…')}" autocomplete="off"></div>
     <p class="sm muted" id="g-n" aria-live="polite"></p>
     <dl class="gl">${GLOSSARY.map(([term, d]) => `<div class="card gi" id="g-${esc(norm(term).replace(/\W+/g, '-'))}"><dt>${esc(term)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl></div>${siteFooter()}`;
   const inp = $('#g-q', main), items = $$('.gi', main);
-  const run = () => { const v = norm(inp.value); let n = 0; items.forEach((el, i) => { const hit = !v || norm(GLOSSARY[i][0] + ' ' + GLOSSARY[i][1]).includes(v); el.hidden = !hit; n += hit; }); $('#g-n', main).textContent = v ? `${n} de ${GLOSSARY.length} términos` : ''; };
+  const run = () => { const v = norm(inp.value); let n = 0; items.forEach((el, i) => { const hit = !v || norm(GLOSSARY[i][0] + ' ' + GLOSSARY[i][1]).includes(v); el.hidden = !hit; n += hit; }); $('#g-n', main).textContent = v ? L(`${n} de ${GLOSSARY.length} términos`, `${n} of ${GLOSSARY.length} terms`) : ''; };
   inp.addEventListener('input', run);
   if (q.get('q')) { inp.value = q.get('q'); run(); const first = items.find(x => !x.hidden); if (first) first.classList.add('flash'); }
 }
@@ -4712,41 +4918,122 @@ function applyTheme(animate) {
   const th = resolvedTheme(), root = document.documentElement;
   if (animate && !REDUCED.matches) { root.classList.add('theming'); clearTimeout(applyTheme.tm); applyTheme.tm = setTimeout(() => root.classList.remove('theming'), 320); }
   root.dataset.theme = th;
-  const b = $('[data-theme-btn]'); if (b) b.setAttribute('aria-label', th === 'light' ? t('themeToDark') : t('themeToLight'));
+  const b = $('[data-theme-btn]'); if (b) b.setAttribute('aria-checked', String(th === 'dark'));
 }
 function applyLang() { LANG = S.get().settings.lang; document.documentElement.lang = LANG; $('#skip').textContent = t('skip'); }
 
-function renderTop() {
+/* Armazón al estilo de BlueJr y RiskManager-Jr: barra lateral plegable (carril de iconos que se despliega
+   por encima al pasar el ratón o con el teclado), barra superior flotante con buscador, interruptores ES|EN
+   y claro|oscuro, y barra de pestañas abajo en el móvil. */
+const MOBILE_MQ = matchMedia('(max-width: 900px)');
+let CUR_MOD = null, indY = null;
+function sideOpen() { return S.get().settings.side !== false; }
+function renderShell() { renderSide(); renderTop(); renderTabbar(); applyTheme(false); markNav(); }
+function renderSide() {
+  indY = null;                                             // tras repintar, el indicador se coloca sin animar
   const xp = S.xp(), lv = S.level();
+  const mods = MODULES.map((m, i) => {
+    const p = modProgress(m), st = p.done === p.total ? 'ok' : p.done ? 'mid' : '';
+    return `<li data-i="${i + 2}"><a href="#/m/${m.id}" class="sub" data-mod="${m.id}" title="${esc(`${m.n}. ${mT(m, 'title')}`)}"><span class="dotn ${st}" aria-hidden="true"><b>${m.n}</b></span><span class="txt">${esc(mT(m, 'title'))}</span><span class="cnt num">${p.done}/${p.total}</span></a></li>`;
+  }).join('');
+  const item = ([k, h, i], n) => `<a href="${h}" data-nav="${k}" data-i="${n}" title="${esc(t(k))}">${ic(i)}<span class="txt">${t(k)}</span></a>`;
+  const pct = lv.next ? Math.round(100 * (xp - lv.min) / (lv.next - lv.min)) : 100;
+  $('#side').setAttribute('aria-label', t('navMain'));
+  $('#side').innerHTML = `
+    <a class="side-brand" href="#/" aria-label="Megalodon · ${t('home')}"><span class="logo" aria-hidden="true">${ic('fish')}</span><span class="brand-txt"><b>Megalodon</b><small>${t('brandSub')}</small></span></a>
+    <nav class="side-nav" aria-label="${t('navMain')}">
+      <span class="side-ind" aria-hidden="true"></span>
+      ${item(NAV[0], 0)}${item(NAV[1], 1)}
+      <ul aria-label="${t('modules')}">${mods}</ul>
+      ${NAV.slice(2).map((n, k) => item(n, 10 + k)).join('')}
+    </nav>
+    <div class="side-foot">
+      <a class="lvl" href="#/modulos" title="${t('level')}: ${esc(lvName(lv))}"><span class="lvl-ic" aria-hidden="true">${ic('trophy')}</span><span class="lvl-txt"><b>${esc(lvName(lv))} · <span class="num" data-xp>${xp}</span> XP</b><span class="meter" role="progressbar" aria-label="${t('levelProg')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i data-w="${Math.max(3, pct)}"></i></span></span></a>
+    </div>`;
+  $$('[data-i]', $('#side')).forEach(el => el.style.setProperty('--i', el.dataset.i));   // la CSP prohíbe style en línea
+  $$('[data-w]', $('#side')).forEach(el => { el.style.width = `${el.dataset.w}%`; });
+  document.body.classList.toggle('side-mini', !sideOpen());
+}
+/* Progreso en su sitio: no se repinta el lateral, así el indicador y el foco no se mueven */
+function updateSide() {
+  MODULES.forEach(m => {
+    const a = $(`.side-nav [data-mod="${m.id}"]`); if (!a) return;
+    const p = modProgress(m);
+    $('.cnt', a).textContent = `${p.done}/${p.total}`;
+    $('.dotn', a).className = `dotn ${p.done === p.total ? 'ok' : p.done ? 'mid' : ''}`;
+  });
+  const xp = S.xp(), lv = S.level(), pct = lv.next ? Math.round(100 * (xp - lv.min) / (lv.next - lv.min)) : 100;
+  const l = $('.lvl'); if (!l) return;
+  $('.lvl-txt b', l).innerHTML = `${esc(lvName(lv))} · <span class="num" data-xp>${xp}</span> XP`;
+  l.title = `${t('level')}: ${lvName(lv)}`;
+  const m = $('.meter', l); m.setAttribute('aria-valuenow', String(pct)); $('i', m).style.width = `${Math.max(3, pct)}%`;
+}
+function renderTop() {
+  const th = resolvedTheme();
   $('#top').innerHTML = `<div class="top-in">
-    <a class="brand" href="#/" aria-label="Megalodon · ${t('home')}"><span class="logo" aria-hidden="true">${ic('fish')}</span><span class="brand-t">Megalodon</span></a>
-    <nav class="nav" aria-label="Principal">${NAV.map(([k, h, i]) => `<a href="${h}" data-nav="${k}">${ic(i, 'sm')}<span>${t(k)}</span></a>`).join('')}</nav>
-    <div class="top-acts">
+      <button class="ibtn only-desk" type="button" data-side aria-label="${t('sideToggle')}" aria-expanded="${sideOpen()}" title="${t('sideToggle')} ( [ )">${ic('panel')}</button>
+      <a class="brand-m" href="#/" aria-label="Megalodon · ${t('home')}"><span class="logo" aria-hidden="true">${ic('fish')}</span><b>Megalodon</b></a>
+      <span class="grow"></span>
       <button class="search-btn" type="button" data-search aria-label="${t('search')} (Ctrl K)">${ic('search')}<span class="sb-t">${t('search')}…</span><kbd>Ctrl K</kbd></button>
-      <a class="xp-chip" href="#/modulos" title="${t('level')}: ${lv.name}" aria-label="${xp} XP, ${t('level')} ${lv.name}">${ic('trophy', 'sm')}<span class="num" data-xp>${xp}</span><span class="xp-u">XP</span></a>
-      <button class="ibtn hide-narrow" type="button" data-help aria-label="${t('help')}" title="${t('help')}">${ic('help')}</button>
-      <button class="ibtn hide-narrow" type="button" data-keys aria-label="${t('shortcuts')}" title="${t('shortcuts')} (?)">${ic('keyboard')}</button>
-      <button class="ibtn" type="button" data-settings aria-label="${t('settings')}" title="${t('settings')}">${ic('settings')}</button>
-      <button class="ibtn theme-btn" type="button" data-theme-btn aria-label="${t('themeToLight')}"><span class="sun">${ic('sun')}</span><span class="moon">${ic('moon')}</span></button>
-      <button class="ibtn" type="button" data-menu aria-label="${t('menu')}" aria-expanded="false" aria-controls="mnav">${ic('menu')}</button>
-    </div>
-  </div>
-  <nav id="mnav" class="mnav" aria-label="Principal (móvil)" hidden>${NAV.map(([k, h, i]) => `<a href="${h}" data-nav="${k}">${ic(i)}<span>${t(k)}</span></a>`).join('')}<button type="button" data-help>${ic('help')}<span>${t('help')}</span></button><button type="button" data-keys>${ic('keyboard')}<span>${t('shortcuts')}</span></button></nav>`;
+      <div class="lang-sw" role="group" aria-label="${t('langSwitch')}"><button type="button" data-lang="es" aria-pressed="${LANG === 'es'}" lang="es" aria-label="Español">ES</button><button type="button" data-lang="en" aria-pressed="${LANG === 'en'}" lang="en" aria-label="English">EN</button></div>
+      <button class="theme-sw" type="button" role="switch" data-theme-btn aria-checked="${th === 'dark'}" aria-label="${t('themeSwitch')}"><span class="track" aria-hidden="true">${ic('sun')}${ic('moon')}</span><span class="knob" aria-hidden="true"></span></button>
+      <button class="ibtn only-desk" type="button" data-help aria-label="${t('help')}" title="${t('help')}">${ic('help')}</button>
+      <button class="ibtn only-desk" type="button" data-keys aria-label="${t('shortcuts')}" title="${t('shortcuts')} (?)">${ic('keyboard')}</button>
+      <button class="ibtn only-desk" type="button" data-settings aria-label="${t('settings')}" title="${t('settings')}">${ic('settings')}</button>
+    </div>`;
   const top = $('#top');
-  $$('[data-search]', top).forEach(b => b.onclick = openSearch);
-  $$('[data-help]', top).forEach(b => b.onclick = () => { closeMenu(); openHelp(); });
-  $$('[data-keys]', top).forEach(b => b.onclick = () => { closeMenu(); openKeys(); });
+  $('[data-search]', top).onclick = openSearch;
+  $('[data-help]', top).onclick = openHelp;
+  $('[data-keys]', top).onclick = openKeys;
   $('[data-settings]', top).onclick = openSettings;
   $('[data-theme-btn]', top).onclick = toggleTheme;
-  const mb = $('[data-menu]', top), mn = $('#mnav');
-  mb.onclick = () => { const open = mn.hidden; mn.hidden = !open; mb.setAttribute('aria-expanded', String(open)); if (open) $('a', mn).focus(); };
-  $$('a', mn).forEach(a => a.addEventListener('click', closeMenu));
-  applyTheme(false); markNav();
+  $('[data-side]', top).onclick = toggleSide;
+  $$('[data-lang]', top).forEach(b => b.onclick = () => setLang(b.dataset.lang));
 }
-function closeMenu() { const mn = $('#mnav'); if (mn && !mn.hidden) { mn.hidden = true; $('[data-menu]').setAttribute('aria-expanded', 'false'); } }
+function renderTabbar() {
+  const tb = $('#tabbar');
+  tb.setAttribute('aria-label', t('navMobile'));
+  tb.innerHTML = NAV.slice(0, 4).map(([k, h, i]) => `<a href="${h}" data-nav="${k}">${ic(i)}<span>${t(k)}</span></a>`).join('') + `<button type="button" data-more aria-haspopup="dialog">${ic('more')}<span>${t('more')}</span></button>`;
+  $('[data-more]', tb).onclick = openMore;
+}
+function openMore() {
+  const d = openDialog({ title: `${ic('more')} ${t('more')}`, cls: 'narrow sheet', body: `<div class="more-list">
+      <a href="#/glosario" data-go>${ic('glossary')}<span>${t('glossary')}</span>${ic('chevR', 'sm')}</a>
+      <button type="button" data-a="settings">${ic('settings')}<span>${t('settings')}</span>${ic('chevR', 'sm')}</button>
+      <button type="button" data-a="help">${ic('help')}<span>${t('help')}</span>${ic('chevR', 'sm')}</button>
+      <button type="button" data-a="keys">${ic('keyboard')}<span>${t('shortcuts')}</span>${ic('chevR', 'sm')}</button>
+    </div>` });
+  $('[data-go]', d).onclick = () => closeDialog(true);
+  $$('[data-a]', d).forEach(b => b.onclick = () => { closeDialog(true); ({ settings: openSettings, help: openHelp, keys: openKeys })[b.dataset.a](); });
+}
+function toggleSide() {
+  S.set('side', !sideOpen());
+  document.body.classList.toggle('side-mini', !sideOpen());
+  const b = $('[data-side]'); if (b) b.setAttribute('aria-expanded', String(sideOpen()));
+  setTimeout(moveIndicator, 340);
+}
+function setLang(l) {
+  if (l === LANG) return;
+  S.set('lang', l); applyLang(); SEARCH_INDEX = null; renderShell(); route();
+  toast(l === 'en' ? 'Interface in English. Lessons stay in Spanish.' : 'Interfaz en español.', 'info', 'lang');
+}
+/* Indicador del lateral: se desliza hasta el elemento activo (solo transform, sin mover la página) */
+function moveIndicator() {
+  const nav = $('.side-nav'), ind = $('.side-ind'), act = nav && $('a[aria-current="page"]', nav);
+  if (!ind) return;
+  if (!act) { ind.style.opacity = '0'; return; }
+  const y = act.getBoundingClientRect().top - nav.getBoundingClientRect().top + nav.scrollTop, h = act.offsetHeight;   // no offsetTop: los <li> no son el padre de referencia
+  if (indY === null || REDUCED.matches) { ind.style.transition = 'none'; ind.style.transform = `translateY(${y}px)`; ind.style.height = `${h}px`; ind.style.opacity = '1'; indY = y; requestAnimationFrame(() => { ind.style.transition = ''; }); return; }
+  ind.style.height = `${h}px`; ind.style.opacity = '1'; ind.style.transform = `translateY(${y}px)`; indY = y;
+}
+function closeMenu() {}
 function toggleTheme() { S.set('theme', resolvedTheme() === 'light' ? 'dark' : 'light'); applyTheme(true); }
 let CUR_NAV = 'home';
-function markNav() { $$('[data-nav]').forEach(a => { if (a.dataset.nav === CUR_NAV) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }); }
+function markNav() {
+  $$('[data-nav]').forEach(a => { const on = a.dataset.nav === CUR_NAV && !(CUR_MOD && a.closest('.side-nav')); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  $$('[data-mod]').forEach(a => { if (a.dataset.mod === CUR_MOD) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  requestAnimationFrame(moveIndicator);
+}
 
 function route() {
   const raw = location.hash.replace(/^#/, '') || '/';
@@ -4757,13 +5044,13 @@ function route() {
   const main = $('#main');
   let hit = null;
   for (const [re, fn, nav] of ROUTES) { const m = path.match(re); if (m) { hit = { fn, nav, id: m[1] }; break; } }
-  CUR_NAV = hit ? hit.nav : '';
+  CUR_NAV = hit ? hit.nav : ''; CUR_MOD = hit && hit.fn === viewModule ? hit.id : null;
   main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter');
   cleanup = hit ? hit.fn(main, { id: hit.id, q }) || null : (viewNotFound(main), null);
   $$('.meter[aria-valuemax]', main).forEach(mt => { const i = mt.firstElementChild; if (i && !i.style.width) i.style.width = `${Math.max(2, 100 * (+mt.getAttribute('aria-valuenow')) / (+mt.getAttribute('aria-valuemax')))}%`; });
   markNav();
   const h1 = $('h1', main);
-  document.title = `${h1 && hit && hit.nav !== 'home' ? h1.textContent + ' · ' : ''}Megalodon · Laboratorio de Wireshark`;
+  document.title = `${h1 && hit && hit.nav !== 'home' ? h1.textContent + ' · ' : ''}Megalodon · ${L('Laboratorio de Wireshark', 'Wireshark lab')}`;
   if (!firstRoute) { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
   firstRoute = false;
 }
@@ -4773,31 +5060,33 @@ let SEARCH_INDEX = null;
 function searchIndex() {
   if (SEARCH_INDEX) return SEARCH_INDEX;
   const ix = [];
-  NAV.forEach(([k, h, i]) => ix.push({ k: 'Página', i, title: t(k), go: h }));
+  const K = { page: L('Página', 'Page'), mod: L('Módulo', 'Module'), les: L('Lección', 'Lesson'), task: L('Reto', 'Challenge'), glo: t('glossary'), flt: L('Filtro', 'Filter'), fld: L('Campo', 'Field'), act: L('Acción', 'Action') };
+  NAV.forEach(([k, h, i]) => ix.push({ ty: 'page', i, title: t(k), go: h }));
   MODULES.forEach(m => {
-    ix.push({ k: 'Módulo', i: m.icon, title: `${m.n}. ${m.title}`, d: m.sub, go: `#/m/${m.id}` });
-    m.lessons.forEach((l, j) => ix.push({ k: 'Lección', i: 'book', title: l.h, d: `Módulo ${m.n} · ${plain(l.p[0]).slice(0, 90)}`, go: `#/m/${m.id}?l=${j}`, body: plain(l.p.join(' ')) }));
-    m.tasks.forEach(x => ix.push({ k: 'Reto', i: 'target', title: plain(x.q), d: `Módulo ${m.n} · ${m.title}`, go: `#/m/${m.id}?t=${x.id}` }));
+    ix.push({ ty: 'mod', i: m.icon, title: `${m.n}. ${mT(m, 'title')}`, d: mT(m, 'sub'), go: `#/m/${m.id}`, body: LANG === 'en' ? `${m.title} ${m.sub}` : '' });
+    m.lessons.forEach((l, j) => ix.push({ ty: 'les', i: 'book', title: l.h, d: `${K.mod} ${m.n} · ${plain(l.p[0]).slice(0, 90)}`, go: `#/m/${m.id}?l=${j}`, body: plain(l.p.join(' ')) }));
+    m.tasks.forEach(x => ix.push({ ty: 'task', i: 'target', title: plain(x.q), d: `${K.mod} ${m.n} · ${mT(m, 'title')}`, go: `#/m/${m.id}?t=${x.id}` }));
   });
-  GLOSSARY.forEach(([term, d]) => ix.push({ k: 'Glosario', i: 'glossary', title: term, d, go: `#/glosario?q=${encodeURIComponent(term)}` }));
-  CHEATS.forEach(g => g.items.forEach(([f, d]) => { if (!/\s{3}| vs /.test(f)) ix.push({ k: 'Filtro', i: 'filter', title: f, d, go: `#/lab?f=${encodeURIComponent(f)}`, mono: true }); }));
-  FIELD_DEFS.forEach(([n, , d]) => ix.push({ k: 'Campo', i: 'tree', title: n, d, go: `#/lab?f=${encodeURIComponent(n)}`, mono: true }));
-  ix.push({ k: 'Acción', i: 'sun', title: 'Cambiar tema claro u oscuro', act: toggleTheme }, { k: 'Acción', i: 'settings', title: t('settings'), act: openSettings }, { k: 'Acción', i: 'keyboard', title: t('shortcuts'), act: openKeys }, { k: 'Acción', i: 'help', title: t('help'), act: openHelp });
+  GLOSSARY.forEach(([term, d]) => ix.push({ ty: 'glo', i: 'glossary', title: term, d, go: `#/glosario?q=${encodeURIComponent(term)}` }));
+  CHEATS.forEach(g => g.items.forEach(([f, d]) => { if (!/\s{3}| vs /.test(f)) ix.push({ ty: 'flt', i: 'filter', title: f, d, go: `#/lab?f=${encodeURIComponent(f)}`, mono: true }); }));
+  FIELD_DEFS.forEach(([n, , d]) => ix.push({ ty: 'fld', i: 'tree', title: n, d, go: `#/lab?f=${encodeURIComponent(n)}`, mono: true }));
+  ix.push({ ty: 'act', i: 'sun', title: L('Cambiar tema claro u oscuro', 'Toggle light or dark theme'), act: toggleTheme }, { ty: 'act', i: 'lang', title: L('Interfaz en inglés', 'Interface in Spanish'), act: () => setLang(LANG === 'en' ? 'es' : 'en') }, { ty: 'act', i: 'panel', title: t('sideToggle'), act: toggleSide }, { ty: 'act', i: 'settings', title: t('settings'), act: openSettings }, { ty: 'act', i: 'keyboard', title: t('shortcuts'), act: openKeys }, { ty: 'act', i: 'help', title: t('help'), act: openHelp });
+  ix.forEach(x => { x.k = K[x.ty]; });
   ix.forEach(x => { x.nt = norm(x.title); x.nd = norm((x.d || '') + ' ' + (x.body || '')); });
   return (SEARCH_INDEX = ix);
 }
 function openSearch() {
   const body = document.createElement('div');
-  body.innerHTML = `<div class="sbox"><span aria-hidden="true">${ic('search')}</span><label class="vh" for="s-q">${t('search')}</label><input id="s-q" type="text" role="combobox" aria-expanded="true" aria-controls="s-r" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="${esc(t('searchPh'))}"></div><ul id="s-r" class="sres" role="listbox" aria-label="Resultados"></ul><p class="sm muted s-foot"><kbd>↑</kbd><kbd>↓</kbd> moverte · <kbd>Enter</kbd> abrir · <kbd>Esc</kbd> cerrar</p>`;
+  body.innerHTML = `<div class="sbox"><span aria-hidden="true">${ic('search')}</span><label class="vh" for="s-q">${t('search')}</label><input id="s-q" type="text" role="combobox" aria-expanded="true" aria-controls="s-r" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="${esc(t('searchPh'))}"></div><ul id="s-r" class="sres" role="listbox" aria-label="${L('Resultados', 'Results')}"></ul><p class="sm muted s-foot"><kbd>↑</kbd><kbd>↓</kbd> ${L('moverte', 'move')} · <kbd>Enter</kbd> ${L('abrir', 'open')} · <kbd>Esc</kbd> ${L('cerrar', 'close')}</p>`;
   openDialog({ title: `${ic('search')} ${t('search')}`, body, cls: 'search' });
   const inp = $('#s-q'), list = $('#s-r');
   let res = [], idx = 0;
   const draw = () => {
     const v = norm(inp.value), ix = searchIndex();
-    if (!v) res = ix.filter(x => x.k === 'Módulo' || x.k === 'Página').slice(0, 14);
+    if (!v) res = ix.filter(x => x.ty === 'mod' || x.ty === 'page').slice(0, 14);
     else res = ix.map(x => ({ x, s: x.nt.startsWith(v) ? 3 : x.nt.includes(v) ? 2 : x.nd.includes(v) ? 1 : 0 })).filter(r => r.s).sort((a, b) => b.s - a.s || a.x.title.length - b.x.title.length).slice(0, 30).map(r => r.x);
     idx = 0;
-    list.innerHTML = res.length ? res.map((x, i) => `<li role="option" id="s-o${i}" aria-selected="${i === idx}" data-i="${i}"><span class="s-ic">${ic(x.i, 'sm')}</span><span class="s-t"><span class="${x.mono ? 'mono' : ''}">${esc(x.title.length > 110 ? x.title.slice(0, 108) + '…' : x.title)}</span>${x.d ? `<small>${esc(x.d.length > 100 ? x.d.slice(0, 98) + '…' : x.d)}</small>` : ''}</span><span class="s-k">${x.k}</span></li>`).join('') : `<li class="s-none" role="option" aria-disabled="true">Nada por aquí. Prueba con «syn», «cookie» o «dns».</li>`;
+    list.innerHTML = res.length ? res.map((x, i) => `<li role="option" id="s-o${i}" aria-selected="${i === idx}" data-i="${i}"><span class="s-ic">${ic(x.i, 'sm')}</span><span class="s-t"><span class="${x.mono ? 'mono' : ''}">${esc(x.title.length > 110 ? x.title.slice(0, 108) + '…' : x.title)}</span>${x.d ? `<small>${esc(x.d.length > 100 ? x.d.slice(0, 98) + '…' : x.d)}</small>` : ''}</span><span class="s-k">${x.k}</span></li>`).join('') : `<li class="s-none" role="option" aria-disabled="true">${L('Nada por aquí. Prueba con «syn», «cookie» o «dns».', 'Nothing here. Try “syn”, “cookie” or “dns”.')}</li>`;
     inp.setAttribute('aria-activedescendant', res.length ? 's-o0' : '');
   };
   const go = i => { const x = res[i]; if (!x) return; closeDialog(true); if (x.act) x.act(); else if (location.hash === x.go) route(); else location.hash = x.go; };
@@ -4820,34 +5109,44 @@ function openSettings() {
   const solved = Object.keys(S.get().done).length;
   const d = openDialog({ title: `${ic('settings')} ${t('settings')}`, body: `
     <div class="set-row"><div><p>${t('theme')}</p></div><div data-set="theme">${seg(t('theme'), st.theme, [['light', t('light'), 'sun'], ['dark', t('dark'), 'moon'], ['system', t('system'), null]])}</div></div>
-    <div class="set-row"><div><p>${t('language')}</p><p class="sm muted">Interfaz en español o inglés. Las lecciones están en español.</p></div><div data-set="lang">${seg(t('language'), st.lang, [['es', 'Español'], ['en', 'English']])}</div></div>
-    ${sw('relative', 'Números de secuencia relativos', 'Como Wireshark por defecto: Seq y Ack empiezan en 0. Desactívalo para ver los valores reales.')}
-    ${sw('colorize', 'Colorear paquetes', 'Reglas de color de Wireshark: TCP, HTTP, RST, problemas…')}
-    <div class="set-row danger-zone"><div><p>${t('resetProgress')}</p><p class="sm muted">${solved} retos y ${S.xp()} XP guardados en este navegador.</p></div><button type="button" class="btn danger sm" data-reset ${solved || S.xp() ? '' : 'disabled'}>${ic('reset', 'sm')}${t('resetProgress')}</button></div>` });
+    <div class="set-row"><div><p>${t('language')}</p><p class="sm muted">${L('Interfaz en español o inglés. Las lecciones están en español.', 'Interface in Spanish or English. Lessons are in Spanish.')}</p></div><div data-set="lang">${seg(t('language'), st.lang, [['es', 'Español'], ['en', 'English']])}</div></div>
+    ${sw('relative', L('Números de secuencia relativos', 'Relative sequence numbers'), L('Como Wireshark por defecto: Seq y Ack empiezan en 0. Desactívalo para ver los valores reales.', 'Wireshark’s default: Seq and Ack start at 0. Turn it off to see the real values.'))}
+    ${sw('colorize', L('Colorear paquetes', 'Colorize packets'), L('Reglas de color de Wireshark: TCP, HTTP, RST, problemas…', 'Wireshark coloring rules: TCP, HTTP, RST, problems…'))}
+    <div class="set-row danger-zone"><div><p>${t('resetProgress')}</p><p class="sm muted">${L(`${solved} retos y ${S.xp()} XP guardados en este navegador.`, `${solved} challenges and ${S.xp()} XP saved in this browser.`)}</p></div><button type="button" class="btn danger sm" data-reset ${solved || S.xp() ? '' : 'disabled'}>${ic('reset', 'sm')}${t('resetProgress')}</button></div>` });
   $$('[data-set]', d).forEach(g => g.addEventListener('click', e => {
     const b = e.target.closest('[data-v]'); if (!b) return;
     $$('[role=radio]', g).forEach(x => x.setAttribute('aria-checked', String(x === b)));
     const k = g.dataset.set; S.set(k, b.dataset.v);
     if (k === 'theme') applyTheme(true);
-    if (k === 'lang') { applyLang(); SEARCH_INDEX = null; renderTop(); closeDialog(true); route(); openSettings(); }
+    if (k === 'lang') { applyLang(); SEARCH_INDEX = null; renderShell(); closeDialog(true); route(); openSettings(); }
+    if (k === 'theme') renderTop();
   }));
   $$('[data-sw]', d).forEach(b => b.onclick = () => { const v = b.getAttribute('aria-checked') !== 'true'; b.setAttribute('aria-checked', String(v)); S.set(b.dataset.sw, v); });
   $('[data-reset]', d).onclick = async () => {
-    const ok = await confirmDialog({ title: '¿Borrar todo tu progreso?', text: `Se borrarán <strong>${Object.keys(S.get().done).length} retos</strong>, <strong>${Object.keys(S.get().badges).length} insignias</strong> y <strong>${S.xp()} XP</strong>. Tus ajustes se mantienen. No se puede deshacer.`, ok: t('resetConfirm') });
-    if (ok) { S.reset(); toast('Progreso borrado. A empezar de cero.', 'info', 'reset'); route(); }
+    const nd = Object.keys(S.get().done).length, nb = Object.keys(S.get().badges).length;
+    const ok = await confirmDialog({ title: L('¿Borrar todo tu progreso?', 'Reset all your progress?'), text: L(`Se borrarán <strong>${nd} retos</strong>, <strong>${nb} insignias</strong> y <strong>${S.xp()} XP</strong>. Tus ajustes se mantienen. No se puede deshacer.`, `This deletes <strong>${nd} challenges</strong>, <strong>${nb} badges</strong> and <strong>${S.xp()} XP</strong>. Your settings stay. It cannot be undone.`), ok: t('resetConfirm') });
+    if (ok) { S.reset(); toast(L('Progreso borrado. A empezar de cero.', 'Progress reset. Back to square one.'), 'info', 'reset'); route(); }
   };
 }
 function openHelp() {
-  openDialog({ title: `${ic('help')} ${t('help')}`, wide: true, body: `<div class="help">
+  openDialog({ title: `${ic('help')} ${t('help')}`, wide: true, body: LANG === 'en' ? `<div class="help">
+    <section><h3>${ic('rows', 'sm')}The three panes</h3><p>At the top, the <strong>packet list</strong>. In the middle, the layered <strong>detail tree</strong>. At the bottom, the <strong>bytes</strong>. Clicking a field highlights its bytes, and clicking a byte opens its field.</p></section>
+    <section><h3>${ic('filter', 'sm')}The filter bar</h3><p>It turns <span class="okt">green</span> when the filter is valid and <span class="badt">red</span> when it is not, with the reason below. <kbd>Tab</kbd> accepts the suggestion and <kbd>Enter</kbd> applies. In the tree, each field’s ${ic('filter', 'sm')} button turns it into a filter (“Apply as Filter”).</p></section>
+    <section><h3>${ic('target', 'sm')}Challenges</h3><p>Four kinds: write a <strong>filter</strong> (it must show exactly the solution’s packets), pick a <strong>packet</strong>, type an <strong>answer</strong> or choose an option. Each challenge gives 10 XP; each hint takes a little off. Finishing a module gives a badge and 20 extra XP.</p></section>
+    <section><h3>${ic('flask', 'sm')}Analyst tools</h3><p>Expert Information (<kbd>E</kbd>), HTTP objects, cleartext credentials, Statistics (<kbd>S</kbd>) with conversations, endpoints and I/O graph, Follow TCP/UDP stream (<kbd>F</kbd>), Find Packet (<kbd>Ctrl F</kbd>), Go to Packet (<kbd>Ctrl G</kbd>) and the time display format, as in Wireshark.</p></section>
+    <section><h3>${ic('upload', 'sm')}Your captures</h3><p>In the Free lab you can open your own .pcap or .pcapng files (or drag them in). Everything is processed in your browser: nothing leaves your device.</p></section>
+    <section><h3>${ic('book', 'sm')}Sources</h3><p>Field names, coloring rules and the Info column follow Wireshark 4.x; the engine was checked packet by packet against tshark. Official guide: <a href="https://www.wireshark.org/docs/wsug_html_chunked/" target="_blank" rel="noopener noreferrer">Wireshark User's Guide</a> · <a href="https://www.wireshark.org/docs/man-pages/wireshark-filter.html" target="_blank" rel="noopener noreferrer">wireshark-filter(4)</a>.</p></section>
+  </div>` : `<div class="help">
     <section><h3>${ic('rows', 'sm')}Las tres zonas</h3><p>Arriba, la <strong>lista de paquetes</strong>. En medio, el <strong>árbol de detalle</strong> por capas. Abajo, los <strong>bytes</strong>. Al pulsar un campo se iluminan sus bytes, y al pulsar un byte se abre su campo.</p></section>
     <section><h3>${ic('filter', 'sm')}La barra de filtros</h3><p>Se pone <span class="okt">verde</span> si el filtro es válido y <span class="badt">roja</span> si no, con el motivo debajo. <kbd>Tab</kbd> acepta la sugerencia y <kbd>Enter</kbd> aplica. En el árbol, el botón ${ic('filter', 'sm')} de cada campo lo convierte en filtro («Aplicar como filtro»).</p></section>
     <section><h3>${ic('target', 'sm')}Retos</h3><p>Hay cuatro tipos: escribir un <strong>filtro</strong> (debe mostrar exactamente los paquetes de la solución), elegir un <strong>paquete</strong>, escribir una <strong>respuesta</strong> o elegir una opción. Cada reto da 10 XP; cada pista resta un poco. Completar un módulo da una insignia y 20 XP extra.</p></section>
+    <section><h3>${ic('flask', 'sm')}Herramientas de analista</h3><p>Información experta (<kbd>E</kbd>), objetos HTTP, credenciales en claro, Estadísticas (<kbd>S</kbd>) con conversaciones, endpoints y gráfico de E/S, seguir flujo TCP/UDP (<kbd>F</kbd>), Buscar paquete (<kbd>Ctrl F</kbd>), Ir al paquete (<kbd>Ctrl G</kbd>) y formato de tiempo, como en Wireshark.</p></section>
     <section><h3>${ic('upload', 'sm')}Tus capturas</h3><p>En el Laboratorio libre puedes abrir tus .pcap o .pcapng (o arrastrarlos). Todo se procesa en tu navegador: nada sale de tu equipo.</p></section>
     <section><h3>${ic('book', 'sm')}Fuentes</h3><p>Nombres de campos, reglas de color y formato de la columna Info siguen a Wireshark 4.x; el motor se ha comprobado paquete a paquete contra tshark. Guía oficial: <a href="https://www.wireshark.org/docs/wsug_html_chunked/" target="_blank" rel="noopener noreferrer">Wireshark User's Guide</a> · <a href="https://www.wireshark.org/docs/man-pages/wireshark-filter.html" target="_blank" rel="noopener noreferrer">wireshark-filter(4)</a>.</p></section>
   </div>` });
 }
 function openKeys() {
-  openDialog({ title: `${ic('keyboard')} ${t('shortcuts')}`, cls: 'narrow', body: `<table class="tbl keys"><caption class="vh">${t('shortcuts')}</caption><tbody>${SHORTCUTS.map(([k, es, en]) => `<tr><th scope="row">${k.split(' ').map(x => `<kbd>${x}</kbd>`).join(' ')}</th><td>${LANG === 'en' ? en : es}</td></tr>`).join('')}</tbody></table>` });
+  openDialog({ title: `${ic('keyboard')} ${t('shortcuts')}`, cls: 'narrow', body: `<table class="tbl keys"><caption class="vh">${t('shortcuts')}</caption><tbody>${SHORTCUTS.map(([k, es, en]) => `<tr><th scope="row">${k.split(' ').map(x => `<kbd>${LANG === 'en' ? ({ Inicio: 'Home', Fin: 'End', 'Mayús': 'Shift' })[x] || x : x}</kbd>`).join(' ')}</th><td>${LANG === 'en' ? en : es}</td></tr>`).join('')}</tbody></table>` });
 }
 
 function onKey(e) {
@@ -4857,6 +5156,7 @@ function onKey(e) {
   if (typing || $('#dlg').open || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === '/' && CUR_WS) { e.preventDefault(); CUR_WS.focusFilter(); }
   else if (e.key === '?') { e.preventDefault(); openKeys(); }
+  else if (e.key === '[' && !MOBILE_MQ.matches) { e.preventDefault(); toggleSide(); }
   else if (e.key === 'T' && e.shiftKey) toggleTheme();
   else if ((e.key === 'f' || e.key === 'F') && !e.shiftKey && CUR_WS) CUR_WS.follow();
   else if ((e.key === 's' || e.key === 'S') && !e.shiftKey && CUR_WS) openStats(CUR_WS);
@@ -4864,11 +5164,17 @@ function onKey(e) {
 }
 
 function boot() {
-  applyLang(); renderTop(); route();
+  applyLang(); renderShell(); route();
+  setTimeout(() => document.body.classList.add('ready'), 700);          // la entrada escalonada solo en la primera carga
   addEventListener('hashchange', route);
   addEventListener('keydown', onKey);
   matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (S.get().settings.theme === 'system') applyTheme(true); });
-  S.on(() => { const el = $('[data-xp]'); if (el && +el.textContent !== S.xp()) { el.textContent = S.xp(); const chip = el.closest('.xp-chip'); chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); chip.setAttribute('aria-label', `${S.xp()} XP, ${t('level')} ${S.level().name}`); } });
+  let lastXp = S.xp();
+  S.on(() => {                                             // el lateral refleja al momento retos, insignias y XP
+    updateSide();
+    if (S.xp() > lastXp) { const l = $('.lvl'); if (l) { l.classList.remove('bump'); void l.offsetWidth; l.classList.add('bump'); } }
+    lastXp = S.xp();
+  });
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 </script>

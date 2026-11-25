@@ -309,12 +309,12 @@ const tD0 = u => ZC(u) + HT(u);
 const ANCHORS = [
   { id: 'hoc', p: bodyPt(.03, 1.75), w: 0, t: ['Hocico', 'ampollas de Lorenzini'] },
   { id: 'ojo', p: bodyPt(.088, 1.03), w: 0, t: ['Ojo', 'tapetum lucidum'] },
-  { id: 'die', p: lerp3(bodyPt(.1, phiM(.1)), center(.1), .1), w: 1, t: ['Dientes aserrados', '2 filas · reemplazo continuo'] },
-  { id: 'bra', p: bodyPt(.215, 1.45), w: 0, t: ['Hendiduras branquiales', '5 por lado'] },
-  { id: 'dor', p: [X(.445), tD0(.445) + .122, 0], w: 0, t: ['Primera dorsal', 'estabiliza el balanceo'] },
-  { id: 'pec', p: add(inward(.258, 2.16, .86), [-.14, -.095, .15]), w: 0, t: ['Aleta pectoral', 'sustentación y giro'] },
-  { id: 'qui', p: bodyPt(.875, Math.PI / 2), w: 0, t: ['Quilla del pedúnculo', 'reduce la resistencia'] },
-  { id: 'cau', p: [X(1.105), .205, 0], w: 0, t: ['Caudal semilunar', 'nado carangiforme'] },
+  { id: 'die', p: lerp3(bodyPt(.1, phiM(.1)), center(.1), .1), w: 1, t: ['Dientes aserrados', '2 filas · reemplazo continuo'], te: ['Serrated teeth', '2 rows · constant replacement'] },
+  { id: 'bra', p: bodyPt(.215, 1.45), w: 0, t: ['Hendiduras branquiales', '5 por lado'], te: ['Gill slits', '5 per side'] },
+  { id: 'dor', p: [X(.445), tD0(.445) + .122, 0], w: 0, t: ['Primera dorsal', 'estabiliza el balanceo'], te: ['First dorsal', 'steadies the roll'] },
+  { id: 'pec', p: add(inward(.258, 2.16, .86), [-.14, -.095, .15]), w: 0, t: ['Aleta pectoral', 'sustentación y giro'], te: ['Pectoral fin', 'lift and turning'] },
+  { id: 'qui', p: bodyPt(.875, Math.PI / 2), w: 0, t: ['Quilla del pedúnculo', 'reduce la resistencia'], te: ['Caudal keel', 'cuts drag'] },
+  { id: 'cau', p: [X(1.105), .205, 0], w: 0, t: ['Caudal semilunar', 'nado carangiforme'], te: ['Lunate tail', 'carangiform swimming'] },
 ];
 
 
@@ -916,8 +916,8 @@ function callouts(s) {
       const pl = document.createElementNS(NS_SVG, 'polyline'); pl.setAttribute('class', 'ld');
       const rc = document.createElementNS(NS_SVG, 'rect'); rc.setAttribute('class', 'plate'); rc.setAttribute('rx', 6);
       const dt = document.createElementNS(NS_SVG, 'circle'); dt.setAttribute('class', 'dot'); dt.setAttribute('r', 3);
-      const t1 = document.createElementNS(NS_SVG, 'text'); t1.setAttribute('class', 'k'); t1.textContent = a.t[0];
-      const t2 = document.createElementNS(NS_SVG, 'text'); t2.textContent = a.t[1];
+      const t1 = document.createElementNS(NS_SVG, 'text'); t1.setAttribute('class', 'k'); t1.textContent = (LANG === 'en' ? a.te : a.t)[0];
+      const t2 = document.createElementNS(NS_SVG, 'text'); t2.textContent = (LANG === 'en' ? a.te : a.t)[1];
       g.append(pl, rc, dt, t1, t2); svg.append(g);
       return { a, g, pl, rc, dt, t1, t2, w: 0 };
     });
@@ -983,7 +983,7 @@ function ensureGL() {
   cv = document.createElement('canvas');
   cv.className = 'shark-cv';
   cv.setAttribute('role', 'img');
-  cv.setAttribute('aria-label', 'Un megalodón realista nada entre rayos de luz. Cada pocos segundos muerde: eleva el hocico, abre la boca en herradura y adelanta la mandíbula superior enseñando la encía y los dientes aserrados.');
+  cv.setAttribute('aria-label', LANG === 'en' ? 'A realistic megalodon swims through shafts of light. Every few seconds it bites: it lifts its snout, opens its horseshoe mouth and thrusts the upper jaw forward, showing the gum and the serrated teeth.' : 'Un megalodón realista nada entre rayos de luz. Cada pocos segundos muerde: eleva el hocico, abre la boca en herradura y adelanta la mandíbula superior enseñando la encía y los dientes aserrados.');
   gl = cv.getContext('webgl2', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
   if (!gl) return (glOk = false);
   try {
@@ -1004,14 +1004,14 @@ function mount(slot) {
   const hud = document.createElement('div');
   hud.className = 'shark-hud';
   hud.setAttribute('role', 'group');
-  hud.setAttribute('aria-label', 'Megalodón 3D');
-  hud.innerHTML = `<button type="button" class="btn ghost sm" data-shark-mode aria-pressed="false">${ic('layers', 'sm')}Plano técnico</button><button type="button" class="ibtn" data-shark-pause>${ic('pause')}</button>`;
+  hud.setAttribute('aria-label', LANG === 'en' ? '3D megalodon' : 'Megalodón 3D');
+  hud.innerHTML = `<button type="button" class="btn ghost sm" data-shark-mode aria-pressed="false">${ic('layers', 'sm')}${LANG === 'en' ? 'Blueprint' : 'Plano técnico'}</button><button type="button" class="ibtn" data-shark-pause>${ic('pause')}</button>`;
   host.append(hud);
   const modeBtn = hud.querySelector('[data-shark-mode]'), pauseBtn = hud.querySelector('[data-shark-pause]');
   const sync = () => {
     const still = isStill();
     pauseBtn.innerHTML = ic(still ? 'play' : 'pause');
-    pauseBtn.setAttribute('aria-label', still ? 'Reanudar la animación del megalodón' : 'Pausar la animación del megalodón');
+    pauseBtn.setAttribute('aria-label', LANG === 'en' ? (still ? 'Resume the megalodon animation' : 'Pause the megalodon animation') : (still ? 'Reanudar la animación del megalodón' : 'Pausar la animación del megalodón'));
     modeBtn.setAttribute('aria-pressed', String(st.blueTo > .5));
   };
   modeBtn.onclick = () => { st.blueTo = st.blueTo > .5 ? 0 : 1; sync(); if (!running) settle(); };

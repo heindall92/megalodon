@@ -3,5 +3,5 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 node scripts/build.mjs --check
-node --test tests/engine.test.mjs
+node --test tests/engine.test.mjs tests/i18n.test.mjs
 node tests/e2e.mjs

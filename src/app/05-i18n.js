@@ -14,6 +14,7 @@ const STRINGS = {
     progress: 'Progreso', resetProgress: 'Borrar mi progreso', resetConfirm: 'Sí, borrar', theme: 'Tema', light: 'Claro', dark: 'Oscuro', system: 'Sistema',
     language: 'Idioma', copy: 'Copiar', copied: 'Copiado', lessonsInSpanish: '', importDrop: 'Suelta aquí un .pcap o .pcapng', captures: 'Captura',
     expert: 'Información experta', objects: 'Objetos HTTP', creds: 'Credenciales', endpoints: 'Endpoints', gotoPkt: 'Ir al paquete', findPkt: 'Buscar paquete', timeFmt: 'Formato de tiempo', followUdp: 'Seguir flujo UDP',
+    sideToggle: 'Mostrar u ocultar la barra lateral', brandSub: 'Laboratorio de Wireshark', more: 'Más', navMain: 'Secciones', navMobile: 'Secciones (móvil)', themeSwitch: 'Modo oscuro', langSwitch: 'Idioma', allModules: 'Todos los módulos', levelProg: 'Progreso de nivel',
     conv: 'Conversaciones', hier: 'Jerarquía de protocolos', io: 'Gráfico de E/S', interval: 'Intervalo', filterThis: 'Filtrar esto', filterStream: 'Filtrar este flujo',
     prevStream: 'Flujo anterior', nextStream: 'Flujo siguiente', client: 'Cliente', server: 'Servidor', allPackets: 'Todos los paquetes', matching: 'Cumplen el filtro',
     moduleDone: '¡Módulo completado!', badgeEarned: 'Has ganado la insignia', next: 'Siguiente módulo', back: 'Volver', notFound: 'Esta página no existe.',
@@ -32,6 +33,7 @@ const STRINGS = {
     progress: 'Progress', resetProgress: 'Reset my progress', resetConfirm: 'Yes, reset', theme: 'Theme', light: 'Light', dark: 'Dark', system: 'System',
     language: 'Language', copy: 'Copy', copied: 'Copied', lessonsInSpanish: 'Lessons and challenges are written in Spanish.', importDrop: 'Drop a .pcap or .pcapng here', captures: 'Capture',
     expert: 'Expert Information', objects: 'HTTP Objects', creds: 'Credentials', endpoints: 'Endpoints', gotoPkt: 'Go to Packet', findPkt: 'Find Packet', timeFmt: 'Time Display Format', followUdp: 'Follow UDP Stream',
+    sideToggle: 'Show or hide the sidebar', brandSub: 'Wireshark lab', more: 'More', navMain: 'Sections', navMobile: 'Sections (mobile)', themeSwitch: 'Dark mode', langSwitch: 'Language', allModules: 'All modules', levelProg: 'Level progress',
     conv: 'Conversations', hier: 'Protocol Hierarchy', io: 'I/O Graph', interval: 'Interval', filterThis: 'Filter this', filterStream: 'Filter this stream',
     prevStream: 'Previous stream', nextStream: 'Next stream', client: 'Client', server: 'Server', allPackets: 'All packets', matching: 'Match the filter',
     moduleDone: 'Module complete!', badgeEarned: 'You earned the badge', next: 'Next module', back: 'Back', notFound: 'This page does not exist.',
@@ -39,3 +41,7 @@ const STRINGS = {
 };
 let LANG = 'es';
 const t = k => (STRINGS[LANG] && STRINGS[LANG][k]) ?? STRINGS.es[k] ?? k;
+/* Texto en línea para lo que solo aparece una vez: L('español', 'English') */
+const L = (es, en) => LANG === 'en' ? en : es;
+/* Campos de módulo con su versión inglesa (title, sub, badge) */
+const mT = (m, k) => (LANG === 'en' && m[`${k}_en`]) || m[k];
