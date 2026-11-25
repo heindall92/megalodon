@@ -311,7 +311,9 @@ await t('efectos de tema: la gota cae sobre el botón y la lluvia cubre la panta
       const d = await p.evaluate(() => { const b = document.querySelector('[data-theme-btn]').getBoundingClientRect(), g = document.querySelector('.fx-drop'); return Math.abs(parseFloat(g.style.left) + 11 - (b.left + b.width / 2)); });
       assert(d < 1, `gota centrada (${d})`);
     }
-    assert(await p.evaluate(() => document.documentElement.dataset.theme) === 'dark', 'el tema cambia al empezar');
+    // el tema se aplica en la actualización de la View Transition, uno o dos fotogramas después de crear la capa del efecto
+    await p.waitForFunction(() => document.documentElement.dataset.theme === 'dark', null, { timeout: 1500 });
+    assert(await p.locator('.fx-layer').count() === 1, 'el efecto sigue en marcha cuando el tema ya ha cambiado');
     await p.waitForFunction(() => !document.querySelector('.fx-layer'), null, { timeout: 5000 });
     assert(!p.errors.length, `${fx}: ${p.errors.join(' | ')}`);
     await p.close2();
