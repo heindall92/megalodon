@@ -16,6 +16,11 @@
 - [x] Toda la interfaz en inglés, con prueba de paridad de claves y traducción de cada error del filtro
 - [x] e2e del lateral, idioma, tema y móvil, y axe en el lateral plegado, el inglés y la hoja «Más»
 
+## 1.3.1 · Facciones del megalodón ✅
+- [x] Boca, dientes, encías y comisura revisados con un banco de vistas
+- [x] Ojo, hocico, narinas e interior de la boca
+- [x] Encuadre de la portada con la barra lateral y pruebas e2e del plano técnico en inglés
+
 ## 1.3.x · Contenido en inglés
 - [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
 

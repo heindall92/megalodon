@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/LICENCIA-MIT-4169A1?style=flat"/></a>
-  <img alt="Versión 1.3.0" src="https://img.shields.io/badge/versi%C3%B3n-1.3.0-3B8BFF?style=flat"/>
+  <img alt="Versión 1.3.1" src="https://img.shields.io/badge/versi%C3%B3n-1.3.1-3B8BFF?style=flat"/>
   <img alt="Filtros de Wireshark 4.x" src="https://img.shields.io/badge/filtros-Wireshark%204.x-1679A7?style=flat"/>
   <img alt="Ruta eWPT" src="https://img.shields.io/badge/ruta-eWPT-E07B39?style=flat"/>
   <img alt="8 módulos y 58 retos" src="https://img.shields.io/badge/8%20m%C3%B3dulos-58%20retos-7B4FD1?style=flat"/>
@@ -85,7 +85,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
         <img src="docs/assets/stack/pruebas.svg" height="48" alt="node:test">
         <img src="docs/assets/stack/navegador.svg" height="48" alt="Playwright">
         <img src="docs/assets/stack/accesibilidad.svg" height="48" alt="axe-core"><br>
-        <sub><code>node:test 18 · Playwright 22 · axe-core 0 violaciones</code></sub>
+        <sub><code>node:test 18 · Playwright 24 · axe-core 0 violaciones</code></sub>
       </td>
       <td valign="top"><code>╰─ ⌁ seguridad:</code><br><br>
         <img src="docs/assets/stack/csp.svg" height="48" alt="CSP">
@@ -96,7 +96,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="2"><code>version: 1.3.0&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 40 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
+      <td colspan="2"><code>version: 1.3.1&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 42 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
     </tr>
   </tfoot>
 </table>
@@ -106,6 +106,13 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 ---
 
 ## <img src="docs/assets/icons/sparkles.svg" width="20" height="20" valign="middle"/> Novedades
+
+### 1.3.1 · noviembre de 2026 · La cara del megalodón
+
+- **Boca de verdad.** Los dientes de arriba cuelgan y los de abajo se alzan y se cruzan en la línea de la boca; la encía queda dentro del labio y la fila de reemplazo, hundida. En la comisura, un pliegue de piel se estira al abrir.
+- **Ojo, hocico y narinas.** Ojo negro azulado, casi enrasado, con la órbita hundida; hocico corto y cónico de punta redondeada, como lo describe la guía de identificación de CITES; narinas en la cara inferior del hocico.
+- **Interior.** Carne rosada que se oscurece hacia la faringe, suelo cóncavo con el basihial y arcos branquiales al fondo.
+- **Encuadre.** Con la barra lateral, la cabeza había quedado detrás del título; ahora está a su derecha, despejada.
 
 ### 1.3.0 · noviembre de 2026 · Armazón nuevo y todo en inglés
 
@@ -295,7 +302,8 @@ La portada es un megalodón en tiempo real hecho con **WebGL2 puro**, sin librer
 </tr>
 </table>
 
-- **Boca documentada:** 13 dientes superiores anchos y 12 inferiores estrechos por lado, el intermedio superior más pequeño, inclinación distal creciente y una fila de reemplazo detrás.
+- **Boca documentada:** 13 dientes superiores anchos y 12 inferiores estrechos por lado, el intermedio superior más pequeño, inclinación distal creciente y una fila de reemplazo hundida en la encía. Los superiores cuelgan y los inferiores se alzan, y se cruzan en la línea de la boca.
+- **Cara:** ojo negro azulado casi enrasado, hocico corto y cónico de punta redondeada, narinas en la cara inferior del hocico, poros de Lorenzini y pliegue de piel en la comisura.
 - **Mordisco:** elevación del hocico, descenso de la mandíbula, protrusión del palatocuadrado y sacudida lateral, con los tiempos de Tricas (1985).
 - **Piel y agua:** contrasombreado, dentículos, branquias, ampollas de Lorenzini, cáusticas, rayos de luz, nieve marina y bloom.
 
@@ -384,7 +392,7 @@ flowchart LR
 |---|---|---|
 | Motor (`engine.test.mjs`) | 13 | Las 8 capturas se generan, se disecan y son deterministas. Exportar a pcap/pcapng y releer conserva cada byte. **Los 58 retos tienen solución comprobable** contra su captura, y las respuestas derivadas (avisos, intervalo del beacon, Base64 exfiltrado, firma ZIP) se recalculan desde los paquetes. Los 60 «Pruébalo» compilan y muestran paquetes. También comprueba la sintaxis de filtros de Wireshark 4.x, la información experta, los objetos HTTP, las credenciales, el flujo UDP y el checksum RFC 1071. |
 | Idioma (`i18n.test.mjs`) | 5 | Español e inglés tienen las mismas claves. Los ocho módulos tienen título, subtítulo e insignia en inglés. **Cada error del motor de filtros** y **cada etiqueta del árbol de detalle de los 578 paquetes** están traducidos, sin restos en español. |
-| E2E (`e2e.mjs`) | 22 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>búsqueda `Ctrl K`;</li><li>megalodón 3D: pausa, plano técnico, desmontaje, movimiento reducido y sin WebGL2;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más»;</li><li>CSP estricta y red bloqueada.</li></ul> |
+| E2E (`e2e.mjs`) | 24 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>búsqueda `Ctrl K`;</li><li>megalodón 3D: pausa, plano técnico en español e inglés, cabeza a la derecha del título a 1280, 1440 y 1920 px, desmontaje, movimiento reducido y sin WebGL2;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más»;</li><li>CSP estricta y red bloqueada.</li></ul> |
 | Accesibilidad (dentro de `e2e.mjs`) | — | axe-core (WCAG 2.2 A/AA) da **cero violaciones** en: <ul><li>6 vistas, a 1280 y 390 px, en claro y oscuro;</li><li>los diálogos de análisis;</li><li>la barra lateral plegada;</li><li>la interfaz en inglés;</li><li>la hoja «Más».</li></ul> |
 
 La [integración continua](.github/workflows/tests.yml) ejecuta todo en cada *push* y *pull request* y comprueba que los HTML están al día.
@@ -397,6 +405,7 @@ Detalle en [ROADMAP.md](ROADMAP.md).
 - [x] 1.1.0 · Megalodón 3D, pruebas, CI y GitHub Pages
 - [x] 1.2.0 · Herramientas de analista y recorrido del curso completo
 - [x] 1.3.0 · Barra lateral plegable, barra de pestañas en el móvil, interruptores e interfaz en inglés
+- [x] 1.3.1 · Facciones del megalodón: boca, dientes, ojo, hocico, narinas e interior
 - [ ] 1.3.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
 - [ ] 1.4.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
 

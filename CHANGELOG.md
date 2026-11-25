@@ -2,6 +2,25 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [1.3.1] - 2026-11-25
+
+### Cambiado
+- **Facciones del megalodón más realistas**, revisadas con un banco de vistas (perfil, frente, tres cuartos y la pose de la portada):
+  - dientes superiores que cuelgan e inferiores que se alzan y se cruzan en la línea de la boca, en lugar de apuntar hacia delante como un peine;
+  - encía inferior dentro del labio (antes asomaba por fuera como una franja rosa) y fila de reemplazo hundida en la encía;
+  - pliegue de piel en la comisura que se estira al abrir, en vez de dejar ver una cuña negra;
+  - ojo negro azulado con pupila, casi enrasado y con la órbita hundida, sin el aro turquesa;
+  - hocico corto y cónico con la punta redondeada, narinas en la cara inferior y poros de Lorenzini finos;
+  - interior de la boca con carne rosada que se oscurece hacia dentro, suelo cóncavo con el basihial y faringe oscura con arcos branquiales;
+  - mentón y mandíbula inferior más robustos.
+- **Encuadre de la portada**: desde la 1.3.0 la portada es más estrecha y la cabeza quedaba bajo el título. Ahora la cabeza y la boca quedan a su derecha a 1280, 1440 y 1920 px.
+
+### Corregido
+- En inglés, la vista «Plano técnico» fallaba al rotular «Hocico» y «Ojo», que no tenían traducción.
+
+### Añadido
+- Cota «Narina» en el plano técnico y pruebas e2e del plano técnico en inglés y del encuadre de la cabeza.
+
 ## [1.3.0] - 2026-11-25
 
 ### Añadido

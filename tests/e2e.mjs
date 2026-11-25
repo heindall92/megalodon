@@ -69,10 +69,45 @@ await t('megalodón: pausa accesible y vista de plano técnico con cotas', async
   assert(!(await p.evaluate(() => SHARK.stats().running)), 'se detiene');
   await p.click('[data-shark-mode]');
   assert(await p.getAttribute('[data-shark-mode]', 'aria-pressed') === 'true', 'aria-pressed');
-  await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 8);
+  await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 9);
   const labels = await p.$$eval('.shark-callouts text.k', ns => ns.map(n => n.textContent));
-  assert(labels.includes('Dientes aserrados') && labels.includes('Hendiduras branquiales'), labels.join(', '));
+  assert(['Dientes aserrados', 'Hendiduras branquiales', 'Narina', 'Ojo'].every(l => labels.includes(l)), labels.join(', '));
+  assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();
+});
+
+await t('megalodón: el plano técnico en inglés rotula todas las cotas sin errores', async () => {
+  const p = await page(browser);
+  await p.waitForSelector('[data-shark-pause]');
+  await p.click('[data-lang="en"]');
+  await p.waitForSelector('[data-shark-mode]');
+  await p.evaluate(() => SHARK.pause());
+  await p.click('[data-shark-mode]');
+  await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 9);
+  const labels = await p.$$eval('.shark-callouts text', ns => ns.map(n => n.textContent));
+  assert(['Snout', 'Eye', 'Nostril', 'Serrated teeth', 'Gill slits'].every(l => labels.includes(l)), labels.join(', '));
+  assert(labels.every(l => l && !/[áéíóúñ]/.test(l)), `restos en español: ${labels.join(', ')}`);
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('megalodón: la cabeza queda a la derecha del título, sin taparse', async () => {
+  for (const w of [1280, 1440, 1920]) {
+    const p = await page(browser, { viewport: { width: w, height: Math.round(w * .62) } });
+    await p.waitForSelector('canvas.shark-cv');
+    await p.evaluate(() => { SHARK.pause(); SHARK.seek(7.45); });
+    // la cota del ojo da la posición real de la cabeza en pantalla
+    await p.click('[data-shark-mode]');
+    await p.waitForFunction(() => document.querySelectorAll('.shark-callouts g').length === 9);
+    await p.waitForTimeout(200);
+    const r = await p.evaluate(() => {
+      const t = document.querySelector('#hero-t').getBoundingClientRect(), dot = [...document.querySelectorAll('.shark-callouts .dot')].map(d => d.getBoundingClientRect());
+      const svg = document.querySelector('.shark-callouts').getBoundingClientRect();
+      return { titleRight: t.right, minDot: Math.min(...dot.map(d => d.left)), svgRight: svg.right };
+    });
+    assert(r.minDot > r.titleRight - 40, `${w}px: la cabeza (${Math.round(r.minDot)}) queda bajo el título (${Math.round(r.titleRight)})`);
+    await p.close2();
+  }
 });
 
 await t('megalodón: se desmonta al salir de inicio y vuelve al regresar', async () => {

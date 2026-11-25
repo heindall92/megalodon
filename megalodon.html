@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-y/5U0uCLqnyYytoYMQTZnUNyh772yvAzk5feC5A9+xI='; style-src 'sha256-C96SuEnKUh+J8kkbNV7gTpU17KM0Edca82DmDD9F5Sw='; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-F6LBR26RgvlOg9FJEtq2yWimgk9Gfkv9nBrSjUBJFIo='; style-src 'sha256-C96SuEnKUh+J8kkbNV7gTpU17KM0Edca82DmDD9F5Sw='; img-src data: blob:; connect-src 'none'; font-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="dark light">
 <meta name="description" content="Megalodon: laboratorio de Wireshark sin conexión. Capturas de un pentest, filtros con validación al instante y retos guiados del saludo TCP a los ataques web.">
@@ -3620,9 +3620,9 @@ function curve(us, vs) {                                   // Hermite con tangen
 }
 // Perfil lamniforme: hocico cónico, tronco fusiforme alto, pedúnculo estrecho con quilla lateral.
 const U  = [0, .008, .025, .05, .09, .14, .2, .28, .36, .46, .58, .7, .8, .87, .925];
-const HT = curve(U, [0, .011, .025, .04, .056, .072, .086, .098, .103, .098, .078, .05, .028, .016, .011]);
-const HB = curve(U, [0, .008, .02, .033, .049, .067, .083, .096, .099, .092, .07, .043, .024, .013, .009]);
-const WD = curve(U, [0, .011, .026, .041, .057, .072, .084, .093, .095, .088, .068, .044, .026, .016, .011]);
+const HT = curve(U, [0, .0155, .03, .0445, .0585, .072, .086, .098, .103, .098, .078, .05, .028, .016, .011]);
+const HB = curve(U, [0, .0125, .026, .0405, .0555, .0715, .083, .096, .099, .092, .07, .043, .024, .013, .009]);
+const WD = curve(U, [0, .015, .0305, .0445, .0585, .072, .084, .093, .095, .088, .068, .044, .026, .016, .011]);
 const ZC = u => .009 * Math.pow(Math.max(0, 1 - u / .22), 2) - .005 * Math.exp(-(((u - .42) / .22) ** 2));
 const KEEL = u => .0042 * sstep(.8, .865, u);
 const sgnpow = (v, e) => Math.sign(v) * Math.pow(Math.abs(v), e);
@@ -3768,19 +3768,22 @@ const protW = t => 1 - Math.pow(Math.abs(t), 1.6) * .85;   // el frente del pala
 // Marco local del arco: T a lo largo del labio, In hacia dentro de la cabeza (contra la normal de la piel),
 // Dup sobre la piel, perpendicular al labio y hacia la mandíbula superior.
 function archFrame(t) {
+  // Las mandíbulas se cierran en vertical: los dientes de arriba cuelgan y los de abajo se alzan, y se cruzan en
+  // la línea de la boca. Por eso el marco usa la vertical de la cabeza (Up) y la horizontal hacia dentro (In),
+  // no la normal de la piel: bajo el hocico la piel es horizontal y los dientes saldrían hacia delante.
   t = clamp(t, -1, 1);
-  const P = archLip(t), e = .004, u = archU(t), sd = t < 0 ? -1 : 1;
+  const P = archLip(t), e = .004, u = archU(t);
   const T = norm(sub(archLip(Math.min(1, t + e)), archLip(Math.max(-1, t - e))));
-  const n = u <= UF + 1e-6 ? [0, -1, 0] : bodyNormal(u, sd * phiM(u));
-  let In = mul(n, -1); In = norm(sub(In, mul(T, dot(In, T))));
-  let Dup = norm(cross(T, In));
-  // hacia la mandíbula superior: un poco más adelante y por encima de la línea de la boca
-  const toUp = sub(bodyPt(Math.max(0, u - .008), sd * Math.max(0, phiM(u) - .12)), P);
-  if (dot(Dup, toUp) < 0) Dup = mul(Dup, -1);
-  return { P, T, In, Dup, Up: Dup, u };
+  let Up = sub([0, 1, 0], mul(T, T[1])); Up = norm(Up);
+  let v = sub([P[0] - .035, ZC(u), 0], P);                  // hacia el eje, un poco hacia atrás (la garganta)
+  v = sub(v, add(mul(T, dot(v, T)), mul(Up, dot(v, Up))));
+  const In = Math.hypot(...v) > 1e-6 ? norm(v) : [-1, 0, 0];
+  const Out = mul(In, -1);
+  return { P, T, In, Dup: Up, Up, Out, u, front: 1 - Math.abs(t) };
 }
-const gumCenter = (f, lower) => add(add(f.P, mul(f.In, GUM.rh * 1.25)), mul(f.Dup, (lower ? -1 : 1) * GUM.rv * .42));
-const gumPt = (f, lower, a, k = 1) => add(add(gumCenter(f, lower), mul(f.In, GUM.rh * Math.cos(a) * k)), mul(f.Dup, GUM.rv * Math.sin(a) * k));
+const gumTaper = u => 1 - sstep(UC - .016, UC + .002, u);   // la encía se afina y se cierra en la comisura
+const gumCenter = (f, lower) => add(add(f.P, mul(f.In, GUM.rh * (lower ? 2.15 : 1.45))), mul(f.Dup, (lower ? -1 : 1) * GUM.rv * (lower ? .02 - .45 * f.front ** 2 : .35)));   // delante el mentón se curva: la encía sube
+const gumPt = (f, lower, a, k = 1) => { const g = k * (.15 + .85 * gumTaper(f.u)); return add(add(gumCenter(f, lower), mul(f.In, GUM.rh * Math.cos(a) * g)), mul(f.Dup, GUM.rv * Math.sin(a) * g)); };
 
 function buildMouth() {
   const NT = 121, NA = 28, NR = 22;
@@ -3790,18 +3793,18 @@ function buildMouth() {
     // 1) encía: tubo elíptico a lo largo del arco
     const g = frames.map((f, i) => Array.from({ length: NA + 1 }, (_, j) => {
       const a = TAU * j / NA, p = gumPt(f, lower, a);
-      const n = norm(add(mul(f.In, Math.cos(a) / GUM.rh), mul(f.Up, Math.sin(a) / GUM.rv)));
+      const n = norm(add(mul(f.In, Math.cos(a) / GUM.rh), mul(f.Dup, Math.sin(a) / GUM.rv)));
       return vert(p, n, [f.u, -1 + 2 * i / (NT - 1), j / NA, 0], [w, up * protW(-1 + 2 * i / (NT - 1)), 0, 0], 7);
     }));
     for (let i = 0; i < NT - 1; i++) for (let j = 0; j < NA; j++) { tri(g[i][j], g[i + 1][j], g[i + 1][j + 1]); tri(g[i][j], g[i + 1][j + 1], g[i][j + 1]); }
     // 2) paladar (arriba) o suelo con lengua (abajo): del borde interno de la encía a la garganta
     const uTh = UC + .035, cT = center(uTh);
-    const throat = [.5 - uTh, lower ? cT[1] - .5 * HB(uTh) : cT[1] + .3 * HT(uTh), 0];
+    const throat = [.5 - uTh, lower ? cT[1] - .72 * HB(uTh) : cT[1] + .3 * HT(uTh), 0];   // el suelo baja hacia la faringe
     const ref = lower ? [0, 1, 0] : [0, -1, 0];   // normales hacia el interior de la boca
     const S = (i, r) => {
       const f = frames[i], tt = -1 + 2 * i / (NT - 1), e0 = gumPt(f, lower, 0), rr = Math.pow(r, .85);
       const p = lerp3(e0, throat, rr);
-      const vault = lower ? .0055 * Math.sin(Math.PI * r) * (1 - tt * tt) - .006 * Math.sin(Math.PI * r) * Math.abs(tt)
+      const vault = lower ? -.0055 * Math.sin(Math.PI * r) * (1 - .5 * tt * tt) + .0042 * Math.exp(-(((r - .22) / .13) ** 2)) * (1 - tt * tt) ** 2   // suelo cóncavo con el basihial delante
                           : .011 * Math.sin(Math.PI * r) * Math.sqrt(Math.max(0, 1 - tt * tt));
       return add(p, [0, vault, 0]);
     };
@@ -3817,6 +3820,34 @@ function buildMouth() {
       s.push(row);
     }
     for (let i = 0; i < NT - 1; i++) for (let k = 0; k < NR; k++) { tri(s[i][k], s[i + 1][k], s[i + 1][k + 1]); tri(s[i][k], s[i + 1][k + 1], s[i][k + 1]); }
+  }
+}
+
+/* Comisura: pliegue de piel entre los labios. Cerrada no tiene área; al abrir, cada fila gira con su peso
+   de mandíbula (0 arriba, 1 abajo) y la membrana se tensa como en el animal, sin dejar ver el vacío. */
+function buildCorners() {
+  const NT = 16, NK = 10, T0 = .84;
+  for (const sd of [1, -1]) {
+    const rows = [];
+    for (let i = 0; i <= NT; i++) {
+      const tt = T0 + (1 - T0) * i / NT, f = archFrame(sd * tt), d = (tt - T0) / (1 - T0);
+      const base = add(f.P, mul(f.In, GUM.rh * (.7 + .6 * (1 - d))));    // por dentro del labio: queda en sombra
+      const row = [];
+      for (let k = 0; k <= NK; k++) {
+        const w = k / NK, sag = .0042 * Math.sin(Math.PI * w) * (1 - .6 * d);            // la membrana se comba hacia dentro
+        const p = add(base, mul(f.In, sag));
+        const nrm = norm(add(f.Out, mul(f.In, .55 * Math.cos(Math.PI * w))));
+        row.push(vert(p, nrm, [f.u, sd * phiM(f.u), 0, 2], [w, 0, .02 + .25 * Math.sin(Math.PI * w), 0], 0));   // P.w = 2: pliegue de la comisura
+      }
+      rows.push(row);
+    }
+    // cerrada no tiene área: el sentido de cada triángulo se decide con la boca abierta (giro de la bisagra en JS)
+    const opened = i => { const q = vpos(i), w = VB[i * STRIDE + 10], ang = .6 * w, c = Math.cos(ang), sn = Math.sin(ang), dx = q[0] - HINGE[0], dy = q[1] - HINGE[1]; return [HINGE[0] + c * dx + sn * dy, HINGE[1] - sn * dx + c * dy, q[2]]; };
+    const triO = (a, b, c) => { const g = cross(sub(opened(b), opened(a)), sub(opened(c), opened(a))); if (dot(g, vnrm(a)) < 0) IB.push(a, c, b); else IB.push(a, b, c); };
+    for (let i = 0; i < NT; i++) for (let k = 0; k < NK; k++) {
+      const a = rows[i][k], b = rows[i + 1][k], c = rows[i + 1][k + 1], d = rows[i][k + 1];
+      triO(a, b, c); triO(a, c, d);
+    }
   }
 }
 
@@ -3865,12 +3896,13 @@ function buildTeeth() {
       const fr = archFrame(t), dist = mul(fr.T, sd);                                         // hacia la comisura
       for (const row of [0, 1]) {
         const a = lower ? (row ? Math.PI / 2 - .75 : Math.PI / 2 + .5) : (row ? -Math.PI / 2 + .75 : -Math.PI / 2 - .5);
-        const base = gumPt(fr, lower, a, .82);
-        let A = norm(add(add(mul(fr.Dup, lower ? .6 : -.85), [0, lower ? .75 : -.5, 0]), mul(fr.In, -.1)));   // hacia la otra mandíbula, algo hacia fuera
-        if (row) A = norm(add(mul(A, .45), mul(fr.In, 1)));                                   // reemplazo: tumbado hacia dentro
+        const base = gumPt(fr, lower, a, row ? .45 : .82);                                  // el reemplazo nace hundido en la encía
+        const front = 1 - Math.abs(t);                                                        // 1 delante, 0 en la comisura
+        let A = norm(add(mul(fr.Dup, lower ? 1 : -1), mul(fr.Out, lower ? .08 + .06 * front : .14 + .04 * front)));   // hacia la otra mandíbula, algo hacia fuera
+        if (row) A = norm(add(mul(A, .3), mul(fr.In, 1)));                                      // reemplazo: tumbado hacia dentro, casi oculto                                   // reemplazo: tumbado hacia dentro
         A = norm(sub(A, mul(dist, dot(A, dist))));
         A = norm(add(A, mul(fr.In, rnd() * .1)));
-        const sc = (row ? .74 : 1) * (1 + rnd() * .08);
+        const sc = (row ? .6 : 1) * (1 + rnd() * .08);
         const bw = slot * (lower ? .68 : .97) * sc, h = bw * (lower ? 1.95 : 1.42) * (k === 2 && !lower ? .92 : 1);
         const slant = lower ? .02 + .1 * k / prof.length : .02 + .5 * Math.pow(k / prof.length, 1.2);
         tooth(base, A, dist, h, bw, lower ? 1 : 0, lower ? 0 : protW(t), fr.u, slant, lower);
@@ -3879,11 +3911,21 @@ function buildTeeth() {
   }
 }
 function buildEyes() {
-  const r = .0064;
+  const r = .0061, rN = r * .62;                            // casquete aplanado: apenas sobresale de la órbita
   for (const sd of [1, -1]) {
-    const S = bodyPt(.088, sd * 1.03), n0 = bodyNormal(.088, sd * 1.03), C = sub(S, mul(n0, r * .42));
-    const NA = 18, NB = 12, g = [];
-    for (let i = 0; i <= NB; i++) { const row = [], th = Math.PI * i / NB; for (let j = 0; j <= NA; j++) { const ph = TAU * j / NA, n = [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)]; row.push(vert(add(C, mul(n, r)), n, [.088, 0, 0, 0], [0, 0, 9, 0], 4)); } g.push(row); }
+    const S = bodyPt(.088, sd * 1.03), n0 = bodyNormal(.088, sd * 1.03), C = sub(S, mul(n0, rN * .5));
+    let t1 = norm(cross(n0, [0, 1, 0])); const t2 = cross(n0, t1);
+    const NA = 28, NB = 14, g = [];
+    for (let i = 0; i <= NB; i++) {
+      const row = [], th = Math.PI * .62 * i / NB;          // solo la parte que asoma
+      for (let j = 0; j <= NA; j++) {
+        const ph = TAU * j / NA, rad = add(mul(t1, Math.cos(ph)), mul(t2, Math.sin(ph)));
+        const p = add(add(C, mul(n0, Math.cos(th) * rN)), mul(rad, Math.sin(th) * r));
+        const n = norm(add(mul(n0, Math.cos(th) / rN), mul(rad, Math.sin(th) / r)));
+        row.push(vert(p, n, [.088, Math.cos(th), 0, 0], [0, 0, 9, 0], 4));
+      }
+      g.push(row);
+    }
     for (let i = 0; i < NB; i++) for (let j = 0; j < NA; j++) { tri(g[i][j], g[i + 1][j], g[i + 1][j + 1]); tri(g[i][j], g[i + 1][j + 1], g[i][j + 1]); }
   }
 }
@@ -3892,8 +3934,9 @@ function buildEyes() {
 /* Puntos anatómicos para las cotas del plano técnico (posición en reposo + peso de mandíbula) */
 const tD0 = u => ZC(u) + HT(u);
 const ANCHORS = [
-  { id: 'hoc', p: bodyPt(.03, 1.75), w: 0, t: ['Hocico', 'ampollas de Lorenzini'] },
-  { id: 'ojo', p: bodyPt(.088, 1.03), w: 0, t: ['Ojo', 'tapetum lucidum'] },
+  { id: 'nar', p: bodyPt(.03, 2.4), w: 0, t: ['Narina', 'olfato direccional'], te: ['Nostril', 'directional smell'] },
+  { id: 'hoc', p: bodyPt(.03, 1.75), w: 0, t: ['Hocico', 'ampollas de Lorenzini'], te: ['Snout', 'ampullae of Lorenzini'] },
+  { id: 'ojo', p: bodyPt(.088, 1.03), w: 0, t: ['Ojo', 'tapetum lucidum'], te: ['Eye', 'tapetum lucidum'] },
   { id: 'die', p: lerp3(bodyPt(.1, phiM(.1)), center(.1), .1), w: 1, t: ['Dientes aserrados', '2 filas · reemplazo continuo'], te: ['Serrated teeth', '2 rows · constant replacement'] },
   { id: 'bra', p: bodyPt(.215, 1.45), w: 0, t: ['Hendiduras branquiales', '5 por lado'], te: ['Gill slits', '5 per side'] },
   { id: 'dor', p: [X(.445), tD0(.445) + .122, 0], w: 0, t: ['Primera dorsal', 'estabiliza el balanceo'], te: ['First dorsal', 'steadies the roll'] },
@@ -3999,6 +4042,7 @@ vec3 bump(vec3 N, vec3 pos, float h){
   vec3 g = sign(det) * (dhx * r1 + dhy * r2);
   return normalize(abs(det) * N - g);
 }
+float fade0(float x, float y){ return 1. - clamp(max(fwidth(x), fwidth(y)) * .9, 0., 1.); }
 float line(float x, float w){ float f = abs(fract(x - .5) - .5), d = fwidth(x); return 1. - smoothstep(w * d, (w + 1.2) * d, f); }
 float segD(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0., 1.); return length(pa - ba * h); }
 float gills(float u, float a, out float h){
@@ -4046,7 +4090,10 @@ void main(){
   bool inside = !gl_FrontFacing && mat == 0;
   if (!gl_FrontFacing) N = -N;
   if (mat == 0 && inside){                            // interior de la boca: encía y paladar
-    alb = vec3(.025, .006, .009); rough = .4; ck = 0.;
+    float dl = clamp(vQ.z, 0., 3.);                                  // distancia angular al labio
+    alb = mix(vec3(.46, .17, .19), vec3(.05, .012, .016), smoothstep(.04, .7, dl));
+    alb *= .85 + .3 * fbm(vec2(u * 90., dl * 12.));
+    rough = .28; f0 = .03; sss = .5; ck = .15;
   } else if (mat == 0){
     float py = mod(vP.y + 3.14159265, 6.2831853) - 3.14159265;   // ángulo envuelto por fragmento
     float a = abs(py), side = py < 0. ? -1. : 1.;
@@ -4065,16 +4112,26 @@ void main(){
     alb = mix(alb, vec3(.025, .015, .02), g); h += gh;
     vec2 ep = vec2(u - .088, (a - 1.03) * .058);                       // cuenca del ojo
     float ed = length(ep);
-    alb *= 1. - .4 * exp(-pow((ed - .0088) / .003, 2.)); h += .6 * exp(-pow((ed - .009) / .0035, 2.));
-    if (u < .1){                                                        // ampollas de Lorenzini y narina
-      vec2 q = vec2(u * 520., py * 34.), id = floor(q), f = fract(q) - .5;
+    alb *= 1. - .55 * exp(-pow((ed - .0062) / .0014, 2.)) - .18 * exp(-pow((ed - .0075) / .004, 2.));   // párpado y cuenca
+    h -= .5 * exp(-pow(ed / .0095, 2.)) - .25 * exp(-pow((ed - .0102) / .0022, 2.));                   // órbita hundida con reborde suave
+    if (u < .11){                                                       // ampollas de Lorenzini y narinas
+      vec2 q = vec2(u * 980., py * 64.), id = floor(q), f = fract(q) - .5;
       float r = hash12(id + side * 13.);
-      float pore = step(.72, r) * (1. - smoothstep(.06, .13, length(f + (vec2(hash12(id + 3.), hash12(id + 7.)) - .5) * .5)));
-      float m = smoothstep(.1, .03, u) * smoothstep(1.,  1.4, a);
-      alb *= 1. - .35 * pore * m; h -= pore * m * .4;
-      float nd = length(vec2((u - .029) / .0075, (a - 2.25) / .085));
-      alb = mix(alb, vec3(.02), 1. - smoothstep(.6, 1., nd));
+      float pore = step(.66, r) * (1. - smoothstep(.07, .16, length(f + (vec2(hash12(id + 3.), hash12(id + 7.)) - .5) * .45)));
+      float m = smoothstep(.11, .035, u) * (smoothstep(.75, 1.6, a) + .35 * smoothstep(.07, .02, u));
+      m *= fade0(u * 980., py * 64.);
+      alb *= 1. - .28 * pore * m; h -= pore * m * .35;
+      // narina: hendidura oblicua por delante de la boca, con el colgajo anterior que la tapa a medias
+      vec2 nq = vec2(u, a * .034);
+      float nd = segD(nq, vec2(.021, 2.2 * .034), vec2(.037, 2.58 * .034));
+      float slit = 1. - smoothstep(.0007, .0013, nd);
+      float flap = exp(-pow((nd - .0016) / .0009, 2.)) * step(0., (nq.y - mix(2.2, 2.58, clamp((u - .021) / .016, 0., 1.)) * .034));
+      alb = mix(alb, vec3(.012, .01, .012), slit * .92); h += -1.1 * slit + .6 * flap;
     }
+    // pliegue de la piel en la comisura: la línea de la boca se prolonga un poco, sin surco labial marcado
+    float fur = exp(-pow((a - 2.02) / .03, 2.)) * smoothstep(.142, .15, u) * (1. - smoothstep(.155, .166, u));
+    alb *= 1. - .25 * fur; h -= .5 * fur;
+    if (vP.w > 1.5) alb = mix(alb * .45, vec3(.36, .2, .22), .35);      // pliegue de la comisura: hundido y algo rosado
     float sc = 1.;                                                       // cicatrices de viejas peleas
     vec2 pp = vec2(u, a * .06);
     sc = min(sc, segD(pp, vec2(.31, 1.0 * .06), vec2(.37, 1.22 * .06)));
@@ -4110,7 +4167,8 @@ void main(){
     float r = vQ.z;
     alb = mix(vec3(.62, .2, .23), vec3(.3, .045, .06), smoothstep(.05, .55, r));
     alb *= .84 + .16 * sin(r * 70. + vP.y * 3.);                              // pliegues transversales del paladar
-    alb = mix(alb, vec3(.012, .002, .004), smoothstep(.55, .98, r));
+    alb *= 1. - .55 * smoothstep(.58, .7, r) * smoothstep(.2, .8, sin(r * 46.) * .5 + .5);   // arcos branquiales en la faringe
+    alb = mix(alb, vec3(.012, .002, .004), smoothstep(.72, .99, r));
     h = .5 * fbm(vec2(vP.y * 60., r * 18.)) + .35 * sin(r * 70. + vP.y * 3.); bk = .0008;
     rough = .22; f0 = .03; sss = .6; ck = .1;
   } else if (mat == 3){
@@ -4121,12 +4179,16 @@ void main(){
     rough = .17; f0 = .05; sss = .4 + .8 * t; ck = .3;
   } else {
     // ojo: al morder rota hacia atrás y deja ver el tejido blanco que lo protege
-    alb = mix(vec3(.01), vec3(.72, .7, .66), uEye); rough = mix(.07, .35, uEye); f0 = .06; ck = .2;
-    emit = vec3(.03, .22, .15) * pow(max(dot(N, V), 0.), 5.) * .8 * (1. - uEye);   // brillo del tapetum
+    float c = vP.y;                                                        // 1 en el centro, ~0,4 en el borde
+    vec3 iris = mix(vec3(.045, .055, .068), vec3(.018, .022, .03), smoothstep(.5, .8, c));
+    iris *= .85 + .3 * noise(vec2(atan(N0.y, N0.x) * 9., c * 6.));         // fibras del iris, apenas visibles
+    alb = mix(iris, vec3(.003, .003, .004), smoothstep(.86, .93, c));      // pupila
+    alb = mix(alb, vec3(.46, .44, .43), uEye); rough = mix(.09, .4, uEye); f0 = .045; ck = .15;
+    emit = vec3(.02, .12, .09) * pow(max(dot(N, V), 0.), 12.) * smoothstep(.88, .95, c) * .35 * (1. - uEye);   // tapetum: solo en la pupila
   }
   if (bk > 0.) N = bump(N, vW, h * bk);
   vec3 col = shade(alb, N, V, rough, f0, sss, ck) + emit;
-  if (mat == 6 || mat == 7) col += alb * vec3(.55, .22, .22) * .5 * (mat == 6 ? 1. - smoothstep(.2, .9, vQ.z) : 1.);   // luz que entra y se dispersa en la boca
+  if (mat == 6 || mat == 7 || inside) col += alb * vec3(.55, .22, .22) * .5 * (mat == 6 ? 1. - smoothstep(.2, .9, vQ.z) : inside ? 1. - smoothstep(.05, .6, vQ.z) : 1.);   // luz que entra y se dispersa en la boca
   if (mat == 6) col *= mix(1.1, .3, smoothstep(.15, .95, vQ.z));                          // oclusión hacia la garganta
   // absorción del agua por canal (Beer-Lambert) y luz dispersada
   vec3 T = exp(-uSigma * length(uCam - vW));
@@ -4372,6 +4434,7 @@ const THEMES = {
 const ACC = [.12, .83, .54], BPL = [.5, .78, 1];
 const SUN = norm([.22, 1, .32]);
 const OMEGA = TAU * .42, BITEP = 11, BITE_START = 6.4, BITE = BITE_START + 1.05;   // BITE: instante de boca abierta del todo
+let DBG = null;                                           // vista de depuración (solo con navigator.webdriver)
 const st = { t: 0, mix: 0, mixTo: 0, mixV: 0, blue: 0, blueTo: 0, px: 0, py: 0, tx: 0, ty: 0 };   // el hero es siempre oscuro
 
 /* Mordisco según Tricas (1985): elevación del hocico + descenso de la mandíbula (apertura máxima a 0,167 s),
@@ -4402,12 +4465,17 @@ function frameState(t) {
   s.pos = add(mul(head, .05 * b), [0, .018 * Math.sin(t * .3), 0]);
   s.M = model(s.yaw, s.pitch, s.roll, s.pos);
   // cámara: ligeramente por debajo, con paralaje del puntero
-  const az = .02 + st.px * .07, el = -.13 + st.py * .05, dist = NARROW ? 1.4 : 1.6;
-  const tgt = [.04, NARROW ? .02 : .0, 0];
+  let az = .02 + st.px * .07, el = -.13 + st.py * .05, dist = NARROW ? 1.4 : 1.68;
+  let tgt = [.04, NARROW ? .02 : .0, 0];
+  if (DBG) {                                                // solo pruebas automatizadas: cámara libre sobre la cabeza
+    if (DBG.pose) { s.yaw = DBG.pose[0]; s.pitch = DBG.pose[1]; s.roll = DBG.pose[2]; s.M = model(s.yaw, s.pitch, s.roll, s.pos); }
+    az = DBG.az; el = DBG.el; dist = DBG.dist; tgt = DBG.tgt;
+    if (DBG.tgtM) { const m = s.M, q = DBG.tgtM; tgt = [m[0] * q[0] + m[4] * q[1] + m[8] * q[2] + m[12], m[1] * q[0] + m[5] * q[1] + m[9] * q[2] + m[13], m[2] * q[0] + m[6] * q[1] + m[10] * q[2] + m[14]]; }
+  }
   s.cam = add(tgt, [Math.sin(az) * Math.cos(el) * dist, Math.sin(el) * dist, Math.cos(az) * Math.cos(el) * dist]);
   s.V = M4.look(s.cam, tgt, [0, 1, 0]);
   const fov = .56, asp = W / H;
-  s.shift = NARROW ? [.1, -.04] : [.34, .02];
+  s.shift = DBG ? [0, 0] : NARROW ? [.1, -.04] : [.64, .035];   // a la derecha del título: la cabeza y la boca quedan despejadas
   s.P = M4.persp(fov, asp, .02, 30, s.shift[0], s.shift[1]);
   s.VP = M4.mul(s.P, s.V);
   s.tan = [Math.tan(fov / 2) * asp, Math.tan(fov / 2)];
@@ -4501,8 +4569,8 @@ function callouts(s) {
       const pl = document.createElementNS(NS_SVG, 'polyline'); pl.setAttribute('class', 'ld');
       const rc = document.createElementNS(NS_SVG, 'rect'); rc.setAttribute('class', 'plate'); rc.setAttribute('rx', 6);
       const dt = document.createElementNS(NS_SVG, 'circle'); dt.setAttribute('class', 'dot'); dt.setAttribute('r', 3);
-      const t1 = document.createElementNS(NS_SVG, 'text'); t1.setAttribute('class', 'k'); t1.textContent = (LANG === 'en' ? a.te : a.t)[0];
-      const t2 = document.createElementNS(NS_SVG, 'text'); t2.textContent = (LANG === 'en' ? a.te : a.t)[1];
+      const t1 = document.createElementNS(NS_SVG, 'text'); t1.setAttribute('class', 'k'); t1.textContent = ((LANG === 'en' && a.te) || a.t)[0];
+      const t2 = document.createElementNS(NS_SVG, 'text'); t2.textContent = ((LANG === 'en' && a.te) || a.t)[1];
       g.append(pl, rc, dt, t1, t2); svg.append(g);
       return { a, g, pl, rc, dt, t1, t2, w: 0 };
     });
@@ -4572,7 +4640,7 @@ function ensureGL() {
   gl = cv.getContext('webgl2', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance', preserveDrawingBuffer: false });
   if (!gl) return (glOk = false);
   try {
-    if (!geoReady) { buildBody(); buildMouth(); buildFins(); buildTeeth(); buildEyes(); geoReady = true; }
+    if (!geoReady) { buildBody(); buildMouth(); buildCorners(); buildFins(); buildTeeth(); buildEyes(); geoReady = true; }
     initGL();
   } catch (err) { console.error(err); gl = null; return (glOk = false); }
   cv.addEventListener('webglcontextlost', e => { e.preventDefault(); stop(); });
@@ -4631,6 +4699,7 @@ return {
   seek(t) { stop(); st.t = clock = t; settle(); },
   pause() { paused = true; stop(); },
   setMode(m) { st.blueTo = m === 'blue' ? 1 : 0; settle(); },
+  debugView(o) { if (navigator.webdriver) { DBG = o; settle(); } },
   stats: () => ({ vertices: VB.length / STRIDE, triangles: IB.length / 3, hdr, quality, running }),
 };
 })();

@@ -8,8 +8,8 @@ const URL0 = 'file://' + fileURLToPath(new URL('../dist/index.html', import.meta
 const OUT = fileURLToPath(new URL('../docs/capturas/', import.meta.url));
 const SHOTS = [
   { f: 'inicio-oscuro', w: 1280, h: 800, t: 7.45 },
-  { f: 'mordisco', w: 1280, h: 800, t: 7.45, clip: { x: 575, y: 70, width: 400, height: 300 }, dsf: 2 },
-  { f: 'protrusion', w: 1280, h: 800, t: 8.6, clip: { x: 575, y: 70, width: 400, height: 300 }, dsf: 2 },
+  { f: 'mordisco', w: 1280, h: 800, t: 7.45, clip: { x: 735, y: 60, width: 400, height: 300 }, dsf: 2 },
+  { f: 'protrusion', w: 1280, h: 800, t: 8.6, clip: { x: 735, y: 60, width: 400, height: 300 }, dsf: 2 },
   { f: 'plano-tecnico', w: 1280, h: 800, t: 5, mode: 'blue' },
   { f: 'inicio-claro', w: 1280, h: 800, t: 3, theme: 'light', full: true },
   { f: 'movil', w: 390, h: 844, t: 7.45 },
