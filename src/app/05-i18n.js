@@ -1,0 +1,39 @@
+/* Megalodon · textos de la interfaz. El contenido de las lecciones está en español; la interfaz, en español e inglés. */
+const STRINGS = {
+  es: {
+    skip: 'Saltar al contenido', home: 'Inicio', modules: 'Módulos', lab: 'Laboratorio', cheat: 'Chuleta', glossary: 'Glosario',
+    search: 'Buscar', searchPh: 'Busca módulos, filtros, campos o términos…', help: 'Ayuda', shortcuts: 'Atajos de teclado', settings: 'Ajustes',
+    themeToLight: 'Cambiar a modo claro', themeToDark: 'Cambiar a modo oscuro', menu: 'Menú', close: 'Cerrar', cancel: 'Cancelar',
+    filterPh: 'Filtro de visualización…  ( / )', apply: 'Aplicar', clear: 'Borrar filtro', follow: 'Seguir flujo TCP', stats: 'Estadísticas',
+    open: 'Abrir captura', exportPcapng: 'Exportar .pcapng', exportPcap: 'Exportar .pcap', colorize: 'Colores', no: 'N.º', time: 'Tiempo', src: 'Origen', dst: 'Destino',
+    proto: 'Protocolo', len: 'Long.', info: 'Info', packets: 'Paquetes', displayed: 'Mostrados', noPacket: 'Selecciona un paquete para ver su detalle.', bytes: 'Bytes',
+    detail: 'Detalle del paquete', packetList: 'Lista de paquetes', hexView: 'Bytes del paquete', applyAsFilter: 'Aplicar como filtro', relSeq: 'Seq relativos',
+    validFilter: 'Filtro válido', emptyResult: 'Ningún paquete cumple este filtro.', lesson: 'Lección', tasks: 'Retos', wireshark: 'Wireshark',
+    check: 'Comprobar', hint: 'Pista', solved: 'Resuelto', yourFilter: 'Tu filtro actual', selected: 'Paquete seleccionado', none: 'ninguno', answer: 'Tu respuesta',
+    tryIt: 'Pruébalo', start: 'Empezar', continue: 'Continuar', extra: 'Extra', minutes: 'min', badge: 'Insignia', level: 'Nivel', xp: 'XP',
+    progress: 'Progreso', resetProgress: 'Borrar mi progreso', resetConfirm: 'Sí, borrar', theme: 'Tema', light: 'Claro', dark: 'Oscuro', system: 'Sistema',
+    language: 'Idioma', copy: 'Copiar', copied: 'Copiado', lessonsInSpanish: '', importDrop: 'Suelta aquí un .pcap o .pcapng', captures: 'Captura',
+    conv: 'Conversaciones', hier: 'Jerarquía de protocolos', io: 'Gráfico de E/S', interval: 'Intervalo', filterThis: 'Filtrar esto', filterStream: 'Filtrar este flujo',
+    prevStream: 'Flujo anterior', nextStream: 'Flujo siguiente', client: 'Cliente', server: 'Servidor', allPackets: 'Todos los paquetes', matching: 'Cumplen el filtro',
+    moduleDone: '¡Módulo completado!', badgeEarned: 'Has ganado la insignia', next: 'Siguiente módulo', back: 'Volver', notFound: 'Esta página no existe.',
+  },
+  en: {
+    skip: 'Skip to content', home: 'Home', modules: 'Modules', lab: 'Lab', cheat: 'Cheat sheet', glossary: 'Glossary',
+    search: 'Search', searchPh: 'Search modules, filters, fields or terms…', help: 'Help', shortcuts: 'Keyboard shortcuts', settings: 'Settings',
+    themeToLight: 'Switch to light mode', themeToDark: 'Switch to dark mode', menu: 'Menu', close: 'Close', cancel: 'Cancel',
+    filterPh: 'Display filter…  ( / )', apply: 'Apply', clear: 'Clear filter', follow: 'Follow TCP Stream', stats: 'Statistics',
+    open: 'Open capture', exportPcapng: 'Export .pcapng', exportPcap: 'Export .pcap', colorize: 'Colors', no: 'No.', time: 'Time', src: 'Source', dst: 'Destination',
+    proto: 'Protocol', len: 'Length', info: 'Info', packets: 'Packets', displayed: 'Displayed', noPacket: 'Select a packet to see its details.', bytes: 'Bytes',
+    detail: 'Packet details', packetList: 'Packet list', hexView: 'Packet bytes', applyAsFilter: 'Apply as filter', relSeq: 'Relative seq',
+    validFilter: 'Valid filter', emptyResult: 'No packet matches this filter.', lesson: 'Lesson', tasks: 'Challenges', wireshark: 'Wireshark',
+    check: 'Check', hint: 'Hint', solved: 'Solved', yourFilter: 'Your current filter', selected: 'Selected packet', none: 'none', answer: 'Your answer',
+    tryIt: 'Try it', start: 'Start', continue: 'Continue', extra: 'Extra', minutes: 'min', badge: 'Badge', level: 'Level', xp: 'XP',
+    progress: 'Progress', resetProgress: 'Reset my progress', resetConfirm: 'Yes, reset', theme: 'Theme', light: 'Light', dark: 'Dark', system: 'System',
+    language: 'Language', copy: 'Copy', copied: 'Copied', lessonsInSpanish: 'Lessons and challenges are written in Spanish.', importDrop: 'Drop a .pcap or .pcapng here', captures: 'Capture',
+    conv: 'Conversations', hier: 'Protocol Hierarchy', io: 'I/O Graph', interval: 'Interval', filterThis: 'Filter this', filterStream: 'Filter this stream',
+    prevStream: 'Previous stream', nextStream: 'Next stream', client: 'Client', server: 'Server', allPackets: 'All packets', matching: 'Match the filter',
+    moduleDone: 'Module complete!', badgeEarned: 'You earned the badge', next: 'Next module', back: 'Back', notFound: 'This page does not exist.',
+  },
+};
+let LANG = 'es';
+const t = k => (STRINGS[LANG] && STRINGS[LANG][k]) ?? STRINGS.es[k] ?? k;
