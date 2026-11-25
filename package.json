@@ -1,6 +1,6 @@
 {
   "name": "megalodon",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Laboratorio de Wireshark sin conexión: capturas sintéticas de un pentest, filtros validados al instante y retos guiados.",
   "author": "Yoandy Ramírez Delgado",
   "license": "MIT",

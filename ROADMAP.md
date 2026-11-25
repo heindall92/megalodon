@@ -31,6 +31,9 @@
 - [x] Hoja «Más» que se cierra arrastrando; skills de diseño en `.claude/skills/`
 - [x] e2e y axe del perfil (con su peor caso), «Acerca de», buscador y efectos
 
+## 1.4.1 · Prueba estable ✅
+- [x] La e2e de los efectos de tema espera al cambio que aplica la View Transition
+
 ## 1.4.x · Contenido en inglés
 - [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
 
