@@ -1,6 +1,8 @@
 /* Megalodon · estado y progreso guardados en localStorage («megalodon.v1»). */
 const STORE_KEY = 'megalodon.v1';
 const LEVELS = [[0, 'Alevín'], [80, 'Tintorera'], [200, 'Tiburón martillo'], [380, 'Gran blanco'], [600, 'Megalodón']];
+const LEVELS_EN = ['Shark pup', 'Blue shark', 'Hammerhead', 'Great white', 'Megalodon'];
+const lvName = lv => (LANG === 'en' ? LEVELS_EN[lv.i] : lv.name);
 const XP_BY_HINTS = [10, 8, 6, 5];
 const BONUS_MODULE = 20;
 const S = (() => {

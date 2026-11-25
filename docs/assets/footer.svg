@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="170" viewBox="0 0 1280 170" role="img" aria-labelledby="t">
+  <title id="t">Megalodon · lee la red como un pentester</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#041634"/><stop offset=".55" stop-color="#082A5C"/><stop offset="1" stop-color="#0B3A7A"/></linearGradient>
+    <clipPath id="frame"><rect width="1280" height="170"/></clipPath>
+  </defs>
+  <style>
+    .ico { fill: none; stroke: #9FD0FF; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .t { font: 600 18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: rgba(255,255,255,.92); }
+    .s { font: 500 13px ui-monospace, 'SF Mono', Menlo, Consolas, monospace; fill: rgba(159,208,255,.85); letter-spacing: .04em; }
+    @media (prefers-reduced-motion: reduce) { animate, animateTransform { display: none } }
+  </style>
+  <g clip-path="url(#frame)">
+    <path fill="url(#bg)" d="M0 40C140 10 260 4 400 22C540 40 640 58 780 44C920 30 1060 6 1280 30V170H0Z"/>
+    <path fill="#fff" fill-opacity=".06" d="M0 60C160 30 300 26 440 44C580 62 700 76 840 62C980 48 1100 30 1280 50V70C1100 50 980 68 840 82C700 96 580 82 440 64C300 46 160 50 0 80Z"/>
+    <g transform="translate(96 112)"><path class="ico" d="M-24 0h18l6-12 8 24 6-12h18"><animate attributeName="stroke-opacity" values=".3;1;.3" dur="3s" repeatCount="indefinite"/></path></g>
+    <text class="t" x="640" y="106" text-anchor="middle">Megalodon · lee la red como un pentester</text>
+    <text class="s" x="640" y="132" text-anchor="middle">tcp.flags.syn == 1 &amp;&amp; tcp.flags.ack == 0</text>
+    <g transform="translate(1180 112)" class="ico"><circle r="6"/><circle r="6"><animate attributeName="r" values="6;30" dur="2.8s" repeatCount="indefinite"/><animate attributeName="stroke-opacity" values=".8;0" dur="2.8s" repeatCount="indefinite"/></circle></g>
+  </g>
+</svg>

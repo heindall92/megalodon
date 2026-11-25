@@ -186,6 +186,93 @@ await t('buscar (Ctrl F) por hex, ir al paquete (Ctrl G), formato de tiempo y fl
   await p.close2();
 });
 
+await t('armazón: lateral plegable con [, carril que se despliega al pasar el ratón y estado guardado', async () => {
+  const p = await page(browser, { hash: '#/m/m2' });
+  const w = () => p.$eval('#side', el => Math.round(el.getBoundingClientRect().width));
+  const open = await w();
+  assert(open > 200, `abierto ${open}`);
+  assert(await p.getAttribute('.side-nav [data-mod="m2"]', 'aria-current') === 'page', 'm2 activo en el lateral');
+  assert(await p.$eval('.side-ind', el => getComputedStyle(el).opacity) === '1', 'indicador visible');
+  await p.keyboard.press('[');
+  await p.waitForTimeout(450);
+  assert(await p.evaluate(() => document.body.classList.contains('side-mini')), 'clase side-mini');
+  assert(await p.getAttribute('[data-side]', 'aria-expanded') === 'false', 'aria-expanded false');
+  const rail = await p.$eval('.app', el => parseFloat(getComputedStyle(el).gridTemplateColumns));
+  assert(rail < 100, `carril ${rail}`);
+  await p.hover('.side-nav [data-nav="lab"]');
+  await p.waitForTimeout(450);
+  assert(await p.$eval('.side-nav [data-nav="lab"] .txt', el => +getComputedStyle(el).opacity) > 0.9, 'etiquetas visibles al pasar el ratón');
+  await p.mouse.move(900, 400);
+  await p.reload(); await p.waitForSelector('#main h1');
+  assert(await p.evaluate(() => document.body.classList.contains('side-mini')), 'plegado se recuerda');
+  await p.click('[data-side]'); await p.waitForTimeout(400);
+  assert(!(await p.evaluate(() => document.body.classList.contains('side-mini'))), 'se vuelve a abrir con el botón');
+  await p.click('.side-nav [data-nav="lab"]'); await p.waitForSelector('.lab');
+  assert(await p.getAttribute('.side-nav [data-nav="lab"]', 'aria-current') === 'page', 'lab activo');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('idioma: el interruptor ES|EN cambia toda la interfaz y se recuerda', async () => {
+  const p = await page(browser, { hash: '#/m/m3' });
+  await p.click('[data-lang="en"]');
+  await p.waitForFunction(() => document.documentElement.lang === 'en');
+  assert(await p.getAttribute('[data-lang="en"]', 'aria-pressed') === 'true', 'EN pulsado');
+  assert(/Cookies and cleartext credentials/.test(await p.textContent('#main h1')), 'título del módulo en inglés');
+  assert(/Challenges/.test(await p.textContent('#tab-tasks')), 'pestaña Retos → Challenges');
+  assert(/Modules/.test(await p.textContent('.side-nav [data-nav="modules"]')), 'lateral en inglés');
+  assert(/Lessons and challenges are written in Spanish/.test(await p.textContent('#pan-lesson')), 'aviso honesto de lecciones en español');
+  assert(/Wireshark lab/.test(await p.title()), 'título del documento');
+  await p.fill('.finput', 'ip.src = 1');
+  await p.waitForFunction(() => /A single “=” is not valid/.test(document.querySelector('.fmsg').textContent));
+  await p.click('[data-stats]'); await p.waitForTimeout(250);
+  assert(/Packets/.test(await p.textContent('.dlg thead')), 'cabeceras de estadísticas');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(250);
+  await p.goto(URL0 + '#/'); await p.reload(); await p.waitForSelector('#main h1');
+  assert(/Start with module 1|Continue/.test(await p.textContent('.hero .cta')), 'inicio en inglés tras recargar');
+  assert(/Shark pup/.test(await p.textContent('.lvl')), 'nivel en inglés');
+  await p.click('[data-lang="es"]');
+  await p.waitForFunction(() => document.documentElement.lang === 'es');
+  assert(/Empezar por el módulo 1|Continuar/.test(await p.textContent('.hero .cta')), 'vuelta al español');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('tema: el interruptor claro|oscuro es un role=switch y cambia data-theme', async () => {
+  const p = await page(browser, { theme: 'dark', hash: '#/chuleta' });
+  const sw = '[data-theme-btn]';
+  assert(await p.getAttribute(sw, 'role') === 'switch', 'role switch');
+  assert(await p.getAttribute(sw, 'aria-checked') === 'true', 'oscuro marcado');
+  await p.click(sw);
+  await p.waitForFunction(() => document.documentElement.dataset.theme === 'light');
+  assert(await p.getAttribute(sw, 'aria-checked') === 'false', 'claro desmarcado');
+  await p.keyboard.press('Shift+T');
+  await p.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('móvil: sin lateral, barra de pestañas abajo y hoja «Más» con glosario, ajustes, ayuda y atajos', async () => {
+  const p = await page(browser, { viewport: { width: 390, height: 844 }, hash: '#/m/m1' });
+  assert(await p.$eval('#side', el => getComputedStyle(el).display) === 'none', 'lateral oculto');
+  const tb = await p.$eval('#tabbar', el => { const r = el.getBoundingClientRect(); return { d: getComputedStyle(el).display, b: Math.round(r.bottom), n: el.children.length }; });
+  assert(tb.d !== 'none' && tb.b >= 820 && tb.b <= 844 && tb.n === 5, `tab bar ${JSON.stringify(tb)}`);
+  assert(await p.getAttribute('#tabbar [data-nav="modules"]', 'aria-current') === 'page', 'Módulos activo en el módulo');
+  assert(await p.evaluate(() => document.documentElement.scrollWidth) <= 390, 'sin scroll horizontal');
+  await p.click('#tabbar [data-nav="lab"]'); await p.waitForSelector('.lab');
+  assert(await p.getAttribute('#tabbar [data-nav="lab"]', 'aria-current') === 'page', 'Lab activo');
+  await p.click('[data-more]'); await p.waitForSelector('.more-list');
+  assert((await p.$$('.more-list > *')).length === 4, 'cuatro entradas');
+  await p.click('.more-list [data-a="settings"]');
+  await p.waitForFunction(() => /Ajustes/.test(document.querySelector('#dlg h2')?.textContent || ''));
+  await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+  await p.click('[data-more]'); await p.waitForSelector('.more-list');
+  await p.click('.more-list [data-go]'); await p.waitForSelector('.gl');
+  assert(!(await p.evaluate(() => document.querySelector('#dlg').open)), 'la hoja se cierra al navegar');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
 await t('curso completo: los 58 retos se resuelven desde la interfaz y se ganan las 8 insignias', async () => {
   const p = await page(browser, { hash: '#/modulos' });
   const mods = await p.evaluate(() => MODULES.map(m => ({ id: m.id, tasks: m.tasks.map(x => ({ id: x.id, type: x.type, ref: x.ref, match: x.match, ans: x.ans })) })));
@@ -226,6 +313,17 @@ for (const theme of ['dark', 'light']) await t(`axe 0 infracciones en los diálo
       await p.keyboard.press('Escape'); await p.waitForTimeout(300);
     }
   } finally { await p.close2(); }
+});
+
+await t('axe 0 infracciones · lateral plegado, inglés y hoja «Más»', async () => {
+  const p = await page(browser, { hash: '#/m/m1', axe: true });
+  try {
+    await p.keyboard.press('['); await p.waitForTimeout(450); await axe(p, 'lateral plegado');
+    await p.click('[data-lang="en"]'); await p.waitForTimeout(300); await axe(p, 'inglés');
+    await p.click('[data-theme-btn]'); await p.waitForTimeout(400); await axe(p, 'inglés claro');
+  } finally { await p.close2(); }
+  const m = await page(browser, { viewport: { width: 390, height: 844 }, theme: 'light', hash: '#/lab', axe: true });
+  try { await m.click('[data-more]'); await m.waitForSelector('.more-list'); await m.waitForTimeout(350); await axe(m, 'hoja Más'); } finally { await m.close2(); }
 });
 
 for (const [w, h] of [[1280, 800], [390, 844]]) for (const theme of ['dark', 'light']) {

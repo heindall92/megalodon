@@ -2,6 +2,22 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [1.3.0] - 2026-11-25
+
+### Añadido
+- **Armazón nuevo** al estilo de BlueJr y RiskManager-Jr: barra lateral a la izquierda con los ocho módulos y su progreso (punto de estado y retos x/y), nivel y XP abajo, e indicador que se desliza hasta la sección activa.
+- **Barra lateral plegable**: botón en la barra superior o tecla `[`. Plegada queda un carril de iconos que se despliega por encima al pasar el ratón o al llegar con el teclado. El estado se recuerda.
+- **Móvil**: la barra lateral desaparece y aparece una barra de pestañas abajo (Inicio, Módulos, Laboratorio, Chuleta y Más). «Más» abre una hoja con Glosario, Ajustes, Ayuda y Atajos.
+- **Interruptores** en la barra superior: idioma ES|EN segmentado y tema claro|oscuro (`role="switch"`, el pomo se estira al pulsar). Muelles sin rebote (`cubic-bezier(0.32, 0.72, 0, 1)`) y todo desactivado con «reducir movimiento».
+- **Interfaz completa en inglés**: vistas, retos (mensajes de corrección), diálogos de Wireshark, **árbol de detalle con las etiquetas que muestra Wireshark** (`Frame 1: 77 bytes on wire`, `Sequence Number`, `Request Method`…), exportar, buscar, ayuda, atajos, ajustes, búsqueda `Ctrl K`, niveles, títulos, subtítulos e insignias de los ocho módulos, diagrama de escalera y etiquetas del megalodón 3D. Los errores del motor de filtros se traducen en la interfaz sin tocar el motor.
+- Pruebas: `tests/i18n.test.mjs` (paridad de claves ES/EN, módulos con versión inglesa, traducción de cada error del filtro y de cada etiqueta del árbol en los 578 paquetes) y cinco e2e nuevas (lateral plegable, idioma, tema, móvil con la hoja «Más» y axe del lateral plegado, el inglés y la hoja).
+
+### Cambiado
+- La barra superior pasa a ser una píldora flotante con buscador. El menú hamburguesa desaparece: en móvil lo sustituye la barra de pestañas.
+
+### Sin traducir
+- Las lecciones, los enunciados y las pistas de los retos, el glosario y las descripciones de los campos siguen en español. La interfaz lo avisa en inglés.
+
 ## [1.2.0] - 2026-11-25
 
 ### Añadido

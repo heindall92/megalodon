@@ -10,9 +10,14 @@
 - [x] Retos que obligan a usarlas, con respuestas recalculadas desde los paquetes en las pruebas
 - [x] Recorrido e2e del curso completo y axe en los diálogos nuevos
 
-## 1.3.0 · Interfaz en inglés completa
-- [ ] El laboratorio ya tiene diccionario ES/EN para la interfaz; falta traducir lecciones y retos
-- [ ] Prueba de paridad de claves y recorrido e2e en inglés sin restos en español
+## 1.3.0 · Armazón nuevo e interfaz en inglés ✅
+- [x] Barra lateral plegable (carril que se despliega al pasar el ratón), barra de pestañas en móvil y hoja «Más»
+- [x] Interruptores ES|EN y claro|oscuro al estilo de BlueJr y RiskManager-Jr
+- [x] Toda la interfaz en inglés, con prueba de paridad de claves y traducción de cada error del filtro
+- [x] e2e del lateral, idioma, tema y móvil, y axe en el lateral plegado, el inglés y la hoja «Más»
+
+## 1.3.x · Contenido en inglés
+- [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
 
 ## 1.4.0 · Más capturas
 - [ ] Módulo de SMB y movimiento lateral (PsExec visto en el tráfico)

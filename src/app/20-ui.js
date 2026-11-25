@@ -71,7 +71,7 @@ async function copyText(txt, btn) {
     try { ok = document.execCommand('copy'); } catch { ok = false; } ta.remove();
   }
   if (btn) { btn.classList.add('done'); btn.innerHTML = ic(ok ? 'copied' : 'ko'); btn.setAttribute('aria-label', ok ? t('copied') : 'Error'); setTimeout(() => { btn.classList.remove('done'); btn.innerHTML = ic('copy'); btn.setAttribute('aria-label', t('copy')); }, 1400); }
-  toast(ok ? `${t('copied')}: <code>${esc(txt)}</code>` : 'No se pudo copiar', ok ? 'ok' : 'err', ok ? 'copied' : 'ko');
+  toast(ok ? `${t('copied')}: <code>${esc(txt)}</code>` : L('No se pudo copiar', 'Could not copy'), ok ? 'ok' : 'err', ok ? 'copied' : 'ko');
 }
 
 function download(bytes, name, type = 'application/octet-stream') {

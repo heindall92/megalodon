@@ -9,6 +9,7 @@ const MODULES = [
     id: 'm1', n: 1, cap: 'm1', icon: 'handshake', mins: 25,
     title: 'El saludo TCP', sub: 'Handshake de tres pasos, puertos, flags, Seq/Ack y cierre',
     badge: 'Domador del handshake',
+    title_en: 'The TCP handshake', sub_en: 'Three-way handshake, ports, flags, Seq/Ack and teardown', badge_en: 'Handshake tamer',
     intro: 'Kali (192.168.56.10) visita la web del laboratorio (192.168.56.20). Antes de que viaje un solo byte de HTTP, las dos máquinas se saludan. Aquí aprendes a leer ese saludo como lo hace un pentester.',
     lessons: [
       { h: 'Las tres zonas de Wireshark', p: ['Arriba está la **lista de paquetes**: una fila por paquete, con número, tiempo, origen, destino, protocolo, longitud e información resumida.', 'En medio, el **árbol de detalle**: el mismo paquete abierto por capas (Ethernet → IP → TCP → HTTP). Abajo, los **bytes** en hexadecimal. Si pulsas un campo del árbol, sus bytes se iluminan; si pulsas un byte, se abre su campo.', 'Los colores no son decoración: violeta claro es TCP, verde es HTTP, gris oscuro con letras rojas es un problema TCP y rojo es un RST.'], try: [['tcp', 'Solo TCP'], ['arp', 'Solo ARP: quién tiene esta IP']] },
@@ -32,6 +33,7 @@ const MODULES = [
     id: 'm2', n: 2, cap: 'm2', icon: 'globe', mins: 30,
     title: 'HTTP al desnudo', sub: 'Peticiones, cabeceras, métodos, códigos de estado y Follow Stream',
     badge: 'Lector de HTTP',
+    title_en: 'HTTP laid bare', sub_en: 'Requests, headers, methods, status codes and Follow Stream', badge_en: 'HTTP reader',
     intro: 'Marta entra en la tienda tienda.ewpt.local, inicia sesión y navega por su panel. Todo va por HTTP sin cifrar, así que lo puedes leer entero.',
     lessons: [
       { h: 'Petición y respuesta', p: ['Una petición HTTP empieza con la **línea de petición**: método, ruta y versión, por ejemplo `GET /login HTTP/1.1`. Debajo van las cabeceras y, tras una línea vacía, el cuerpo (si lo hay).', 'La respuesta empieza con la **línea de estado**: `HTTP/1.1 200 OK`. Wireshark enlaza cada respuesta con su petición: en el árbol verás «Petición en la trama» y la URI pedida.'], try: [['http.request', 'Solo peticiones'], ['http.response', 'Solo respuestas']] },
@@ -55,6 +57,7 @@ const MODULES = [
     id: 'm3', n: 3, cap: 'm3', icon: 'cookie', mins: 30,
     title: 'Cookies y credenciales en claro', sub: 'Sesiones, Basic Auth, formularios y FTP',
     badge: 'Cazador de credenciales',
+    title_en: 'Cookies and cleartext credentials', sub_en: 'Sessions, Basic Auth, forms and FTP', badge_en: 'Credential hunter',
     intro: 'En la intranet de una empresa, un equipo Windows (192.168.56.40) entra en un panel con Basic Auth, inicia sesión en un formulario y se conecta por FTP. Ninguno de los tres protocolos cifra nada.',
     lessons: [
       { h: 'Cookies: la memoria de la web', p: ['HTTP no recuerda quién eres entre peticiones. Tras el login, el servidor te da una **cookie de sesión** con `Set-Cookie` y tu navegador la devuelve en cada petición con `Cookie`. Quien tenga esa cookie **es** tú para el servidor.', 'Los atributos de la cookie importan: **HttpOnly** impide que JavaScript la lea (frena el robo por XSS), **Secure** obliga a enviarla solo por HTTPS y **SameSite** limita los envíos desde otras webs.'], try: [['http.set_cookie', 'El servidor reparte cookies'], ['http.cookie contains "PHPSESSID"', 'El cliente las devuelve']] },
@@ -77,6 +80,7 @@ const MODULES = [
     id: 'm4', n: 4, cap: 'm4', icon: 'signpost', mins: 20,
     title: 'DNS: la guía de teléfonos', sub: 'Consultas, respuestas, tipos de registro y NXDOMAIN',
     badge: 'Rastreador de nombres',
+    title_en: 'DNS: the phone book', sub_en: 'Queries, answers, record types and NXDOMAIN', badge_en: 'Name tracker',
     intro: 'Antes de visitar una web, el equipo pregunta su IP al DNS. Esa conversación cuenta mucho: qué servicios existen, dónde están alojados y qué nombres no existen.',
     lessons: [
       { h: 'Pregunta y respuesta', p: ['DNS suele ir por **UDP al puerto 53**. El cliente pregunta («¿qué IP tiene www.ewpt.local?») y el servidor responde con el mismo **ID de transacción**, así se emparejan.', '`dns.flags.response == 0` son preguntas y `== 1` respuestas. El nombre preguntado está en `dns.qry.name`.'], try: [['dns.flags.response == 0', 'Solo preguntas'], ['dns.qry.name contains "ewpt"', 'Nombres del laboratorio']] },
@@ -96,6 +100,7 @@ const MODULES = [
     id: 'm5', n: 5, cap: 'm5', icon: 'lock', mins: 25,
     title: 'TLS: lo que el cifrado deja ver', sub: 'Client Hello, SNI, ALPN, TLS 1.3 y HTTP sin cifrar',
     badge: 'Ojo de cerradura',
+    title_en: 'TLS: what encryption still shows', sub_en: 'Client Hello, SNI, ALPN, TLS 1.3 and unencrypted HTTP', badge_en: 'Keyhole eye',
     intro: 'Kali abre dos webs por HTTPS y, por despiste, envía un login por HTTP normal. Vas a comprobar qué esconde TLS y qué no.',
     lessons: [
       { h: 'El saludo TLS', p: ['Tras el saludo TCP llega el saludo TLS. El cliente envía **Client Hello** (versiones y cifrados que acepta, y el nombre del sitio) y el servidor responde **Server Hello** con lo elegido. En TLS 1.3, casi todo lo que viene después ya va cifrado.', 'El tipo de mensaje está en `tls.handshake.type`: 1 es Client Hello y 2 Server Hello.'], try: [['tls.handshake.type == 1', 'Client Hello'], ['tls.handshake.type == 2', 'Server Hello']] },
@@ -116,6 +121,7 @@ const MODULES = [
     id: 'm6', n: 6, cap: 'm6', icon: 'swords', mins: 40,
     title: 'Ataques web en el tráfico', sub: 'Escaneo SYN, fuerza bruta de directorios y de login, SQLi y XSS',
     badge: 'Ojo de halcón',
+    title_en: 'Web attacks on the wire', sub_en: 'SYN scan, directory and login brute force, SQLi and XSS', badge_en: 'Hawk eye',
     intro: 'Desde Kali alguien escanea el servidor, busca directorios ocultos, prueba contraseñas en bucle e inyecta SQL y JavaScript. Todo queda en la captura; aprende a reconocer cada firma.',
     lessons: [
       { h: 'Escaneo SYN (nmap -sS)', p: ['El atacante envía un **SYN** a muchos puertos desde el **mismo puerto de origen** y con ventana pequeña (1024). Si responde **SYN, ACK**, el puerto está abierto y el atacante corta enseguida con **RST** (por eso se llama «medio abierto»). Si responde **RST, ACK**, está cerrado.', 'Para ver los puertos abiertos: `tcp.flags.syn==1 && tcp.flags.ack==1 && tcp.srcport < 1024`. Y en Estadísticas → Conversaciones verás decenas de conversaciones de 2 paquetes.'], try: [['tcp.flags.syn==1 && tcp.flags.ack==0 && tcp.window_size_value == 1024', 'Los SYN del escaneo'], ['tcp.flags.syn==1 && tcp.flags.ack==1 && tcp.srcport < 1024', 'Puertos que dicen «abierto»']] },
@@ -142,6 +148,7 @@ const MODULES = [
     id: 'm7', n: 7, cap: 'm7', icon: 'network', mins: 25, extra: true,
     title: 'Directorio Activo: Kerberos, SMB y NTLM', sub: 'Tickets, SPN, RC4 y autenticación NTLM sobre SMB',
     badge: 'Guardián del dominio',
+    title_en: 'Active Directory: Kerberos, SMB and NTLM', sub_en: 'Tickets, SPNs, RC4 and NTLM authentication over SMB', badge_en: 'Domain guardian',
     intro: 'En el dominio MEGACORP.LOCAL, un usuario pide tickets Kerberos y un equipo intruso se autentica por SMB con NTLM contra el controlador de dominio.',
     lessons: [
       { h: 'Kerberos en cuatro mensajes', p: ['**AS-REQ / AS-REP**: el usuario pide al controlador de dominio su TGT (el «pase general»). **TGS-REQ / TGS-REP**: con el TGT pide tickets para servicios concretos, identificados por su **SPN** (por ejemplo `cifs/DC01.megacorp.local`).', 'Campos útiles: `kerberos.CNameString` (usuario), `kerberos.SNameString` (servicio), `kerberos.realm` (dominio) y `kerberos.etype` (cifrado).'], try: [['kerberos', 'Todo Kerberos'], ['kerberos.msg_type == 13', 'Tickets de servicio (TGS-REP)']] },
@@ -160,6 +167,7 @@ const MODULES = [
     id: 'm8', n: 8, cap: 'm8', icon: 'radar', mins: 25, extra: true,
     title: 'Caza en el SOC', sub: 'ARP spoofing, beacons de C2 y exfiltración por DNS',
     badge: 'Cazador del SOC',
+    title_en: 'SOC hunting', sub_en: 'ARP spoofing, C2 beacons and DNS exfiltration', badge_en: 'SOC hunter',
     intro: 'Un analista del SOC recibe esta captura de la estación WS-0412 (192.168.56.40). Hay tres cosas raras. Encuéntralas.',
     lessons: [
       { h: 'ARP spoofing', p: ['ARP traduce IP a MAC y no tiene autenticación. Un atacante puede gritar «la puerta de enlace soy yo» con respuestas ARP no pedidas y ponerse en medio (MITM).', 'Señal: varias respuestas ARP para la **misma IP con otra MAC**. Wireshark lo marca como «duplicate IP address».'], try: [['arp.opcode == 2', 'Respuestas ARP'], ['arp.src.proto_ipv4 == 192.168.56.1', 'Quién dice ser la puerta de enlace']] },

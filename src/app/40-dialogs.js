@@ -12,8 +12,8 @@ function openFollow(ws, stream, kind = 'tcp') {
         <div class="fs-ends"><span class="who cli">${ic('arrowR', 'sm')}${t('client')} <code>${esc(fs.client)}</code></span><span class="who srv">${ic('arrowL', 'sm')}${t('server')} <code>${esc(fs.server)}</code></span></div>
         <div class="row"><button class="ibtn" data-prev ${idx <= 0 ? 'disabled' : ''} aria-label="${t('prevStream')}">${ic('chevL')}</button><span class="mono sm">${kind}.stream eq ${cur}</span><button class="ibtn" data-next ${idx >= streams.length - 1 ? 'disabled' : ''} aria-label="${t('nextStream')}">${ic('chevR')}</button></div>
       </div>
-      <div class="fs-body mono" tabindex="0" aria-label="Contenido del flujo">${fs.chunks.length ? fs.chunks.map(c => `<pre class="${c.client ? 'cli' : 'srv'}"><span class="vh">${c.client ? t('client') : t('server')}: </span>${esc(c.text)}</pre>`).join('') : `<p class="muted">${udp ? 'Este flujo UDP no lleva datos.' : 'Este flujo no lleva datos: solo saludo y cierre (o un RST).'}</p>`}</div>
-      <p class="sm muted fs-sum">${t('client')} → ${t('server')}: <strong>${fmtNum(fs.cBytes)}</strong> bytes · ${t('server')} → ${t('client')}: <strong>${fmtNum(fs.sBytes)}</strong> bytes · ${fs.chunks.length} bloques</p>`;
+      <div class="fs-body mono" tabindex="0" aria-label="${L('Contenido del flujo', 'Stream content')}">${fs.chunks.length ? fs.chunks.map(c => `<pre class="${c.client ? 'cli' : 'srv'}"><span class="vh">${c.client ? t('client') : t('server')}: </span>${esc(c.text)}</pre>`).join('') : `<p class="muted">${udp ? L('Este flujo UDP no lleva datos.', 'This UDP stream carries no data.') : L('Este flujo no lleva datos: solo saludo y cierre (o un RST).', 'This stream carries no data: just handshake and teardown (or an RST).')}</p>`}</div>
+      <p class="sm muted fs-sum">${t('client')} → ${t('server')}: <strong>${fmtNum(fs.cBytes)}</strong> bytes · ${t('server')} → ${t('client')}: <strong>${fmtNum(fs.sBytes)}</strong> bytes · ${fs.chunks.length} ${L('bloques', 'chunks')}</p>`;
     $('[data-prev]', body).onclick = () => { cur = streams[idx - 1]; render(); };
     $('[data-next]', body).onclick = () => { cur = streams[idx + 1]; render(); };
   };
@@ -51,10 +51,10 @@ function convPanel(ws, panel) {
   const draw = () => {
     const rows = c[k], ports = k === 'tcp' || k === 'udp';
     const fl = r => k === 'tcp' ? `tcp.stream eq ${r.stream}` : k === 'udp' ? `udp.stream eq ${r.stream}` : k === 'ip' ? `ip.addr == ${r.a} && ip.addr == ${r.b}` : `eth.addr == ${r.a} && eth.addr == ${r.b}`;
-    panel.innerHTML = `<div class="chips" role="group" aria-label="Tipo de conversación">${kinds.map(([x, l]) => `<button class="chip ${x === k ? 'on' : ''}" aria-pressed="${x === k}" data-k="${x}">${l} <span class="num">${c[x].length}</span></button>`).join('')}</div>
-      <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl"><caption class="vh">Conversaciones ${k}</caption><thead><tr><th scope="col">${k === 'eth' ? 'Dirección A' : 'IP A'}</th>${ports ? '<th scope="col" class="n">Puerto A</th>' : ''}<th scope="col">${k === 'eth' ? 'Dirección B' : 'IP B'}</th>${ports ? '<th scope="col" class="n">Puerto B</th>' : ''}<th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">A → B</th><th scope="col" class="n">B → A</th><th scope="col" class="n">Inicio</th><th scope="col" class="n">Duración</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+    panel.innerHTML = `<div class="chips" role="group" aria-label="${L('Tipo de conversación', 'Conversation type')}">${kinds.map(([x, l]) => `<button class="chip ${x === k ? 'on' : ''}" aria-pressed="${x === k}" data-k="${x}">${l} <span class="num">${c[x].length}</span></button>`).join('')}</div>
+      <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl"><caption class="vh">${t('conv')} ${k}</caption><thead><tr><th scope="col">${k === 'eth' ? L('Dirección A', 'Address A') : 'IP A'}</th>${ports ? `<th scope="col" class="n">${L('Puerto A', 'Port A')}</th>` : ''}<th scope="col">${k === 'eth' ? L('Dirección B', 'Address B') : 'IP B'}</th>${ports ? `<th scope="col" class="n">${L('Puerto B', 'Port B')}</th>` : ''}<th scope="col" class="n">${L('Paquetes', 'Packets')}</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">A → B</th><th scope="col" class="n">B → A</th><th scope="col" class="n">${L('Inicio', 'Start')}</th><th scope="col" class="n">${L('Duración', 'Duration')}</th><th scope="col"><span class="vh">${L('Acción', 'Action')}</span></th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr><td class="mono">${esc(r.a)}</td>${ports ? `<td class="n mono">${r.pa}</td>` : ''}<td class="mono">${esc(r.b)}</td>${ports ? `<td class="n mono">${r.pb}</td>` : ''}<td class="n">${r.pkts}</td><td class="n">${fmtNum(r.bytes)}</td><td class="n">${r.ab}</td><td class="n">${r.ba}</td><td class="n mono">${r.start.toFixed(3)}</td><td class="n mono">${r.dur.toFixed(3)}</td><td><button class="ibtn sm" data-f="${esc(fl(r))}" aria-label="${t('filterThis')}: ${esc(fl(r))}" title="${t('filterThis')}">${ic('filter', 'sm')}</button></td></tr>`).join('')}</tbody></table></div>
-      <p class="sm muted">Pista: en un escaneo verás muchas conversaciones TCP de 2 o 3 paquetes desde el mismo origen.</p>`;
+      <p class="sm muted">${L('Pista: en un escaneo verás muchas conversaciones TCP de 2 o 3 paquetes desde el mismo origen.', 'Hint: in a scan you will see many 2- or 3-packet TCP conversations from the same source.')}</p>`;
     $$('[data-k]', panel).forEach(b => b.onclick = () => { k = b.dataset.k; draw(); });
     $$('[data-f]', panel).forEach(b => b.onclick = () => { ws.setFilter(b.dataset.f); closeDialog(); });
   };
@@ -65,7 +65,7 @@ function hierPanel(ws, panel) {
   const h = protocolHierarchy(ws.pkts), rows = [];
   const walk = n => { rows.push(n); n.kids.forEach(walk); };
   walk(h);
-  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl hier"><caption class="vh">${t('hier')}</caption><thead><tr><th scope="col">Protocolo</th><th scope="col" class="n">% paquetes</th><th scope="col" class="bar-col"><span class="vh">Barra</span></th><th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('stats')}"><table class="tbl hier"><caption class="vh">${t('hier')}</caption><thead><tr><th scope="col">${L('Protocolo', 'Protocol')}</th><th scope="col" class="n">${L('% paquetes', '% packets')}</th><th scope="col" class="bar-col"><span class="vh">${L('Barra', 'Bar')}</span></th><th scope="col" class="n">${L('Paquetes', 'Packets')}</th><th scope="col" class="n">Bytes</th><th scope="col"><span class="vh">${L('Acción', 'Action')}</span></th></tr></thead>
     <tbody>${rows.map(r => { const name = r.name === 'frame' ? 'Frame' : r.name; const f = r.name === 'frame' ? '' : r.name; return `<tr><td><span class="ind" data-d="${Math.min(r.depth, 8)}">${esc(name)}</span></td><td class="n">${r.pct.toFixed(1)} %</td><td class="bar-col"><span class="bar" data-w="${r.pct}"></span></td><td class="n">${r.pkts}</td><td class="n">${fmtNum(r.bytes)}</td><td>${f && FIELDS[f] ? `<button class="ibtn sm" data-f="${esc(f)}" aria-label="${t('filterThis')}: ${esc(f)}">${ic('filter', 'sm')}</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div>`;
   $$('.bar', panel).forEach(b => { b.style.width = `${b.dataset.w}%`; });
   $$('.ind', panel).forEach(s => { s.style.paddingInlineStart = `${s.dataset.d * 16}px`; });
@@ -83,13 +83,13 @@ function ioPanel(ws, panel) {
     const y = v => H - pb - (v / max) * (H - pb - 10);
     const ticks = [0, Math.ceil(max / 2), max];
     const xl = Math.max(1, Math.ceil(g.buckets.length / 8));
-    panel.innerHTML = `<div class="row between"><div class="row sm"><span class="lgd all"><i></i>${t('allPackets')}</span>${test ? `<span class="lgd hit"><i></i>${t('matching')}: <code>${esc(ws.filterText)}</code></span>` : '<span class="muted">Aplica un filtro para compararlo con el total.</span>'}</div>
+    panel.innerHTML = `<div class="row between"><div class="row sm"><span class="lgd all"><i></i>${t('allPackets')}</span>${test ? `<span class="lgd hit"><i></i>${t('matching')}: <code>${esc(ws.filterText)}</code></span>` : `<span class="muted">${L('Aplica un filtro para compararlo con el total.', 'Apply a filter to compare it with the total.')}</span>`}</div>
       <label class="row sm">${t('interval')} <select data-iv>${(opts.length ? opts : [iv]).map(o => `<option value="${o}" ${o === iv ? 'selected' : ''}>${o} s</option>`).join('')}</select></label></div>
-      <svg class="io" viewBox="0 0 ${W} ${H}" role="img" aria-label="Paquetes por intervalo de ${iv} segundos: máximo ${max}">
+      <svg class="io" viewBox="0 0 ${W} ${H}" role="img" aria-label="${L(`Paquetes por intervalo de ${iv} segundos: máximo ${max}`, `Packets per ${iv}-second interval: maximum ${max}`)}">
         ${ticks.map(v => `<line class="gl" x1="${pl}" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join('')}
-        ${g.buckets.map((b, i) => `<rect class="b-all" x="${pl + i * bw + bw * 0.12}" y="${y(b.all)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.all)}" rx="${Math.min(3, bw / 4)}"><title>${b.t} s: ${b.all} paquetes${test ? `, ${b.hit} cumplen el filtro` : ''}</title></rect>${test && b.hit ? `<rect class="b-hit" x="${pl + i * bw + bw * 0.12}" y="${y(b.hit)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.hit)}" rx="${Math.min(3, bw / 4)}"/>` : ''}`).join('')}
+        ${g.buckets.map((b, i) => `<rect class="b-all" x="${pl + i * bw + bw * 0.12}" y="${y(b.all)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.all)}" rx="${Math.min(3, bw / 4)}"><title>${b.t} s: ${b.all} ${L('paquetes', 'packets')}${test ? `, ${b.hit} ${L('cumplen el filtro', 'match the filter')}` : ''}</title></rect>${test && b.hit ? `<rect class="b-hit" x="${pl + i * bw + bw * 0.12}" y="${y(b.hit)}" width="${Math.max(1, bw * 0.76)}" height="${H - pb - y(b.hit)}" rx="${Math.min(3, bw / 4)}"/>` : ''}`).join('')}
         ${g.buckets.map((b, i) => i % xl === 0 ? `<text class="ax" x="${pl + i * bw + bw / 2}" y="${H - 8}" text-anchor="middle">${+b.t.toFixed(2)}</text>` : '').join('')}
-      </svg><p class="sm muted">Eje horizontal: segundos desde el primer paquete. Un pico que se repite a intervalos fijos puede ser un beacon.</p>`;
+      </svg><p class="sm muted">${L('Eje horizontal: segundos desde el primer paquete. Un pico que se repite a intervalos fijos puede ser un beacon.', 'Horizontal axis: seconds since the first packet. A spike that repeats at fixed intervals may be a beacon.')}</p>`;
     $('[data-iv]', panel).onchange = e => { iv = +e.target.value; draw(); };
   };
   draw();
@@ -99,22 +99,23 @@ function ioPanel(ws, panel) {
 /* ---------- Endpoints (Estadísticas › Endpoints › IPv4) ---------- */
 function endsPanel(ws, panel) {
   const rows = endpoints(ws.pkts);
-  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('endpoints')}"><table class="tbl"><caption class="vh">${t('endpoints')} IPv4</caption><thead><tr><th scope="col">Dirección</th><th scope="col" class="n">Paquetes</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">Enviados</th><th scope="col" class="n">Recibidos</th><th scope="col"><span class="vh">Acción</span></th></tr></thead>
+  panel.innerHTML = `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('endpoints')}"><table class="tbl"><caption class="vh">${t('endpoints')} IPv4</caption><thead><tr><th scope="col">${L('Dirección', 'Address')}</th><th scope="col" class="n">${L('Paquetes', 'Packets')}</th><th scope="col" class="n">Bytes</th><th scope="col" class="n">${L('Enviados', 'Sent')}</th><th scope="col" class="n">${L('Recibidos', 'Received')}</th><th scope="col"><span class="vh">${L('Acción', 'Action')}</span></th></tr></thead>
     <tbody>${rows.map(e => `<tr><td class="mono">${esc(e.addr)}</td><td class="n">${fmtNum(e.pkts)}</td><td class="n">${fmtNum(e.bytes)}</td><td class="n">${fmtNum(e.tx)}</td><td class="n">${fmtNum(e.rx)}</td><td><button class="btn sm ghost" type="button" data-f="ip.addr == ${esc(e.addr)}">${ic('filter', 'sm')}${t('filterThis')}</button></td></tr>`).join('')}</tbody></table></div>
-    <p class="sm muted">Cada IP que aparece en la captura. Un equipo que solo recibe, o uno que habla con muchos, suele ser el primer hilo del que tirar.</p>`;
+    <p class="sm muted">${L('Cada IP que aparece en la captura. Un equipo que solo recibe, o uno que habla con muchos, suele ser el primer hilo del que tirar.', 'Every IP in the capture. A host that only receives, or one that talks to many, is usually the first thread to pull.')}</p>`;
   $$('[data-f]', panel).forEach(b => b.onclick = () => { ws.setFilter(b.dataset.f); closeDialog(); });
 }
 
 /* ---------- Analizar › Información experta ---------- */
-const SEV_LABEL = { error: 'Error', warn: 'Aviso', note: 'Nota', chat: 'Conversación' };
+const SEV_LABELS = { es: { error: 'Error', warn: 'Aviso', note: 'Nota', chat: 'Conversación' }, en: { error: 'Error', warn: 'Warning', note: 'Note', chat: 'Chat' } };
+const sevLabel = k => SEV_LABELS[LANG === 'en' ? 'en' : 'es'][k];
 function openExpert(ws) {
   const ex = expertInfo(ws.pkts), body = document.createElement('div');
-  body.innerHTML = `<p class="muted sm">Wireshark resume aquí lo que le llama la atención de cada paquete, de más grave a más rutinario. Los mensajes se muestran en inglés, como en Wireshark, para que los reconozcas.</p>
-    <div class="ex-sum">${EXPERT_SEV.map(([k, en]) => `<span class="ex-chip sev-${k}"><strong>${fmtNum(ex.count[k])}</strong> ${SEV_LABEL[k]} <small>(${en})</small></span>`).join('')}</div>
-    ${ex.items.length ? `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('expert')}"><table class="tbl ex"><caption class="vh">${t('expert')}</caption><thead><tr><th scope="col">Severidad</th><th scope="col">Resumen</th><th scope="col">Protocolo</th><th scope="col" class="n">Cantidad</th><th scope="col">Paquetes</th></tr></thead>
-    <tbody>${ex.items.map((it, i) => `<tr><td><span class="ex-chip sev-${it.sev}">${SEV_LABEL[it.sev]}</span></td><td class="mono">${esc(it.summary)}</td><td>${esc(it.proto)}</td><td class="n">${fmtNum(it.nos.length)}</td>
-      <td><div class="ex-nos">${it.nos.slice(0, 8).map(n => `<button class="btn sm ghost mono" type="button" data-no="${n}" aria-label="Ir al paquete ${n}">${n}</button>`).join('')}${it.nos.length > 1 ? `<button class="btn sm ghost" type="button" data-show="${i}">${ic('filter', 'sm')}Mostrar</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>`
-      : '<p class="muted">No hay entradas: esta captura no tiene TCP ni HTTP que comentar.</p>'}`;
+  body.innerHTML = `<p class="muted sm">${L('Wireshark resume aquí lo que le llama la atención de cada paquete, de más grave a más rutinario. Los mensajes se muestran en inglés, como en Wireshark, para que los reconozcas.', 'Wireshark sums up here what catches its eye in each packet, from most serious to most routine.')}</p>
+    <div class="ex-sum">${EXPERT_SEV.map(([k, en]) => `<span class="ex-chip sev-${k}"><strong>${fmtNum(ex.count[k])}</strong> ${sevLabel(k)}${LANG === 'en' ? '' : ` <small>(${en})</small>`}</span>`).join('')}</div>
+    ${ex.items.length ? `<div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('expert')}"><table class="tbl ex"><caption class="vh">${t('expert')}</caption><thead><tr><th scope="col">${L('Severidad', 'Severity')}</th><th scope="col">${L('Resumen', 'Summary')}</th><th scope="col">${L('Protocolo', 'Protocol')}</th><th scope="col" class="n">${L('Cantidad', 'Count')}</th><th scope="col">${L('Paquetes', 'Packets')}</th></tr></thead>
+    <tbody>${ex.items.map((it, i) => `<tr><td><span class="ex-chip sev-${it.sev}">${sevLabel(it.sev)}</span></td><td class="mono">${esc(it.summary)}</td><td>${esc(it.proto)}</td><td class="n">${fmtNum(it.nos.length)}</td>
+      <td><div class="ex-nos">${it.nos.slice(0, 8).map(n => `<button class="btn sm ghost mono" type="button" data-no="${n}" aria-label="${L('Ir al paquete', 'Go to packet')} ${n}">${n}</button>`).join('')}${it.nos.length > 1 ? `<button class="btn sm ghost" type="button" data-show="${i}">${ic('filter', 'sm')}${L('Mostrar', 'Show')}</button>` : ''}</div></td></tr>`).join('')}</tbody></table></div>`
+      : `<p class="muted">${L('No hay entradas: esta captura no tiene TCP ni HTTP que comentar.', 'No entries: this capture has no TCP or HTTP worth commenting on.')}</p>`}`;
   openDialog({ title: `${ic('alert')} ${t('expert')}`, body, wide: true });
   $$('[data-no]', body).forEach(b => b.onclick = () => { closeDialog(); ws.select(+b.dataset.no, { focusList: true }); });
   $$('[data-show]', body).forEach(b => b.onclick = () => { closeDialog(); ws.setFilter(`frame.number in {${ex.items[+b.dataset.show].nos.join(', ')}}`); });
@@ -124,18 +125,18 @@ function openExpert(ws) {
 function openObjects(ws) {
   const objs = httpObjects(ws.pkts), body = document.createElement('div');
   const isText = o => /^(text\/|application\/(json|javascript|xml|x-www-form-urlencoded))/i.test(o.type);
-  body.innerHTML = objs.length ? `<p class="muted sm">Los cuerpos HTTP reconstruidos de la captura: páginas, scripts, JSON, formularios y ficheros. Así se recupera lo que se descargó (o se robó) por HTTP sin cifrar.</p>
-    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('objects')}"><table class="tbl"><caption class="vh">${t('objects')}</caption><thead><tr><th scope="col" class="n">Paquete</th><th scope="col">Host</th><th scope="col">Tipo de contenido</th><th scope="col" class="n">Tamaño</th><th scope="col">Nombre</th><th scope="col"><span class="vh">Acciones</span></th></tr></thead>
-    <tbody>${objs.map((o, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-no="${o.no}" aria-label="Ir al paquete ${o.no}">${o.no}</button></td><td class="mono">${esc(o.host)}</td><td class="mono sm">${esc(o.type || '—')}</td><td class="n">${fmtNum(o.size)} B</td><td class="mono">${esc(o.name)}</td>
-      <td><div class="row">${isText(o) ? `<button class="btn sm ghost" type="button" data-view="${i}" aria-label="Ver ${esc(o.name)}">${ic('eye', 'sm')}Ver</button>` : ''}<button class="btn sm ghost" type="button" data-save="${i}" aria-label="Guardar ${esc(o.name)}">${ic('download', 'sm')}Guardar</button></div></td></tr>`).join('')}</tbody></table></div>
+  body.innerHTML = objs.length ? `<p class="muted sm">${L('Los cuerpos HTTP reconstruidos de la captura: páginas, scripts, JSON, formularios y ficheros. Así se recupera lo que se descargó (o se robó) por HTTP sin cifrar.', 'HTTP bodies rebuilt from the capture: pages, scripts, JSON, forms and files. This is how you recover what was downloaded (or stolen) over plain HTTP.')}</p>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('objects')}"><table class="tbl"><caption class="vh">${t('objects')}</caption><thead><tr><th scope="col" class="n">${L('Paquete', 'Packet')}</th><th scope="col">Host</th><th scope="col">${L('Tipo de contenido', 'Content type')}</th><th scope="col" class="n">${L('Tamaño', 'Size')}</th><th scope="col">${L('Nombre', 'Filename')}</th><th scope="col"><span class="vh">${L('Acciones', 'Actions')}</span></th></tr></thead>
+    <tbody>${objs.map((o, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-no="${o.no}" aria-label="${L('Ir al paquete', 'Go to packet')} ${o.no}">${o.no}</button></td><td class="mono">${esc(o.host)}</td><td class="mono sm">${esc(o.type || '—')}</td><td class="n">${fmtNum(o.size)} B</td><td class="mono">${esc(o.name)}</td>
+      <td><div class="row">${isText(o) ? `<button class="btn sm ghost" type="button" data-view="${i}" aria-label="${L('Ver', 'View')} ${esc(o.name)}">${ic('eye', 'sm')}${L('Ver', 'View')}</button>` : ''}<button class="btn sm ghost" type="button" data-save="${i}" aria-label="${L('Guardar', 'Save')} ${esc(o.name)}">${ic('download', 'sm')}${L('Guardar', 'Save')}</button></div></td></tr>`).join('')}</tbody></table></div>
     <div class="ob-prev" hidden><p class="sm"><strong data-pn></strong></p><pre class="mono" tabindex="0"></pre></div>`
-    : '<p class="muted">Esta captura no lleva objetos HTTP. Prueba con los módulos 2, 3 o 6.</p>';
+    : `<p class="muted">${L('Esta captura no lleva objetos HTTP. Prueba con los módulos 2, 3 o 6.', 'This capture carries no HTTP objects. Try modules 2, 3 or 6.')}</p>`;
   openDialog({ title: `${ic('file')} ${t('objects')}`, body, wide: true });
   $$('[data-no]', body).forEach(b => b.onclick = () => { closeDialog(); ws.select(+b.dataset.no, { focusList: true }); });
-  $$('[data-save]', body).forEach(b => b.onclick = () => { const o = objs[+b.dataset.save]; download(o.data, o.name, 'application/octet-stream'); toast(`Guardado: <code>${esc(o.name)}</code>`, 'ok', 'download'); });
+  $$('[data-save]', body).forEach(b => b.onclick = () => { const o = objs[+b.dataset.save]; download(o.data, o.name, 'application/octet-stream'); toast(`${L('Guardado', 'Saved')}: <code>${esc(o.name)}</code>`, 'ok', 'download'); });
   $$('[data-view]', body).forEach(b => b.onclick = () => {
     const o = objs[+b.dataset.view], pv = $('.ob-prev', body);
-    pv.hidden = false; $('[data-pn]', pv).textContent = `${o.name} · paquete ${o.no}`;
+    pv.hidden = false; $('[data-pn]', pv).textContent = `${o.name} · ${L('paquete', 'packet')} ${o.no}`;
     $('pre', pv).textContent = new TextDecoder().decode(o.data);                 // texto, nunca HTML interpretado
     $('pre', pv).focus();
   });
@@ -144,11 +145,11 @@ function openObjects(ws) {
 /* ---------- Herramientas › Credenciales ---------- */
 function openCreds(ws) {
   const cr = credentials(ws.pkts), body = document.createElement('div');
-  body.innerHTML = cr.length ? `<p class="muted sm">Usuarios que viajan por protocolos que Wireshark sabe leer (HTTP Basic, FTP, NTLMSSP). Pulsa el paquete para ir al campo exacto del árbol.</p>
-    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('creds')}"><table class="tbl"><caption class="vh">${t('creds')}</caption><thead><tr><th scope="col" class="n">Paquete</th><th scope="col">Protocolo</th><th scope="col">Usuario</th><th scope="col">Información</th></tr></thead>
-    <tbody>${cr.map((c, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-i="${i}" aria-label="Ir al paquete ${c.no}">${c.no}</button></td><td>${esc(c.proto)}</td><td class="mono">${esc(c.user)}</td><td class="sm">${esc(c.info)}</td></tr>`).join('')}</tbody></table></div>
-    <p class="sm muted">Wireshark no muestra aquí los formularios POST: esos los buscas tú con <code>http.request.method == "POST"</code>.</p>`
-    : '<p class="muted">No hay credenciales en esta captura. Las encontrarás en los módulos 3 (HTTP Basic y FTP) y 7 (NTLMSSP).</p>';
+  body.innerHTML = cr.length ? `<p class="muted sm">${L('Usuarios que viajan por protocolos que Wireshark sabe leer (HTTP Basic, FTP, NTLMSSP). Pulsa el paquete para ir al campo exacto del árbol.', 'Usernames carried by protocols Wireshark can read (HTTP Basic, FTP, NTLMSSP). Click the packet to jump to the exact field in the tree.')}</p>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="${t('creds')}"><table class="tbl"><caption class="vh">${t('creds')}</caption><thead><tr><th scope="col" class="n">${L('Paquete', 'Packet')}</th><th scope="col">${L('Protocolo', 'Protocol')}</th><th scope="col">${L('Usuario', 'Username')}</th><th scope="col">${L('Información', 'Info')}</th></tr></thead>
+    <tbody>${cr.map((c, i) => `<tr><td class="n"><button class="btn sm ghost mono" type="button" data-i="${i}" aria-label="${L('Ir al paquete', 'Go to packet')} ${c.no}">${c.no}</button></td><td>${esc(c.proto)}</td><td class="mono">${esc(c.user)}</td><td class="sm">${esc(c.info)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="sm muted">${L('Wireshark no muestra aquí los formularios POST: esos los buscas tú con', 'Wireshark does not list POST forms here: find those yourself with')} <code>http.request.method == "POST"</code>.</p>`
+    : `<p class="muted">${L('No hay credenciales en esta captura. Las encontrarás en los módulos 3 (HTTP Basic y FTP) y 7 (NTLMSSP).', 'No credentials in this capture. You will find them in modules 3 (HTTP Basic and FTP) and 7 (NTLMSSP).')}</p>`;
   openDialog({ title: `${ic('lock')} ${t('creds')}`, body, wide: true });
   $$('[data-i]', body).forEach(b => b.onclick = () => { const c = cr[+b.dataset.i]; closeDialog(); ws.revealField(c.no, c.field); });
 }
@@ -158,14 +159,14 @@ function openFind(ws, mode = 'find') {
   const body = document.createElement('div');
   body.innerHTML = `<div class="seg" role="tablist" aria-label="${t('findPkt')}"><button role="tab" id="fd-find" aria-selected="${mode === 'find'}" data-m="find">${ic('search', 'sm')}${t('findPkt')}</button><button role="tab" id="fd-goto" aria-selected="${mode === 'goto'}" data-m="goto">${ic('target', 'sm')}${t('gotoPkt')}</button></div>
     <form class="fd" data-p="find" ${mode === 'find' ? '' : 'hidden'} aria-labelledby="fd-find">
-      <div class="row wrap"><label class="sm" for="fd-k">Buscar por</label><select id="fd-k" class="sel"><option value="filter">Filtro de visualización</option><option value="str">Cadena en los bytes</option><option value="hex">Valor hexadecimal</option></select>
-      <label class="row sm"><input type="checkbox" id="fd-c"> Distinguir mayúsculas</label></div>
-      <label class="vh" for="fd-q">Qué buscar</label><input id="fd-q" class="tinput mono" type="text" autocomplete="off" spellcheck="false" placeholder="p. ej. http.cookie, password o 50 4b 03 04">
-      <div class="row"><button class="btn primary sm" type="submit">${ic('search', 'sm')}Buscar siguiente</button><span class="sm" data-msg aria-live="polite"></span></div>
+      <div class="row wrap"><label class="sm" for="fd-k">${L('Buscar por', 'Search by')}</label><select id="fd-k" class="sel"><option value="filter">${L('Filtro de visualización', 'Display filter')}</option><option value="str">${L('Cadena en los bytes', 'String in bytes')}</option><option value="hex">${L('Valor hexadecimal', 'Hex value')}</option></select>
+      <label class="row sm"><input type="checkbox" id="fd-c"> ${L('Distinguir mayúsculas', 'Case sensitive')}</label></div>
+      <label class="vh" for="fd-q">${L('Qué buscar', 'What to find')}</label><input id="fd-q" class="tinput mono" type="text" autocomplete="off" spellcheck="false" placeholder="${L('p. ej. http.cookie, password o 50 4b 03 04', 'e.g. http.cookie, password or 50 4b 03 04')}">
+      <div class="row"><button class="btn primary sm" type="submit">${ic('search', 'sm')}${L('Buscar siguiente', 'Find next')}</button><span class="sm" data-msg aria-live="polite"></span></div>
     </form>
     <form class="fd" data-p="goto" ${mode === 'goto' ? '' : 'hidden'} aria-labelledby="fd-goto">
-      <label class="sm" for="fd-n">Número de paquete (1 a ${fmtNum(ws.pkts.length)})</label><input id="fd-n" class="tinput mono" type="number" min="1" max="${ws.pkts.length}" inputmode="numeric">
-      <div class="row"><button class="btn primary sm" type="submit">${ic('target', 'sm')}Ir</button><span class="sm" data-msg2 aria-live="polite"></span></div>
+      <label class="sm" for="fd-n">${L('Número de paquete', 'Packet number')} (1 ${L('a', 'to')} ${fmtNum(ws.pkts.length)})</label><input id="fd-n" class="tinput mono" type="number" min="1" max="${ws.pkts.length}" inputmode="numeric">
+      <div class="row"><button class="btn primary sm" type="submit">${ic('target', 'sm')}${L('Ir', 'Go')}</button><span class="sm" data-msg2 aria-live="polite"></span></div>
     </form>`;
   openDialog({ title: `${ic('search')} ${t('findPkt')}`, body, cls: 'narrow' });
   const show = m => { $$('[role=tab]', body).forEach(b => b.setAttribute('aria-selected', String(b.dataset.m === m))); $$('form', body).forEach(f => { f.hidden = f.dataset.p !== m; }); $(m === 'find' ? '#fd-q' : '#fd-n', body).focus(); };
@@ -180,20 +181,20 @@ function openFind(ws, mode = 'find') {
   $('[data-p=goto]', body).onsubmit = e => {
     e.preventDefault();
     const n = +$('#fd-n', body).value, m2 = $('[data-msg2]', body);
-    if (!ws.byNo.has(n)) { m2.className = 'sm bad'; m2.textContent = `No existe el paquete ${n}.`; return; }
-    if (!ws.view.some(p => p.no === n)) { m2.className = 'sm bad'; m2.textContent = `El paquete ${n} está oculto por el filtro actual. Bórralo para verlo.`; return; }
+    if (!ws.byNo.has(n)) { m2.className = 'sm bad'; m2.textContent = L(`No existe el paquete ${n}.`, `Packet ${n} does not exist.`); return; }
+    if (!ws.view.some(p => p.no === n)) { m2.className = 'sm bad'; m2.textContent = L(`El paquete ${n} está oculto por el filtro actual. Bórralo para verlo.`, `Packet ${n} is hidden by the current filter. Clear it to see it.`); return; }
     closeDialog(); ws.select(n, { focusList: true });
   };
 }
 /* Busca el siguiente paquete mostrado, tras el seleccionado y dando la vuelta, como Wireshark. */
 function findPacket(ws, kind, q, cs) {
   q = String(q || '');
-  if (!q.trim()) return { ok: false, msg: 'Escribe qué buscar.' };
+  if (!q.trim()) return { ok: false, msg: L('Escribe qué buscar.', 'Type what to find.') };
   let test;
-  if (kind === 'filter') { const r = parseFilter(q); if (!r.ok) return { ok: false, msg: r.error || 'El filtro no es válido.' }; test = r.test; }
+  if (kind === 'filter') { const r = parseFilter(q); if (!r.ok) return { ok: false, msg: fErr(r.error) || L('El filtro no es válido.', 'The filter is not valid.') }; test = r.test; }
   else if (kind === 'hex') {
     const h = q.replace(/0x|[\s:.-]/gi, '');
-    if (!/^([0-9a-f]{2})+$/i.test(h)) return { ok: false, msg: 'Escribe bytes en hexadecimal, por pares: 50 4b 03 04' };
+    if (!/^([0-9a-f]{2})+$/i.test(h)) return { ok: false, msg: L('Escribe bytes en hexadecimal, por pares: 50 4b 03 04', 'Type bytes in hex, in pairs: 50 4b 03 04') };
     const nd = h.match(/../g).map(x => parseInt(x, 16));
     test = p => { const b = p.b; outer: for (let i = 0; i + nd.length <= b.length; i++) { for (let j = 0; j < nd.length; j++) if (b[i + j] !== nd[j]) continue outer; return true; } return false; };
   } else {
@@ -203,7 +204,7 @@ function findPacket(ws, kind, q, cs) {
   const v = ws.view, start = Math.max(-1, v.findIndex(p => p.no === ws.sel));
   for (let k = 1; k <= v.length; k++) {
     const p = v[(start + k) % v.length];
-    if (test(p)) { ws.select(p.no); return { ok: true, msg: `Encontrado en el paquete ${p.no}${(start + k) >= v.length && start >= 0 ? ' (se ha dado la vuelta)' : ''}.` }; }
+    if (test(p)) { ws.select(p.no); return { ok: true, msg: `${L('Encontrado en el paquete', 'Found in packet')} ${p.no}${(start + k) >= v.length && start >= 0 ? L(' (se ha dado la vuelta)', ' (wrapped around)') : ''}.` }; }
   }
-  return { ok: false, msg: 'No aparece en ningún paquete mostrado.' };
+  return { ok: false, msg: L('No aparece en ningún paquete mostrado.', 'Not found in any displayed packet.') };
 }
