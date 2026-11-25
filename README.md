@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/LICENCIA-MIT-4169A1?style=flat"/></a>
-  <img alt="Versión 1.4.0" src="https://img.shields.io/badge/versi%C3%B3n-1.4.0-3B8BFF?style=flat"/>
+  <img alt="Versión 1.4.1" src="https://img.shields.io/badge/versi%C3%B3n-1.4.1-3B8BFF?style=flat"/>
   <img alt="Filtros de Wireshark 4.x" src="https://img.shields.io/badge/filtros-Wireshark%204.x-1679A7?style=flat"/>
   <img alt="Ruta eWPT" src="https://img.shields.io/badge/ruta-eWPT-E07B39?style=flat"/>
   <img alt="8 módulos y 58 retos" src="https://img.shields.io/badge/8%20m%C3%B3dulos-58%20retos-7B4FD1?style=flat"/>
@@ -409,6 +409,7 @@ Detalle en [ROADMAP.md](ROADMAP.md).
 - [x] 1.3.1 · Portada con la ilustración del megalodón y sin el 3D
 - [x] 1.3.2 · Logo nuevo, favicon y más aire en la portada
 - [x] 1.4.0 · Perfil configurable, «Acerca de» con el ecosistema, tema con gota y buscador nuevo
+- [x] 1.4.1 · Prueba de los efectos de tema estable en la CI
 - [ ] 1.4.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
 - [ ] 1.5.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
 

@@ -2,6 +2,11 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [1.4.1] - 2026-11-25
+
+### Corregido
+- **Prueba e2e de los efectos de tema intermitente en la CI.** La capa de la gota se crea antes de `startViewTransition` para que entre en la captura, pero el tema se aplica en la actualización de la transición, uno o dos fotogramas después. La prueba leía el tema en ese hueco y a veces fallaba. Ahora espera el cambio (1,5 s como máximo) y comprueba además que el efecto sigue en marcha cuando el tema ya ha cambiado. La aplicación no cambia.
+
 ## [1.4.0] - 2026-11-25
 
 ### Añadido
