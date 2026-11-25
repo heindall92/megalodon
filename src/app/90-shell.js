@@ -33,7 +33,7 @@ function renderSide() {
   const pct = lv.next ? Math.round(100 * (xp - lv.min) / (lv.next - lv.min)) : 100;
   $('#side').setAttribute('aria-label', t('navMain'));
   $('#side').innerHTML = `
-    <a class="side-brand" href="#/" aria-label="Megalodon · ${t('home')}"><span class="logo" aria-hidden="true">${ic('fish')}</span><span class="brand-txt"><b>Megalodon</b><small>${t('brandSub')}</small></span></a>
+    <a class="side-brand" href="#/" aria-label="Megalodon · ${t('home')}"><img class="logo" src="${LOGO_IMG}" alt="" width="38" height="38" decoding="async"><span class="brand-txt"><b>Megalodon</b><small>${t('brandSub')}</small></span></a>
     <nav class="side-nav" aria-label="${t('navMain')}">
       <span class="side-ind" aria-hidden="true"></span>
       ${item(NAV[0], 0)}${item(NAV[1], 1)}
@@ -65,7 +65,7 @@ function renderTop() {
   const th = resolvedTheme();
   $('#top').innerHTML = `<div class="top-in">
       <button class="ibtn only-desk" type="button" data-side aria-label="${t('sideToggle')}" aria-expanded="${sideOpen()}" title="${t('sideToggle')} ( [ )">${ic('panel')}</button>
-      <a class="brand-m" href="#/" aria-label="Megalodon · ${t('home')}"><span class="logo" aria-hidden="true">${ic('fish')}</span><b>Megalodon</b></a>
+      <a class="brand-m" href="#/" aria-label="Megalodon · ${t('home')}"><img class="logo" src="${LOGO_IMG}" alt="" width="32" height="32" decoding="async"><b>Megalodon</b></a>
       <span class="grow"></span>
       <button class="search-btn" type="button" data-search aria-label="${t('search')} (Ctrl K)">${ic('search')}<span class="sb-t">${t('search')}…</span><kbd>Ctrl K</kbd></button>
       <div class="lang-sw" role="group" aria-label="${t('langSwitch')}"><button type="button" data-lang="es" aria-pressed="${LANG === 'es'}" lang="es" aria-label="Español">ES</button><button type="button" data-lang="en" aria-pressed="${LANG === 'en'}" lang="en" aria-label="English">EN</button></div>

@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licencia MIT" src="https://img.shields.io/badge/LICENCIA-MIT-4169A1?style=flat"/></a>
-  <img alt="Versión 1.3.1" src="https://img.shields.io/badge/versi%C3%B3n-1.3.1-3B8BFF?style=flat"/>
+  <img alt="Versión 1.3.2" src="https://img.shields.io/badge/versi%C3%B3n-1.3.2-3B8BFF?style=flat"/>
   <img alt="Filtros de Wireshark 4.x" src="https://img.shields.io/badge/filtros-Wireshark%204.x-1679A7?style=flat"/>
   <img alt="Ruta eWPT" src="https://img.shields.io/badge/ruta-eWPT-E07B39?style=flat"/>
   <img alt="8 módulos y 58 retos" src="https://img.shields.io/badge/8%20m%C3%B3dulos-58%20retos-7B4FD1?style=flat"/>
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/capturas/inicio-oscuro.webp" alt="Portada de Megalodon: un megalodón dibujado como un plano técnico azul a la derecha del título; a la izquierda, la barra lateral con los ocho módulos y su progreso; arriba, el buscador y los interruptores de idioma y tema" width="880"/>
+  <img src="docs/capturas/inicio-claro.webp" alt="Portada de Megalodon en modo claro: el megalodón dibujado como un plano técnico azul a la derecha del título; a la izquierda, la barra lateral con el logo, los ocho módulos y su progreso; arriba, el buscador y los interruptores de idioma y tema" width="880"/>
 </p>
 
 Para leer tráfico con soltura hay que haber mirado muchas capturas, y las de verdad no explican nada ni dicen si lo has entendido. Megalodon reúne **8 capturas sintéticas (578 paquetes)** de un pentest de laboratorio sobre **tienda.ewpt.local** y la red de **MEGACORP** (inventadas) y te sienta delante de un espacio que se comporta como Wireshark. Con él practicas:
@@ -95,7 +95,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="2"><code>version: 1.3.1&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 38 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
+      <td colspan="2"><code>version: 1.3.2&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 38 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
     </tr>
   </tfoot>
 </table>
@@ -105,6 +105,11 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 ---
 
 ## <img src="docs/assets/icons/sparkles.svg" width="20" height="20" valign="middle"/> Novedades
+
+### 1.3.2 · noviembre de 2026 · Logo y más aire
+
+- **Logo nuevo** del megalodón de plano técnico con su aro de radar, en la barra lateral, en el móvil y en el icono de la pestaña.
+- **Más espacio** entre la portada, las tarjetas de progreso y las secciones.
 
 ### 1.3.1 · noviembre de 2026 · Portada con la ilustración
 
@@ -271,7 +276,7 @@ Una prueba resuelve cada reto con su solución de referencia contra su captura. 
 <td><img src="docs/capturas/ingles-claro.webp" alt="Laboratorio libre en inglés y en modo claro"/><br/><sub><b>Inglés y modo claro</b> · interruptores ES|EN y claro|oscuro</sub></td>
 </tr>
 <tr>
-<td colspan="2"><img src="docs/capturas/inicio-claro.webp" alt="Inicio en modo claro, página completa"/><br/><sub><b>Inicio en modo claro</b> · progreso, módulos y cómo funciona</sub></td>
+<td colspan="2"><img src="docs/capturas/inicio-oscuro.webp" alt="Portada en modo oscuro"/><br/><sub><b>Modo oscuro</b> · la misma portada con el tema oscuro</sub></td>
 </tr>
 </table>
 
@@ -381,6 +386,7 @@ Detalle en [ROADMAP.md](ROADMAP.md).
 - [x] 1.2.0 · Herramientas de analista y recorrido del curso completo
 - [x] 1.3.0 · Barra lateral plegable, barra de pestañas en el móvil, interruptores e interfaz en inglés
 - [x] 1.3.1 · Portada con la ilustración del megalodón y sin el 3D
+- [x] 1.3.2 · Logo nuevo, favicon y más aire en la portada
 - [ ] 1.3.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
 - [ ] 1.4.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
 
@@ -418,7 +424,7 @@ megalodon/
 │   │   ├── 45-ladder.js        Diagrama de escalera del saludo TCP
 │   │   ├── 50-views.js         Inicio, módulos, laboratorio, chuleta y glosario
 │   │   └── 90-shell.js         Barra lateral, barra superior, pestañas, búsqueda y ajustes
-│   └── assets/                 Ilustración de la portada (AVIF y WebP)
+│   └── assets/                 Ilustración de la portada (AVIF y WebP), logo y favicon
 │
 ├── 📦 dist/index.html          La aplicación generada (igual que megalodon.html)
 ├── 🛠️ scripts/                  build.mjs · capturas.mjs
