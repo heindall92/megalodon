@@ -19,7 +19,7 @@ async function t(name, fn) {
 const assert = (c, m) => { if (!c) throw new Error(m); };
 
 async function page(browser, opts = {}) {
-  const ctx = await browser.newContext({ bypassCSP: !!opts.axe, viewport: opts.viewport || { width: 1280, height: 800 }, colorScheme: opts.theme || 'dark', reducedMotion: opts.reduced ? 'reduce' : 'no-preference' });
+  const ctx = await browser.newContext({ bypassCSP: !!(opts.axe || opts.bypass), viewport: opts.viewport || { width: 1280, height: 800 }, colorScheme: opts.theme || 'dark', reducedMotion: opts.reduced ? 'reduce' : 'no-preference' });
   const p = await ctx.newPage();
   p.errors = [];
   p.on('pageerror', e => p.errors.push(e.message));
@@ -60,23 +60,29 @@ await t('inicio: carga sin errores con la ilustración de la portada', async () 
   await p.close2();
 });
 
-await t('portada: el tiburón de la ilustración queda a la derecha del título, sin taparse', async () => {
-  // zona del tiburón en la imagen original (1983 × 793): de la punta del hocico al borde de la aleta caudal
-  const SHARK_BOX = { x0: 1215, x1: 1760, y0: 45, y1: 760 };
-  for (const [w, side] of [[1280, false], [1440, false], [1920, false], [1280, true]]) {
-    const p = await page(browser, { viewport: { width: w, height: Math.round(w * .62) } });
+await t('portada: el tiburón de la ilustración queda a la derecha del texto, sin taparse', async () => {
+  // zona del tiburón en la imagen original (1983 × 793): de la punta de la aleta pectoral a la cola
+  const SHARK_BOX = { x0: 1215, x1: 1760 };
+  // también con una fuente del sistema ancha (DejaVu Sans, la de Linux sin Inter): el texto crece hacia la derecha
+  for (const [w, side, wide] of [[1280, false, false], [1440, false, false], [1920, false, false], [1280, true, false], [1280, false, true], [1440, false, true]]) {
+    const p = await page(browser, { viewport: { width: w, height: Math.round(w * .62) }, bypass: wide });
+    if (wide) await p.addStyleTag({ content: '.hero-copy, .hero-copy * { font-family: "DejaVu Sans", Verdana, sans-serif !important; }' });
     if (side) { await p.keyboard.press('['); await p.waitForTimeout(450); }
     await p.waitForFunction(() => { const i = document.querySelector('.hero-img'); return i && i.complete && i.naturalWidth > 0; });
     const r = await p.evaluate(B => {
-      const img = document.querySelector('.hero-img'), box = img.getBoundingClientRect(), t = document.querySelector('#hero-t').getBoundingClientRect();
-      // object-fit: cover con object-position leído del CSS
-      const [px, py] = getComputedStyle(img).objectPosition.split(' ').map(v => parseFloat(v) / 100);
+      const img = document.querySelector('.hero-img'), box = img.getBoundingClientRect();
+      const textRight = Math.max(...['#hero-t', '.hero-copy .lead', '.hero-copy .cta'].map(q => {
+        const el = document.querySelector(q), rg = document.createRange(); rg.selectNodeContents(el);
+        return Math.max(...[...rg.getClientRects()].map(c => c.right));                 // el texto real, no la caja del bloque
+      }));
+      const [px] = getComputedStyle(img).objectPosition.split(' ').map(v => parseFloat(v) / 100);
       const s = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
-      const ox = box.left + (box.width - img.naturalWidth * s) * px, oy = box.top + (box.height - img.naturalHeight * s) * py;
-      return { titleRight: t.right, sharkLeft: ox + B.x0 * s, sharkRight: ox + B.x1 * s, heroRight: box.right };
+      const ox = box.left + (box.width - img.naturalWidth * s) * px;
+      return { textRight, sharkLeft: ox + B.x0 * s, sharkRight: ox + B.x1 * s, heroRight: box.right };
     }, SHARK_BOX);
-    assert(r.sharkLeft > r.titleRight - 10, `${w}px${side ? ' (lateral plegado)' : ''}: el tiburón (${Math.round(r.sharkLeft)}) queda bajo el título (${Math.round(r.titleRight)})`);
-    assert(r.sharkRight < r.heroRight + 60, `${w}px: el tiburón se sale por la derecha`);
+    const tag = `${w}px${side ? ' con la barra plegada' : ''}${wide ? ' con fuente ancha' : ''}`;
+    assert(r.sharkLeft > r.textRight + 8, `${tag}: el tiburón (${Math.round(r.sharkLeft)}) queda bajo el texto (${Math.round(r.textRight)})`);
+    assert(r.sharkRight < r.heroRight + 24, `${tag}: la cola se sale por la derecha (${Math.round(r.sharkRight)} > ${Math.round(r.heroRight)})`);
     await p.close2();
   }
 });

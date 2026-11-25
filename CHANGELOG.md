@@ -6,7 +6,7 @@ Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado
 
 ### Cambiado
 - **La portada vuelve a la ilustración** del megalodón como plano técnico azul, ahora en mejor calidad: AVIF y WebP de 1983 × 793 px, de unos 70 KB cada uno, codificados desde el original (PSNR de 40 y 38 dB).
-- **Encuadre con la barra lateral:** el tiburón queda a la derecha del título a 1280, 1440 y 1920 px, también con la barra plegada.
+- **Encuadre con la barra lateral:** la ilustración se alinea al 62 % (antes al 78 %) para que el tiburón empiece a la derecha del título y del texto de entrada a 1280, 1440 y 1920 px, también con la barra plegada y con fuentes del sistema anchas como DejaVu Sans.
 
 ### Eliminado
 - **El megalodón 3D en WebGL2** (`src/app/48-shark.js`), con su vista «Plano técnico», el botón de pausa y sus notas (`docs/megalodon-3d.md`). No convencía visualmente. La página pesa unos 100 KB menos (de 655 a 550 KB) y ya no necesita WebGL.
@@ -14,7 +14,7 @@ Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado
 ### Pruebas
 - Sustituyen a las del 3D:
   - la ilustración carga con su tamaño y su texto alternativo, y no queda ningún lienzo;
-  - el tiburón no queda bajo el título en cuatro encuadres;
+  - el tiburón no queda bajo el texto en seis encuadres, dos de ellos con una fuente ancha (así lo detectó la CI de GitHub, que no tiene Inter);
   - con «reducir movimiento», la ilustración queda quieta.
 
 ## [1.3.0] - 2026-11-25
