@@ -35,11 +35,19 @@
 - [x] La e2e de los efectos de tema espera al cambio que aplica la View Transition
 
 ## 1.4.x · Contenido en inglés
-- [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática)
+- [ ] Lecciones, enunciados, pistas, glosario y descripciones de campos en inglés (revisados a mano, no traducción automática). El módulo 9 ya lo está y sirve de patrón (`h_en`, `p_en`, `q_en`, `hints_en`, `ok_en`, `opts_en`)
 
-## 1.5.0 · Más capturas
+## 1.5.0 · Módulo 9: VoIP ✅
+- [x] Disectores de SIP, SDP, RTP, RTCP y eventos DTMF, con el RTP asociado a la llamada por el SDP
+- [x] Campos `sip.*`, `sdp.*`, `rtp.*`, `rtcp.*` y `rtpevent.*` con la semántica de Wireshark 4.x
+- [x] Captura determinista con REGISTER y Digest, llamada, RTP con pérdida y jitter, DTMF, BYE y un escáner SIP
+- [x] Telefonía: llamadas VoIP, flujo SIP y flujos RTP con reproducción (Web Audio API) y WAV
+- [x] Diez retos en español e inglés con solución comprobada, y referencia de tshark 4.6.8 en las pruebas
+
+## 1.6.0 · Más capturas
 - [ ] Módulo de SMB y movimiento lateral (PsExec visto en el tráfico)
-- [ ] Módulo de VoIP/SIP y de DHCP spoofing
+- [ ] Módulo de DHCP spoofing
+- [ ] Referencia de tshark (`scripts/tshark-ref.mjs`) también para los módulos 1 a 8
 - [ ] Cada reto nuevo con su solución comprobada en `tests/engine.test.mjs`
 
 ## Después

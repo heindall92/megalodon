@@ -20,9 +20,10 @@ function activity(weeks = 15) {
   Object.values(S.get().done).forEach(d => { if (d && d.at) { const k = dayKey(new Date(d.at)); per[k] = (per[k] || 0) + 1; } });
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const dow = (today.getDay() + 6) % 7;                    // lunes = 0
-  const start = new Date(today); start.setDate(today.getDate() - dow - (weeks - 1) * 7);
-  const days = [];
-  for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) days.push({ date: new Date(d), n: per[dayKey(d)] || 0 });
+  /* Por índice de día y no sumando a una fecha: donde el cambio de hora es a medianoche (Chile, Paraguay…)
+     ese día empieza a la 01:00 y comparar con «hoy a las 00:00» dejaría fuera el día de hoy. */
+  const span = dow + (weeks - 1) * 7, days = [];
+  for (let i = span; i >= 0; i--) { const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i); days.push({ date: d, n: per[dayKey(d)] || 0 }); }
   let streak = 0;
   for (let i = days.length - 1; i >= 0; i--) { if (days[i].n) streak++; else if (i === days.length - 1) continue; else break; }
   const active = days.filter(d => d.n).length, total = days.reduce((s, d) => s + d.n, 0);

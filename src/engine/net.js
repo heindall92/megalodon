@@ -1,4 +1,4 @@
-/* Megalodon · constructores de paquetes byte a byte (Ethernet II, ARP, IPv4, ICMP, UDP, TCP, DNS, DHCP, TLS, SMB2, NTLMSSP, Kerberos)
+/* Megalodon · constructores de paquetes byte a byte (Ethernet II, ARP, IPv4, ICMP, UDP, TCP, DNS, DHCP, TLS, SMB2, NTLMSSP, Kerberos, SIP, SDP, RTP, RTCP)
    y lectura/escritura de pcap y pcapng. Sin DOM: se prueba en Node. */
 const TE = new TextEncoder(), TD = new TextDecoder('utf-8', { fatal: false });
 const txt = s => Array.from(TE.encode(s));
@@ -259,4 +259,65 @@ function writePcapng(pkts, comment = 'Megalodon') {
     block(6, cat([h, p.b, new Uint8Array(pad4(p.b.length) - p.b.length)]));
   }
   return cat(parts);
+}
+
+/* ---- VoIP: SIP (RFC 3261), SDP (RFC 4566), RTP y RTCP (RFC 3550), eventos DTMF (RFC 4733) ---- */
+/* Mensaje SIP: primera línea, cabeceras en orden (pares [nombre, valor], Via puede repetirse) y cuerpo SDP opcional */
+function sipMsg(first, hdrs, body = '') {
+  const lines = [first, ...hdrs.map(([k, v]) => `${k}: ${v}`)];
+  if (body) lines.push('Content-Type: application/sdp');
+  lines.push(`Content-Length: ${TE.encode(body).length}`);
+  return txt(lines.join('\r\n') + '\r\n\r\n' + body);
+}
+/* SDP de una llamada de audio G.711 µ-law con eventos DTMF en el tipo dinámico 101 */
+function sdpBody(o) {
+  return [`v=0`, `o=${o.user || '-'} ${o.sess} ${o.ver || o.sess} IN IP4 ${o.ip}`, `s=${o.name || 'Llamada'}`, `c=IN IP4 ${o.ip}`, 't=0 0',
+    `m=audio ${o.port} RTP/AVP 0 101`, 'a=rtpmap:0 PCMU/8000', 'a=rtpmap:101 telephone-event/8000', 'a=fmtp:101 0-16', 'a=ptime:20', 'a=sendrecv'].join('\r\n') + '\r\n';
+}
+/* Cabecera RTP fija de 12 bytes: V=2, sin relleno, sin extensión, sin CSRC */
+const rtpPkt = (pt, seq, ts, ssrc, payload, marker) => [0x80, (marker ? 0x80 : 0) | pt, ...u16(seq & 0xffff), ...u32(ts >>> 0), ...u32(ssrc >>> 0), ...payload];
+/* Carga de un evento telefónico: evento, E (fin) + volumen, duración en unidades de reloj */
+const rtpEv = (ev, end, vol, dur) => [ev, (end ? 0x80 : 0) | (vol & 0x3f), ...u16(dur)];
+const rtcpBlock = r => [...u32(r.ssrc), r.fraction & 255, (r.cum >>> 16) & 255, (r.cum >>> 8) & 255, r.cum & 255, ...u32(r.extHigh), ...u32(r.jitter), ...u32(r.lsr || 0), ...u32(r.dlsr || 0)];
+function rtcpPkt(pt, body, rc) { return [0x80 | rc, pt, ...u16((body.length + 4) / 4 - 1), ...body]; }
+/* Sender Report (200): emisor, NTP, RTP, contadores y un bloque de recepción opcional */
+const rtcpSR = o => rtcpPkt(200, [...u32(o.ssrc), ...u32(o.ntpMsw >>> 0), ...u32(o.ntpLsw >>> 0), ...u32(o.rtpTs >>> 0), ...u32(o.pkts), ...u32(o.octets), ...(o.rb ? rtcpBlock(o.rb) : [])], o.rb ? 1 : 0);
+/* Receiver Report (201): solo el emisor del informe y el bloque de recepción */
+const rtcpRR = o => rtcpPkt(201, [...u32(o.ssrc), ...(o.rb ? rtcpBlock(o.rb) : [])], o.rb ? 1 : 0);
+
+/* G.711 µ-law (ITU-T G.711, con sesgo 0x84 y recorte a 32635): PCM lineal de 16 bits → 1 byte */
+function ulawEnc(s) {
+  s = Math.max(-32768, Math.min(32767, Math.round(s)));
+  const sign = s < 0 ? 0x80 : 0; if (sign) s = -s;
+  s = Math.min(s, 32635) + 0x84;
+  let exp = 7; for (let m = 0x4000; (s & m) === 0 && exp > 0; m >>= 1) exp--;
+  return ~(sign | (exp << 4) | ((s >> (exp + 3)) & 0x0f)) & 0xff;
+}
+
+/* MD5 (RFC 1321) para calcular respuestas Digest reales (RFC 2617): nada de red, todo en la captura */
+function md5Hex(input) {
+  const msg = typeof input === 'string' ? txt(input) : Array.from(input), len = msg.length;
+  const K = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) >>> 0);
+  const S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+  msg.push(0x80); while (msg.length % 64 !== 56) msg.push(0);
+  const bits = len * 8; for (let i = 0; i < 8; i++) msg.push(Math.floor(bits / 2 ** (8 * i)) & 255);
+  let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+  for (let o = 0; o < msg.length; o += 64) {
+    const M = Array.from({ length: 16 }, (_, i) => msg[o + 4 * i] | (msg[o + 4 * i + 1] << 8) | (msg[o + 4 * i + 2] << 16) | (msg[o + 4 * i + 3] << 24));
+    let A = a0, B = b0, C = c0, D = d0;
+    for (let i = 0; i < 64; i++) {
+      let F, g;
+      if (i < 16) { F = (B & C) | (~B & D); g = i; } else if (i < 32) { F = (D & B) | (~D & C); g = (5 * i + 1) % 16; }
+      else if (i < 48) { F = B ^ C ^ D; g = (3 * i + 5) % 16; } else { F = C ^ (B | ~D); g = (7 * i) % 16; }
+      const s = S[(i >> 4) * 4 + (i & 3)], x = (F + A + K[i] + M[g]) | 0;
+      A = D; D = C; C = B; B = (B + ((x << s) | (x >>> (32 - s)))) | 0;
+    }
+    a0 = (a0 + A) | 0; b0 = (b0 + B) | 0; c0 = (c0 + C) | 0; d0 = (d0 + D) | 0;
+  }
+  return [a0, b0, c0, d0].map(v => [0, 1, 2, 3].map(i => ((v >>> (8 * i)) & 255).toString(16).padStart(2, '0')).join('')).join('');
+}
+/* response = MD5(HA1:nonce:nc:cnonce:qop:HA2) con qop=auth; sin qop, MD5(HA1:nonce:HA2) */
+function digestResponse(o) {
+  const ha1 = md5Hex(`${o.user}:${o.realm}:${o.pass}`), ha2 = md5Hex(`${o.method}:${o.uri}`);
+  return o.qop ? md5Hex(`${ha1}:${o.nonce}:${o.nc}:${o.cnonce}:${o.qop}:${ha2}`) : md5Hex(`${ha1}:${o.nonce}:${ha2}`);
 }

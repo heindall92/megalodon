@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/assets/header.svg" alt="Megalodon · Laboratorio de Wireshark · eWPT · SOC · Directorio Activo" width="100%"/></p>
 
 <p align="center">
-  <b>Laboratorio de Wireshark en el navegador: aprende a leer la red como un pentester con capturas de un ataque real en miniatura, filtros que se validan mientras escribes y retos guiados desde el saludo TCP hasta la inyección SQL, Kerberos y la caza en el SOC.</b>
+  <b>Laboratorio de Wireshark en el navegador: aprende a leer la red como un pentester con capturas de un ataque real en miniatura, filtros que se validan mientras escribes y retos guiados desde el saludo TCP hasta la inyección SQL, Kerberos, la caza en el SOC y la escucha de llamadas VoIP.</b>
 </p>
 
 <p align="center">
@@ -14,7 +14,7 @@
   <img alt="Versión 1.4.1" src="https://img.shields.io/badge/versi%C3%B3n-1.4.1-3B8BFF?style=flat"/>
   <img alt="Filtros de Wireshark 4.x" src="https://img.shields.io/badge/filtros-Wireshark%204.x-1679A7?style=flat"/>
   <img alt="Ruta eWPT" src="https://img.shields.io/badge/ruta-eWPT-E07B39?style=flat"/>
-  <img alt="8 módulos y 58 retos" src="https://img.shields.io/badge/8%20m%C3%B3dulos-58%20retos-7B4FD1?style=flat"/>
+  <img alt="9 módulos y 68 retos" src="https://img.shields.io/badge/9%20m%C3%B3dulos-68%20retos-7B4FD1?style=flat"/>
   <a href="https://github.com/heindall92/megalodon/actions/workflows/tests.yml"><img alt="Pruebas" src="https://github.com/heindall92/megalodon/actions/workflows/tests.yml/badge.svg"/></a>
   <img alt="axe-core: 0 violaciones" src="https://img.shields.io/badge/axe--core-0%20violaciones-2E8B57?style=flat"/>
   <img alt="Interfaz ES/EN" src="https://img.shields.io/badge/UI-ES%20%2F%20EN-2E8B57?style=flat"/>
@@ -26,15 +26,16 @@
   <img src="docs/capturas/inicio-claro.webp" alt="Portada de Megalodon en modo claro: el megalodón dibujado como un plano técnico azul a la derecha del título; encima de la ilustración flotan el botón del lateral y el buscador a la izquierda y los interruptores de idioma y tema a la derecha; a la izquierda, la barra lateral con el logo, los ocho módulos, la tarjeta del perfil y el nivel" width="880"/>
 </p>
 
-Para leer tráfico con soltura hay que haber mirado muchas capturas, y las de verdad no explican nada ni dicen si lo has entendido. Megalodon reúne **8 capturas sintéticas (578 paquetes)** de un pentest de laboratorio sobre **tienda.ewpt.local** y la red de **MEGACORP** (inventadas) y te sienta delante de un espacio que se comporta como Wireshark. Con él practicas:
+Para leer tráfico con soltura hay que haber mirado muchas capturas, y las de verdad no explican nada ni dicen si lo has entendido. Megalodon reúne **9 capturas sintéticas (1203 paquetes)** de un pentest de laboratorio sobre **tienda.ewpt.local**, la red de **MEGACORP** y la centralita de **voip.local** (inventadas) y te sienta delante de un espacio que se comporta como Wireshark. Con él practicas:
 
 - filtros de visualización con la semántica de Wireshark 4.x, que se ponen verdes o rojos mientras escribes;
 - el saludo TCP, HTTP, cookies y credenciales en claro, DNS y lo que TLS deja ver;
 - ataques web en el tráfico: escaneo SYN, fuerza bruta, SQLi y XSS;
 - Directorio Activo (Kerberos, SMB2 y NTLM) y caza en el SOC (ARP spoofing, beacon de C2 y exfiltración por DNS);
-- las herramientas de analista: información experta, objetos HTTP, credenciales, seguir flujo, estadísticas, buscar e ir al paquete.
+- VoIP: registro SIP con Digest, llamadas, audio RTP que se puede escuchar, calidad con RTCP, PIN tecleado por DTMF y un escáner SIP;
+- las herramientas de analista: información experta, objetos HTTP, credenciales, seguir flujo, estadísticas, telefonía (llamadas VoIP, flujo SIP y flujos RTP con reproducción), buscar e ir al paquete.
 
-Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instante. Funciona en el navegador, sin servidor, sin cuenta y sin conexión: es **un solo archivo HTML**, y tu progreso no sale del equipo. Cada captura se exporta en `.pcapng` para repetir el reto en tu Wireshark de verdad.
+Son **37 lecciones y 68 retos** que se comprueban contra los paquetes al instante. Funciona en el navegador, sin servidor, sin cuenta y sin conexión: es **un solo archivo HTML**, y tu progreso no sale del equipo. Cada captura se exporta en `.pcapng` para repetir el reto en tu Wireshark de verdad.
 
 <div align="center">
 
@@ -53,13 +54,13 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
         <img src="docs/assets/stack/retos.svg" height="48" alt="Retos">
         <img src="docs/assets/stack/capturas.svg" height="48" alt="Capturas">
         <img src="docs/assets/stack/filtros.svg" height="48" alt="Filtros"><br>
-        <sub><code>8 módulos · 32 lecciones · 58 retos · 60 «Pruébalo» · 578 paquetes · 136 campos · 41 términos</code></sub>
+        <sub><code>9 módulos · 37 lecciones · 68 retos · 74 «Pruébalo» · 1203 paquetes · 235 campos · 53 términos</code></sub>
       </td>
       <td width="50%" valign="top"><code>├─ ⌕ analista:</code><br><br>
         <img src="docs/assets/stack/experto.svg" height="48" alt="Información experta">
         <img src="docs/assets/stack/flujos.svg" height="48" alt="Seguir flujo">
         <img src="docs/assets/stack/estadisticas.svg" height="48" alt="Estadísticas"><br>
-        <sub><code>información experta · objetos HTTP · credenciales · seguir flujo TCP/UDP · conversaciones · endpoints · E/S</code></sub>
+        <sub><code>información experta · objetos HTTP · credenciales · seguir flujo TCP/UDP · conversaciones · endpoints · E/S · llamadas VoIP · flujo SIP · flujos RTP</code></sub>
       </td>
     </tr>
     <tr>
@@ -84,7 +85,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
         <img src="docs/assets/stack/pruebas.svg" height="48" alt="node:test">
         <img src="docs/assets/stack/navegador.svg" height="48" alt="Playwright">
         <img src="docs/assets/stack/accesibilidad.svg" height="48" alt="axe-core"><br>
-        <sub><code>node:test 18 · Playwright 20 · axe-core 0 violaciones</code></sub>
+        <sub><code>node:test 29 · Playwright 29 · axe-core 0 violaciones · tshark 4.6</code></sub>
       </td>
       <td valign="top"><code>╰─ ⌁ seguridad:</code><br><br>
         <img src="docs/assets/stack/csp.svg" height="48" alt="CSP">
@@ -95,7 +96,7 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
   </tbody>
   <tfoot>
     <tr>
-      <td colspan="2"><code>version: 1.3.2&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 38 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
+      <td colspan="2"><code>version: 1.5.0&nbsp;&nbsp;·&nbsp;&nbsp;filtros: Wireshark 4.x&nbsp;&nbsp;·&nbsp;&nbsp;pruebas: 58 ok&nbsp;&nbsp;·&nbsp;&nbsp;licencia: MIT</code></td>
     </tr>
   </tfoot>
 </table>
@@ -105,6 +106,14 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 ---
 
 ## <img src="docs/assets/icons/sparkles.svg" width="20" height="20" valign="middle"/> Novedades
+
+### 1.5.0 · noviembre de 2026 · Módulo 9: VoIP, SIP, RTP y grabación
+
+- **Módulo 9 «VoIP: SIP, RTP y grabación»**, extra y bilingüe (lecciones, retos, pistas y opciones en español e inglés). El teléfono de Alicia se registra con Digest, llama a su buzón de voz y teclea su PIN; luego un escáner SIP prueba contraseñas e intenta una llamada internacional. Cinco lecciones y diez retos.
+- **Disectores nuevos:** SIP (petición, respuesta, Via, From, To, Call-ID, CSeq, Contact y Digest), SDP (`c=`, `m=`, `a=rtpmap`), RTP, RTCP (Sender y Receiver Report con pérdida y jitter) y eventos DTMF (RFC 4733), con 99 campos `sip.*`, `sdp.*`, `rtp.*`, `rtcp.*` y `rtpevent.*`. Como en Wireshark, el RTP se reconoce por el SDP de la llamada y apunta a la trama que lo negoció.
+- **Telefonía** (`V`): llamadas VoIP con su estado, diagrama del flujo SIP con el RTP y las teclas, y flujos RTP con perdidos, delta y jitter calculados con el mismo algoritmo que Wireshark. Cada flujo **se escucha** (G.711 decodificado en el navegador con Web Audio API, sin red y sin tocar la CSP) y se guarda como WAV.
+- **Contrastado con tshark 4.6.8:** las 625 tramas del módulo dan las mismas columnas Protocolo e Info, cada filtro de las lecciones y los retos deja pasar las mismas tramas y el análisis RTP coincide al milésimo. La referencia está en `tests/tshark/m9.json` y se regenera con `node scripts/tshark-ref.mjs m9`.
+- **Corregido:** el mapa de actividad del perfil perdía el día de hoy en zonas horarias que cambian la hora a medianoche (Chile, por ejemplo).
 
 ### 1.4.0 · noviembre de 2026 · Perfil, «Acerca de», tema con gota y buscador nuevo
 
@@ -183,11 +192,11 @@ Son **32 lecciones y 58 retos** que se comprueban contra los paquetes al instant
 mindmap
   root((Megalodon))
     Capturas sintéticas
-      8 escenarios y 578 paquetes
+      9 escenarios y 1203 paquetes
       Construidas byte a byte
       Semilla fija y deterministas
       Contrastadas con tshark
-    Ruta de 8 módulos
+    Ruta de 9 módulos
       El saludo TCP
       HTTP al desnudo
       Cookies y credenciales
@@ -196,6 +205,7 @@ mindmap
       Ataques web
       Directorio Activo
       Caza en el SOC
+      VoIP SIP y RTP
     Espacio tipo Wireshark
       Lista, árbol y bytes
       Filtros de Wireshark 4.x
@@ -210,11 +220,12 @@ mindmap
       Credenciales
       Seguir flujo TCP y UDP
       Estadísticas
+      Telefonía y reproductor RTP
       Buscar e ir al paquete
       Formato de tiempo
     Aprender
-      32 lecciones
-      58 retos con pistas
+      37 lecciones
+      68 retos con pistas
       XP, niveles e insignias
       Chuleta y glosario
     Garantías
@@ -228,10 +239,10 @@ mindmap
 
 | | Vista | Contenido |
 |---|---|---|
-| <img src="docs/assets/icons/house.svg" width="18"/> | **Inicio** | Ilustración del megalodón, siguiente módulo recomendado, XP, nivel, retos resueltos, insignias, los ocho módulos y cómo funciona. |
+| <img src="docs/assets/icons/house.svg" width="18"/> | **Inicio** | Ilustración del megalodón, siguiente módulo recomendado, XP, nivel, retos resueltos, insignias, los nueve módulos y cómo funciona. |
 | <img src="docs/assets/icons/layers.svg" width="18"/> | **Módulo** | Lección con «Pruébalo» y retos a la izquierda; captura del módulo a la derecha. En el móvil, pestañas Lección, Retos y Wireshark. |
-| <img src="docs/assets/icons/flask-conical.svg" width="18"/> | **Laboratorio libre** | Cualquiera de las ocho capturas, o la tuya en `.pcap` o `.pcapng` (arrastrándola o con «Abrir captura»). |
-| <img src="docs/assets/icons/book-open.svg" width="18"/> | **Chuleta** | Los filtros de uso diario, con copiar y probar en el laboratorio, y la tabla de los 136 campos. |
+| <img src="docs/assets/icons/flask-conical.svg" width="18"/> | **Laboratorio libre** | Cualquiera de las nueve capturas, o la tuya en `.pcap` o `.pcapng` (arrastrándola o con «Abrir captura»). |
+| <img src="docs/assets/icons/book-open.svg" width="18"/> | **Chuleta** | Los filtros de uso diario, con copiar y probar en el laboratorio, y la tabla de los 235 campos. |
 | <img src="docs/assets/icons/languages.svg" width="18"/> | **Glosario** | 41 términos de redes y pentesting, con buscador. |
 | <img src="docs/assets/icons/user-round.svg" width="18"/> | **Perfil** | Nombre, tipo de perfil, rol (o uno propio) y color del avatar, con guardado al instante. XP, nivel, retos, insignias y mapa de actividad de 15 semanas con tu racha. |
 | <img src="docs/assets/icons/waypoints.svg" width="18"/> | **Acerca de** | Autor y enlaces, los cinco laboratorios y las ocho herramientas del ecosistema, privacidad, licencias y avisos de independencia. |
@@ -256,18 +267,19 @@ Cada reto se comprueba contra la captura en el navegador, sin servidor:
 | Módulo terminado | Insignia y 20 XP de bonus |
 | Niveles | Alevín (0), Tintorera (80), Tiburón martillo (200), Gran blanco (380) y Megalodón (600) |
 
-Una prueba resuelve cada reto con su solución de referencia contra su captura. Otra lo hace desde la interfaz, reto a reto, hasta ganar las 8 insignias.
+Una prueba resuelve cada reto con su solución de referencia contra su captura. Otra lo hace desde la interfaz, reto a reto, hasta ganar las 9 insignias.
 
 ## <img src="docs/assets/icons/compass.svg" width="20" height="20" valign="middle"/> Herramientas de analista
 
 | | Herramienta | Comportamiento |
 |---|---|---|
-| <img src="docs/assets/icons/flask-conical.svg" width="18"/> | **Filtros de visualización** | 136 campos con la semántica de Wireshark 4.x: `==` sobre cualquier valor, `in {80, 443}`, rangos, `contains`, `matches` y funciones. Autocompletado con `Tab`. Si el filtro falla, explica el error, marca su posición y sugiere el campo que quizá querías («¿Querías decir…?»). |
+| <img src="docs/assets/icons/flask-conical.svg" width="18"/> | **Filtros de visualización** | 235 campos con la semántica de Wireshark 4.x: `==` sobre cualquier valor, `in {80, 443}`, rangos, `contains`, `matches` y funciones. Autocompletado con `Tab`. Si el filtro falla, explica el error, marca su posición y sugiere el campo que quizá querías («¿Querías decir…?»). |
 | <img src="docs/assets/icons/sparkles.svg" width="18"/> | **Información experta** (`E`) | Mensajes y severidades de Wireshark: `Connection reset (RST)` es *Warning* y `Connection establish request (SYN)` es *Chat*. Salta a cada paquete y permite filtrarlos. |
 | <img src="docs/assets/icons/book-open.svg" width="18"/> | **Objetos HTTP** | Cuerpos reconstruidos con host, tipo, tamaño y nombre seguro. La vista previa muestra texto (nunca interpreta el HTML de la captura) y permite descargar. |
 | <img src="docs/assets/icons/lock-keyhole.svg" width="18"/> | **Credenciales** | HTTP Basic, FTP y NTLMSSP, con salto al campo exacto del árbol. |
 | <img src="docs/assets/icons/waypoints.svg" width="18"/> | **Seguir flujo** (`F`) | TCP o UDP según el paquete, con cliente y servidor en colores y paso al flujo anterior o siguiente. |
 | <img src="docs/assets/icons/network.svg" width="18"/> | **Estadísticas** (`S`) | Conversaciones (Ethernet, IPv4, TCP, UDP), endpoints IPv4, jerarquía de protocolos y gráfico de E/S que compara el filtro con el total. |
+| <img src="docs/assets/icons/waypoints.svg" width="18"/> | **Telefonía** (`V`) | Llamadas VoIP (estado, partes, Call-ID), flujo SIP dibujado con el RTP y las teclas DTMF, y flujos RTP con perdidos, delta máximo y jitter máximo y medio calculados como en Wireshark. Cada flujo se reproduce (G.711 → Web Audio API, con la forma de onda y el cursor), o los dos sentidos a la vez, y se guarda en WAV. |
 | <img src="docs/assets/icons/target.svg" width="18"/> | **Buscar e ir al paquete** | `Ctrl F` busca por filtro, cadena o hex desde el paquete seleccionado y da la vuelta al llegar al final. `Ctrl G` lleva al paquete y avisa si el filtro lo oculta. |
 | <img src="docs/assets/icons/telescope.svg" width="18"/> | **Formato de tiempo** | Desde el inicio, desde el anterior capturado, desde el anterior mostrado u hora UTC. Con «desde el anterior mostrado» el beacon de 60 s del módulo 8 salta a la vista. |
 
@@ -391,10 +403,10 @@ flowchart LR
 
 | Suite | Pruebas | Qué comprueba |
 |---|---|---|
-| Motor (`engine.test.mjs`) | 13 | Las 8 capturas se generan, se disecan y son deterministas. Exportar a pcap/pcapng y releer conserva cada byte. **Los 58 retos tienen solución comprobable** contra su captura, y las respuestas derivadas (avisos, intervalo del beacon, Base64 exfiltrado, firma ZIP) se recalculan desde los paquetes. Los 60 «Pruébalo» compilan y muestran paquetes. También comprueba la sintaxis de filtros de Wireshark 4.x, la información experta, los objetos HTTP, las credenciales, el flujo UDP y el checksum RFC 1071. |
-| Idioma (`i18n.test.mjs`) | 5 | Español e inglés tienen las mismas claves. Los ocho módulos tienen título, subtítulo e insignia en inglés. **Cada error del motor de filtros** y **cada etiqueta del árbol de detalle de los 578 paquetes** están traducidos, sin restos en español. |
-| E2E (`e2e.mjs`) | 25 | **El curso completo se resuelve desde la interfaz** (58 retos y 8 insignias). También cubre: <ul><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>buscador: nace de la píldora, guarda y quita recientes (papelera, `Supr`, «Borrar todo» y «Restaurar»), filtra por categorías y devuelve el foco;</li><li>perfil: guardado, lateral, inglés, texto que nunca es HTML, vaciarlo sin perder el progreso y el peor caso (nombre de 60 caracteres sin espacios a 1280 y 390 px);</li><li>«Acerca de»: los 13 proyectos, enlaces `https` con `noopener noreferrer`, «Estás aquí» y versión;</li><li>efectos de tema: gota centrada en el botón, lluvia, interrupción sin restos y movimiento reducido;</li><li>portada sin barra con los controles sobre la ilustración;</li><li>portada: la ilustración carga, el tiburón queda a la derecha del título a 1280, 1440 y 1920 px (también con la barra plegada) y se queda quieta con movimiento reducido;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más» y su cierre arrastrando;</li><li>CSP estricta y red bloqueada.</li></ul> |
-| Accesibilidad (dentro de `e2e.mjs`) | — | axe-core (WCAG 2.2 A/AA) da **cero violaciones** en: <ul><li>8 vistas (también perfil y «Acerca de») y el buscador abierto, a 1280 y 390 px, en claro y oscuro;</li><li>los diálogos de análisis;</li><li>la barra lateral plegada;</li><li>la interfaz en inglés;</li><li>la hoja «Más».</li></ul> |
+| Motor (`engine.test.mjs`) | 23 | Las 9 capturas se generan, se disecan y son deterministas. Exportar a pcap/pcapng y releer conserva cada byte. **Los 68 retos tienen solución comprobable** contra su captura, y las respuestas derivadas (avisos, intervalo del beacon, Base64 exfiltrado, firma ZIP) se recalculan desde los paquetes. Los 60 «Pruébalo» compilan y muestran paquetes. También comprueba la sintaxis de filtros de Wireshark 4.x, la información experta, los objetos HTTP, las credenciales, el flujo UDP y el checksum RFC 1071. En VoIP: MD5 y Digest (RFC 2617) frente a `node:crypto`, la contraseña que delata el response del REGISTER, G.711 µ-law y A-law, campos SIP y SDP, la asociación RTP↔SDP, el PIN por DTMF, las llamadas, el flujo, el audio y el WAV, y **la equivalencia con tshark 4.6.8** (columnas, filtros y RTP Streams) guardada en `tests/tshark/m9.json`. |
+| Idioma (`i18n.test.mjs`) | 6 | Español e inglés tienen las mismas claves. Los nueve módulos tienen título, subtítulo e insignia en inglés, y los bilingües (el 9), cada lección, reto, pista, opción y «Pruébalo». **Cada error del motor de filtros** y **cada etiqueta del árbol de detalle de los 1203 paquetes** están traducidos, sin restos en español. |
+| E2E (`e2e.mjs`) | 29 | **El curso completo se resuelve desde la interfaz** (68 retos y 9 insignias). También cubre: <ul><li>telefonía: llamadas, flujo SIP que lleva al paquete, flujos RTP con los 7 perdidos, reproducción, WAV, filtro del flujo y el módulo 9 en inglés;</li><li>herramientas de analista, buscar e ir al paquete, formato de tiempo y flujo UDP;</li><li>buscador: nace de la píldora, guarda y quita recientes (papelera, `Supr`, «Borrar todo» y «Restaurar»), filtra por categorías y devuelve el foco;</li><li>perfil: guardado, lateral, inglés, texto que nunca es HTML, vaciarlo sin perder el progreso y el peor caso (nombre de 60 caracteres sin espacios a 1280 y 390 px);</li><li>«Acerca de»: los 13 proyectos, enlaces `https` con `noopener noreferrer`, «Estás aquí» y versión;</li><li>efectos de tema: gota centrada en el botón, lluvia, interrupción sin restos y movimiento reducido;</li><li>portada sin barra con los controles sobre la ilustración;</li><li>portada: la ilustración carga, el tiburón queda a la derecha del título a 1280, 1440 y 1920 px (también con la barra plegada) y se queda quieta con movimiento reducido;</li><li>barra lateral plegable (`[`, ratón y estado guardado);</li><li>interruptores de idioma y de tema;</li><li>móvil con la hoja «Más» y su cierre arrastrando;</li><li>CSP estricta y red bloqueada.</li></ul> |
+| Accesibilidad (dentro de `e2e.mjs`) | — | axe-core (WCAG 2.2 A/AA) da **cero violaciones** en: <ul><li>8 vistas (también perfil y «Acerca de») y el buscador abierto, a 1280 y 390 px, en claro y oscuro;</li><li>los diálogos de análisis y los de Telefonía (con el reproductor);</li><li>el módulo 9 en el móvil;</li><li>la barra lateral plegada;</li><li>la interfaz en inglés;</li><li>la hoja «Más».</li></ul> |
 
 La [integración continua](.github/workflows/tests.yml) ejecuta todo en cada *push* y *pull request* y comprueba que los HTML están al día.
 
@@ -411,12 +423,13 @@ Detalle en [ROADMAP.md](ROADMAP.md).
 - [x] 1.4.0 · Perfil configurable, «Acerca de» con el ecosistema, tema con gota y buscador nuevo
 - [x] 1.4.1 · Prueba de los efectos de tema estable en la CI
 - [ ] 1.4.x · Lecciones, retos, glosario y campos en inglés, revisados a mano
-- [ ] 1.5.0 · Más capturas: SMB y movimiento lateral, VoIP/SIP y DHCP spoofing
+- [x] 1.5.0 · Módulo 9: VoIP (SIP, SDP, RTP, RTCP y DTMF), Telefonía con reproductor y contraste con tshark
+- [ ] 1.6.0 · Más capturas: SMB y movimiento lateral, y DHCP spoofing
 
 ## <img src="docs/assets/icons/triangle-alert.svg" width="20" height="20" valign="middle"/> Limitaciones conocidas
 
-- **Contenido en español.** La interfaz está entera en inglés, con el árbol de detalle con las etiquetas de Wireshark. Pero las lecciones, los enunciados, las pistas, el glosario y las descripciones de los campos siguen en español, y la interfaz lo avisa.
-- **Subconjunto de Wireshark.** Hay 136 campos y los protocolos de las capturas del curso. Una captura propia con otros protocolos se ve hasta la capa que el disector conoce.
+- **Contenido en español.** La interfaz está entera en inglés, con el árbol de detalle con las etiquetas de Wireshark. El módulo 9 también está en inglés; en los ocho primeros, las lecciones, los enunciados y las pistas siguen en español (la interfaz lo avisa), igual que el glosario y las descripciones de los campos.
+- **Subconjunto de Wireshark.** Hay 235 campos y los protocolos de las capturas del curso. En VoIP: SIP sobre UDP, SDP, RTP con G.711 y RTCP SR/RR; no hay SIP sobre TCP o TLS, SRTP, ni decodificación de otros códecs (G.729, Opus). Una captura propia con otros protocolos se ve hasta la capa que el disector conoce.
 - **Sin captura en vivo.** El navegador no puede escuchar la interfaz de red; para eso está Wireshark.
 - **El progreso vive en el navegador.** Si borras sus datos, se pierde.
 
@@ -430,12 +443,13 @@ megalodon/
 │   ├── styles.css              Tokens, claro y oscuro, barra lateral, móvil y movimiento
 │   ├── engine/                 Motor sin DOM
 │   │   ├── net.js              Constructores de tramas y checksums
-│   │   ├── scenarios.js        Las 8 capturas, con semilla fija
-│   │   ├── fields.js           136 campos de filtro
+│   │   ├── scenarios.js        Las 9 capturas, con semilla fija
+│   │   ├── fields.js           235 campos de filtro
 │   │   ├── dissect.js          Disector, árbol de detalle y rangos de bytes
 │   │   ├── filter.js           Filtros de visualización y autocompletado
 │   │   ├── stats.js            Conversaciones, endpoints, jerarquía, E/S y flujos
-│   │   └── analyze.js          Información experta, objetos HTTP, credenciales y flujo UDP
+│   │   ├── analyze.js          Información experta, objetos HTTP, credenciales y flujo UDP
+│   │   └── voip.js             Llamadas VoIP, flujo SIP, análisis RTP (como Wireshark), G.711 y WAV
 │   ├── content/                Módulos, lecciones y retos; chuleta, glosario y atajos
 │   ├── app/                    Interfaz
 │   │   ├── 00-iconos.js        Iconos Lucide en línea
@@ -445,6 +459,7 @@ megalodon/
 │   │   ├── 30-workspace.js     Espacio tipo Wireshark y árbol en inglés
 │   │   ├── 40-dialogs.js       Seguir flujo, estadísticas y herramientas de analista
 │   │   ├── 45-ladder.js        Diagrama de escalera del saludo TCP
+│   │   ├── 47-voip.js          Telefonía: llamadas, flujo SIP y flujos RTP con reproductor (Web Audio API)
 │   │   ├── 50-views.js         Inicio, módulos, laboratorio, chuleta y glosario
 │   │   ├── 60-perfil.js        Perfil configurable y «Acerca de» con el ecosistema
 │   │   ├── 80-fx.js            Cambio de tema con gota, lluvia o fundido (View Transitions)
@@ -453,8 +468,8 @@ megalodon/
 │   └── assets/                 Ilustración de la portada (AVIF y WebP), logo y favicon
 │
 ├── 📦 dist/index.html          La aplicación generada (igual que megalodon.html)
-├── 🛠️ scripts/                  build.mjs · capturas.mjs
-├── 🧪 tests/                    engine · i18n · e2e · load
+├── 🛠️ scripts/                  build.mjs · capturas.mjs · tshark-ref.mjs
+├── 🧪 tests/                    engine · i18n · e2e · load · tshark/ (referencia de tshark)
 ├── 📄 docs/                     Capturas, cabecera e iconos del README
 ├── 🎨 .claude/skills/           Skills de diseño: impeccable, ui-ux-pro-max y las de Emil Kowalski
 └── ⚙️ .github/workflows/        tests.yml · pages.yml

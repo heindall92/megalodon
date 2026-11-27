@@ -257,5 +257,174 @@ const SCENARIOS = {
     }
     return c.pkts;
   },
+
+  /* M9 · VoIP: el teléfono de Alicia se registra con Digest, llama al buzón de voz (*97) y teclea su PIN por DTMF;
+     al final, un escáner SIP prueba contraseñas e intenta una llamada internacional. Ver VOIP_M9 para los datos. */
+  m9() {
+    const c = new Cap(909), V = VOIP_M9, { tel, pbx, atk } = VOIP_HOSTS, R = VOIP_M9.realm;
+    const sipTo = (a, b, sport, dport, first, hdrs, body) => c.udp(a, b, sport, dport, sipMsg(first, hdrs, body));
+    const viaT = br => ['Via', `SIP/2.0/UDP ${tel.ip}:5060;branch=z9hG4bK-${br};rport`];
+    const viaR = br => ['Via', `SIP/2.0/UDP ${tel.ip}:5060;branch=z9hG4bK-${br};received=${tel.ip};rport=5060`];
+    const fromA = ['From', `"Alicia" <sip:${V.user}@${R}>;tag=8a41c2`], ua = ['User-Agent', V.uaPhone], srv = ['Server', V.server];
+    const allow = ['Allow', 'INVITE, ACK, CANCEL, BYE, OPTIONS, INFO, NOTIFY'];
+
+    /* 1 · REGISTER → 401 con reto Digest → REGISTER con Authorization → 200 OK */
+    c.wait(0.12);
+    const regTo = ['To', `"Alicia" <sip:${V.user}@${R}>`], regCid = ['Call-ID', V.regCallId];
+    sipTo(tel, pbx, 5060, 5060, `REGISTER sip:${R} SIP/2.0`, [viaT('1f3a9c01'), ['Max-Forwards', '70'], fromA, regTo, regCid, ['CSeq', '1 REGISTER'], ['Contact', `<sip:${V.user}@${tel.ip}:5060>`], ua, ['Expires', '3600'], allow]);
+    c.jitter(0.0012, 0.0025);
+    const chal = `Digest algorithm=MD5, realm="${R}", nonce="${V.nonce}", qop="auth"`;
+    sipTo(pbx, tel, 5060, 5060, 'SIP/2.0 401 Unauthorized', [viaR('1f3a9c01'), fromA, [regTo[0], `${regTo[1]};tag=as5e1c0a77`], regCid, ['CSeq', '1 REGISTER'], srv, allow, ['WWW-Authenticate', chal]]);
+    c.jitter(0.006, 0.011);
+    const resp = digestResponse({ user: V.user, realm: R, pass: V.pass, method: 'REGISTER', uri: `sip:${R}`, nonce: V.nonce, nc: '00000001', cnonce: V.cnonce, qop: 'auth' });
+    sipTo(tel, pbx, 5060, 5060, `REGISTER sip:${R} SIP/2.0`, [viaT('1f3a9c02'), ['Max-Forwards', '70'], fromA, regTo, regCid, ['CSeq', '2 REGISTER'], ['Contact', `<sip:${V.user}@${tel.ip}:5060>`],
+      ['Authorization', `Digest username="${V.user}", realm="${R}", nonce="${V.nonce}", uri="sip:${R}", response="${resp}", algorithm=MD5, cnonce="${V.cnonce}", nc=00000001, qop=auth`], ua, ['Expires', '3600'], allow]);
+    c.jitter(0.0015, 0.003);
+    sipTo(pbx, tel, 5060, 5060, 'SIP/2.0 200 OK', [viaR('1f3a9c02'), fromA, [regTo[0], `${regTo[1]};tag=as5e1c0a77`], regCid, ['CSeq', '2 REGISTER'], srv, allow, ['Expires', '3600'], ['Contact', `<sip:${V.user}@${tel.ip}:5060>;expires=3600`], ['Date', 'Fri, 27 Nov 2026 09:14:05 GMT']]);
+
+    /* 2 · INVITE al buzón de voz con SDP → 100 → 180 → 200 OK con SDP → ACK */
+    c.wait(2.4);
+    const dest = `sip:${V.dest}@${R}`, cid = ['Call-ID', V.callId], toD = ['To', `<${dest}>`], toDt = ['To', `<${dest}>;tag=as4d17b2e1`];
+    const fromC = ['From', `"Alicia" <sip:${V.user}@${R}>;tag=3e90d1`];
+    const sdpA = sdpBody({ user: V.user, sess: 2104, ip: tel.ip, port: V.portTel, name: 'Ondas SIP' });
+    const sdpB = sdpBody({ user: 'root', sess: 1795000123, ip: pbx.ip, port: V.portPbx, name: 'Asterisk PBX' });
+    sipTo(tel, pbx, 5060, 5060, `INVITE ${dest} SIP/2.0`, [viaT('7c2e9a10'), ['Max-Forwards', '70'], fromC, toD, cid, ['CSeq', '101 INVITE'], ['Contact', `<sip:${V.user}@${tel.ip}:5060>`], ua, allow], sdpA);
+
+    c.jitter(0.0008, 0.0016);
+    sipTo(pbx, tel, 5060, 5060, 'SIP/2.0 100 Trying', [viaR('7c2e9a10'), fromC, toD, cid, ['CSeq', '101 INVITE'], srv, ['Contact', `<${dest.replace(R, `${pbx.ip}:5060`)}>`]]);
+    c.jitter(0.03, 0.05);
+    sipTo(pbx, tel, 5060, 5060, 'SIP/2.0 180 Ringing', [viaR('7c2e9a10'), fromC, toDt, cid, ['CSeq', '101 INVITE'], srv, ['Contact', `<${dest.replace(R, `${pbx.ip}:5060`)}>`]]);
+    c.jitter(0.6, 0.7);
+    sipTo(pbx, tel, 5060, 5060, 'SIP/2.0 200 OK', [viaR('7c2e9a10'), fromC, toDt, cid, ['CSeq', '101 INVITE'], srv, allow, ['Contact', `<${dest.replace(R, `${pbx.ip}:5060`)}>`]], sdpB);
+    const t200 = c.t;
+    c.jitter(0.004, 0.006);
+    sipTo(tel, pbx, 5060, 5060, `ACK ${dest.replace(R, `${pbx.ip}:5060`)} SIP/2.0`, [viaT('7c2e9a11'), ['Max-Forwards', '70'], fromC, toDt, cid, ['CSeq', '101 ACK'], ua]);
+    const tAck = c.t;
+
+    /* 3 · RTP en los dos sentidos (20 ms, 160 muestras), DTMF y RTCP. Todo se planifica y luego se emite en orden de llegada. */
+    const ev = [], a = rng(9090), N = V.slots, startP = t200 + 0.004, startT = tAck + 0.009;
+    const lost = new Set(V.lostPbx), dtmf = new Map();
+    let k0 = V.dtmfStart;
+    for (const ch of V.pin) { const id = DTMF_CH.indexOf(ch); for (let i = 0; i < 11; i++) dtmf.set(k0 + i, { id, i, start: k0 }); k0 += 11 + 14; }
+    const seqT = V.seqTel, seqP = V.seqPbx, tsT = V.tsTel, tsP = V.tsPbx;
+    const arrivP = [], sentTel = [];                      // llegadas al punto de captura (junto al teléfono): centralita → teléfono y audio del teléfono
+    const octetsTel = n => { let o = 0; for (let k = 0; k < n; k++) o += dtmf.has(k) ? 4 : 160; return o; };
+    for (let k = 0; k < N; k++) {
+      /* teléfono → centralita: limpio, solo el reloj de la tarjeta */
+      const tT = startT + k * 0.02 + a() * 0.0006, d = dtmf.get(k);
+      if (d) {
+        const end = d.i >= 8, dur = 160 * Math.min(d.i + 1, 8);
+        ev.push({ t: tT, f: () => c.udp(tel, pbx, V.portTel, V.portPbx, rtpPkt(101, seqT + k, tsT + 160 * d.start, V.ssrcTel, rtpEv(d.id, end, 10, dur), d.i === 0)) });
+      } else {
+        const pcm = voipVoice('tel', k, a); sentTel.push({ k, t: tT });
+        ev.push({ t: tT, f: () => c.udp(tel, pbx, V.portTel, V.portPbx, rtpPkt(0, seqT + k, tsT + 160 * k, V.ssrcTel, pcm.map(ulawEnc), k === 0)) });
+      }
+      /* centralita → teléfono: llega con jitter (más en la ráfaga de congestión) y con pérdidas */
+      const burst = k >= V.burst[0] && k < V.burst[1], tP = startP + k * 0.02 + 0.0004 + (burst ? a() * 0.018 : a() * 0.0015);
+      const pcmP = voipVoice('pbx', k, a);
+      if (lost.has(k)) continue;
+      arrivP.push({ k, t: tP });
+      ev.push({ t: tP, f: () => c.udp(pbx, tel, V.portPbx, V.portTel, rtpPkt(0, seqP + k, tsP + 160 * k, V.ssrcPbx, pcmP.map(ulawEnc), k === 0)) });
+    }
+    /* RTCP: la centralita informa del audio del teléfono (sin pérdidas) y el teléfono, del de la centralita */
+    const ntp = t => { const s = t + 2208988800; return [Math.floor(s) >>> 0, Math.floor((s % 1) * 4294967296) >>> 0]; };
+    const mid = t => { const [m, l] = ntp(t); return ((m & 0xffff) << 16 | l >>> 16) >>> 0; };
+    let lastSrPbx = null, prevExp = 0, prevRecv = 0;
+    for (const [kP, kT] of V.rtcpAt) {
+      const tP = startP + kP * 0.02 + 0.011, tT = startT + kT * 0.02 + 0.012;
+      const sentT = Math.round((tP - startT) / 0.02);           // paquetes del teléfono enviados hasta ese momento
+      const [msw, lsw] = ntp(tP);
+      const srP = { ssrc: V.ssrcPbx, ntpMsw: msw, ntpLsw: lsw, rtpTs: tsP + Math.round((tP - startP) * 8000), pkts: kP, octets: kP * 160,
+        rb: { ssrc: V.ssrcTel, fraction: 0, cum: 0, extHigh: seqT + sentT - 1, jitter: voipJitter(sentTel.filter(x => x.t < tP - 0.002), startT) } };
+      ev.push({ t: tP, f: () => c.udp(pbx, tel, V.portPbx + 1, V.portTel + 1, rtcpSR(srP)) });
+      /* el teléfono: recibido hasta su informe → pérdida del intervalo, acumulada y jitter (RFC 3550, A.3 y A.8) */
+      const got = arrivP.filter(x => x.t < tT), hi = got.length ? got[got.length - 1].k : 0, expected = hi + 1, cum = expected - got.length;
+      const fr = expected - prevExp > 0 ? Math.max(0, Math.floor(((expected - prevExp) - (got.length - prevRecv)) * 256 / (expected - prevExp))) : 0;
+      prevExp = expected; prevRecv = got.length;
+      const sentByTel = Math.round((tT - startT) / 0.02), [m2, l2] = ntp(tT);
+      lastSrPbx = { lsr: mid(tP), at: tP };
+      const srT = { ssrc: V.ssrcTel, ntpMsw: m2, ntpLsw: l2, rtpTs: tsT + Math.round((tT - startT) * 8000), pkts: sentByTel, octets: octetsTel(sentByTel),
+        rb: { ssrc: V.ssrcPbx, fraction: fr, cum, extHigh: seqP + hi, jitter: voipJitter(got, startP), lsr: lastSrPbx.lsr, dlsr: Math.round((tT - lastSrPbx.at) * 65536) } };
+      ev.push({ t: tT, f: () => c.udp(tel, pbx, V.portTel + 1, V.portPbx + 1, rtcpSR(srT)) });
+    }
+    ev.sort((x, y) => x.t - y.t);
+    for (const e of ev) { c.t = Math.max(c.t, e.t); e.f(); }
+
+    /* 4 · Alicia cuelga: BYE → 200 OK */
+    c.wait(0.03);
+    sipTo(tel, pbx, 5060, 5060, `BYE ${dest.replace(R, `${pbx.ip}:5060`)} SIP/2.0`, [viaT('7c2e9a12'), ['Max-Forwards', '70'], fromC, toDt, cid, ['CSeq', '102 BYE'], ua]);
+    c.jitter(0.002, 0.004);
+    sipTo(pbx, tel, 5060, 5060, 'SIP/2.0 200 OK', [viaR('7c2e9a12'), fromC, toDt, cid, ['CSeq', '102 BYE'], srv]);
+
+    /* 5 · El escáner: OPTIONS para ver qué centralita es, contraseñas para la 1002 e INVITE a un número internacional */
+    c.wait(3.1);
+    const va = (br, p) => ['Via', `SIP/2.0/UDP ${atk.ip}:${p};branch=z9hG4bK-${br};rport`], uaS = ['User-Agent', 'friendly-scanner'];
+    sipTo(atk, pbx, 5061, 5060, `OPTIONS sip:100@${pbx.ip} SIP/2.0`, [va('2063346', 5061), ['Max-Forwards', '70'], ['From', `"sipvicious" <sip:100@1.1.1.1>;tag=6635633539`], ['To', `"sipvicious" <sip:100@1.1.1.1>`], ['Call-ID', '1840566719131592640941@1.1.1.1'], ['CSeq', '1 OPTIONS'], ['Contact', `<sip:100@${atk.ip}:5061>`], ['Accept', 'application/sdp'], uaS]);
+    c.jitter(0.001, 0.002);
+    sipTo(pbx, atk, 5060, 5061, 'SIP/2.0 200 OK', [['Via', `SIP/2.0/UDP ${atk.ip}:5061;branch=z9hG4bK-2063346;received=${atk.ip};rport=5061`], ['From', `"sipvicious" <sip:100@1.1.1.1>;tag=6635633539`], ['To', `"sipvicious" <sip:100@1.1.1.1>;tag=as0c3ad1f2`], ['Call-ID', '1840566719131592640941@1.1.1.1'], ['CSeq', '1 OPTIONS'], srv, allow, ['Accept', 'application/sdp']]);
+    c.wait(0.9);
+    V.guesses.forEach((pw, i) => {
+      const ci = ['Call-ID', `${V.atkCallBase + i}@${atk.ip}`], fr = ['From', `"${V.victim}" <sip:${V.victim}@${R}>;tag=7b${i}e1`], to = ['To', `"${V.victim}" <sip:${V.victim}@${R}>`], nonce = V.atkNonces[i];
+      sipTo(atk, pbx, 5062, 5060, `REGISTER sip:${R} SIP/2.0`, [va(`9a1${i}0`, 5062), ['Max-Forwards', '70'], fr, to, ci, ['CSeq', '1 REGISTER'], ['Contact', `<sip:${V.victim}@${atk.ip}:5062>`], uaS, ['Expires', '3600']]);
+      c.jitter(0.001, 0.002);
+      sipTo(pbx, atk, 5060, 5062, 'SIP/2.0 401 Unauthorized', [['Via', `SIP/2.0/UDP ${atk.ip}:5062;branch=z9hG4bK-9a1${i}0;received=${atk.ip};rport=5062`], fr, [to[0], `${to[1]};tag=as71c0${i}9d`], ci, ['CSeq', '1 REGISTER'], srv, ['WWW-Authenticate', `Digest algorithm=MD5, realm="${R}", nonce="${nonce}"`]]);
+      c.jitter(0.004, 0.008);
+      const r2 = digestResponse({ user: V.victim, realm: R, pass: pw, method: 'REGISTER', uri: `sip:${R}`, nonce });
+      sipTo(atk, pbx, 5062, 5060, `REGISTER sip:${R} SIP/2.0`, [va(`9a1${i}1`, 5062), ['Max-Forwards', '70'], fr, to, ci, ['CSeq', '2 REGISTER'], ['Contact', `<sip:${V.victim}@${atk.ip}:5062>`],
+        ['Authorization', `Digest username="${V.victim}", realm="${R}", nonce="${nonce}", uri="sip:${R}", response="${r2}", algorithm=MD5`], uaS, ['Expires', '3600']]);
+      c.jitter(0.001, 0.002);
+      sipTo(pbx, atk, 5060, 5062, 'SIP/2.0 403 Forbidden', [['Via', `SIP/2.0/UDP ${atk.ip}:5062;branch=z9hG4bK-9a1${i}1;received=${atk.ip};rport=5062`], fr, [to[0], `${to[1]};tag=as71c0${i}9d`], ci, ['CSeq', '2 REGISTER'], srv]);
+      c.jitter(0.2, 0.3);
+    });
+    c.wait(1.2);
+    const fraud = `sip:${V.fraudNumber}@${R}`, fci = ['Call-ID', `${V.atkCallBase + 9}@${atk.ip}`], ffr = ['From', `"${V.victim}" <sip:${V.victim}@${R}>;tag=55ab01`];
+    sipTo(atk, pbx, 5062, 5060, `INVITE ${fraud} SIP/2.0`, [va('c0ffe1', 5062), ['Max-Forwards', '70'], ffr, ['To', `<${fraud}>`], fci, ['CSeq', '1 INVITE'], ['Contact', `<sip:${V.victim}@${atk.ip}:5062>`], uaS]);
+    c.jitter(0.001, 0.002);
+    sipTo(pbx, atk, 5060, 5062, 'SIP/2.0 403 Forbidden', [['Via', `SIP/2.0/UDP ${atk.ip}:5062;branch=z9hG4bK-c0ffe1;received=${atk.ip};rport=5062`], ffr, ['To', `<${fraud}>;tag=as2f0e9b44`], fci, ['CSeq', '1 INVITE'], srv]);
+    c.jitter(0.001, 0.002);
+    sipTo(atk, pbx, 5062, 5060, `ACK ${fraud} SIP/2.0`, [va('c0ffe1', 5062), ['Max-Forwards', '70'], ffr, ['To', `<${fraud}>;tag=as2f0e9b44`], fci, ['CSeq', '1 ACK'], uaS]);
+    return c.pkts;
+  },
 };
-const SCENARIO_FILES = { m1: 'm1-saludo-tcp', m2: 'm2-http', m3: 'm3-sesiones', m4: 'm4-dns', m5: 'm5-tls', m6: 'm6-ataques-web', m7: 'm7-directorio-activo', m8: 'm8-caza-soc' };
+const SCENARIO_FILES = { m1: 'm1-saludo-tcp', m2: 'm2-http', m3: 'm3-sesiones', m4: 'm4-dns', m5: 'm5-tls', m6: 'm6-ataques-web', m7: 'm7-directorio-activo', m8: 'm8-caza-soc', m9: 'm9-voip' };
+
+/* Red de voz del módulo 9 (10.20.0.0/24, dominio voip.local) y los datos que las pruebas recalculan desde los paquetes */
+const VOIP_HOSTS = {
+  pbx: { mac: '02:00:0a:14:00:05', ip: '10.20.0.5', ttl: 64 },
+  tel: { mac: '02:00:0a:14:00:15', ip: '10.20.0.21', ttl: 64 },
+  atk: { mac: '02:00:0a:14:00:42', ip: '10.20.0.66', ttl: 64 },
+};
+const VOIP_M9 = {
+  realm: 'voip.local', user: '1001', pass: 'verano2026', nonce: '6c1f0a8e3b5d4972', cnonce: '0a4f113b',
+  uaPhone: 'Ondas SIP-T40 4.2.1', server: 'Asterisk PBX 20.5.0',
+  regCallId: '5c7e1d93a0b24f6e@10.20.0.21', callId: '7f3b2e90c4d1a856@10.20.0.21', dest: '*97',
+  portTel: 16384, portPbx: 10000, ssrcTel: 0x5a3c9e21, ssrcPbx: 0x1b7f04d3, seqTel: 21877, seqPbx: 4310, tsTel: 1840000, tsPbx: 96000,
+  slots: 300, lostPbx: [61, 62, 63, 140, 177, 211, 212], burst: [150, 200], dtmfStart: 95, pin: '4721#', rtcpAt: [[120, 124], [240, 245]],
+  victim: '1002', guesses: ['1002', '123456', 'password'], atkNonces: ['3a9e5f17', '7d20c4b8', '0e6b91fa'], atkCallBase: 1840566720, fraudNumber: '00447700900123',
+};
+/* Jitter entre llegadas (RFC 3550, A.8) en unidades de reloj de 8 kHz: J += (|D| - J) / 16 */
+function voipJitter(arr, start) {
+  let j = 0, prev = null;
+  for (const x of arr) { const transit = x.t * 8000 - (start * 8000 + 160 * x.k); if (prev !== null) j += (Math.abs(transit - prev) - j) / 16; prev = transit; }
+  return Math.round(j);
+}
+/* Audio sintético y determinista, 160 muestras por ranura de 20 ms.
+   Centralita: locución con voz sintética, silencio mientras se teclea el PIN, tres tonos de confirmación y otra locución.
+   Teléfono: un «¿hola?» corto y ruido de fondo. */
+function voipVoice(who, k, r) {
+  const out = new Array(160), t0 = k * 0.02;
+  for (let i = 0; i < 160; i++) {
+    const t = t0 + i / 8000; let s = (r() - 0.5) * 40;
+    const voice = (f0, a, from, to) => {
+      if (t < from || t >= to) return 0;
+      const u = t - from, env = Math.sin(Math.PI * Math.min(1, u / (to - from))) * (0.55 + 0.45 * Math.sin(2 * Math.PI * 3.7 * u) ** 2);
+      let v = 0; for (let h = 1; h <= 9; h++) v += Math.sin(2 * Math.PI * h * f0 * (1 + 0.04 * Math.sin(2 * Math.PI * 2.1 * u)) * u) / (1 + Math.abs(h * f0 - 650) / 180);
+      return a * env * v;
+    };
+    const tone = (f, a, from, to) => (t >= from && t < to ? a * Math.sin(2 * Math.PI * f * (t - from)) * Math.min(1, (t - from) * 200, (to - t) * 200) : 0);
+    if (who === 'pbx') s += voice(190, 2600, 0.1, 1.7) + tone(523, 7000, 4.4, 4.6) + tone(659, 7000, 4.65, 4.85) + tone(784, 7000, 4.9, 5.2) + voice(175, 2400, 5.3, 5.95);
+    else s += voice(120, 3000, 0.3, 0.75);
+    out[i] = s;
+  }
+  return out;
+}
