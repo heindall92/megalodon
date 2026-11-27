@@ -63,7 +63,7 @@ function siteFooter() {
   return `<footer class="foot wrap"><p>${L('Megalodon · laboratorio de Wireshark sin conexión. Contenido basado en la', 'Megalodon · offline Wireshark lab. Content based on the')} <a href="https://www.wireshark.org/docs/" target="_blank" rel="noopener noreferrer">${L('documentación pública de Wireshark', 'public Wireshark documentation')}</a>${L('; las capturas son sintéticas y los dominios, de prueba.', '; captures are synthetic and domains are test domains.')}</p><p>Yoandy Ramírez Delgado · Huelva, ${L('España', 'Spain')}</p></footer>`;
 }
 function viewModules(main) {
-  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('modules')}</p><h1>${L('Ruta de aprendizaje', 'Learning path')}</h1><p class="muted">${L('Seis módulos principales para el eWPT y dos extra de SOC y Directorio Activo.', 'Six core modules for the eWPT and two extra ones on SOC and Active Directory.')}</p></div>
+  main.innerHTML = `<div class="wrap page"><div class="sec-h"><p class="eyebrow">${t('modules')}</p><h1>${L('Ruta de aprendizaje', 'Learning path')}</h1><p class="muted">${L('Seis módulos principales para el eWPT y tres extra: Directorio Activo, SOC y VoIP.', 'Six core modules for the eWPT and three extra ones: Active Directory, SOC and VoIP.')}</p></div>
     <h2 class="vh">${L('Módulos principales', 'Core modules')}</h2><div class="mgrid">${MODULES.filter(m => !m.extra).map(modCard).join('')}</div>
     <div class="sec-h sub"><h2>${t('extra')}</h2></div><div class="mgrid">${MODULES.filter(m => m.extra).map(modCard).join('')}</div></div>${siteFooter()}`;
 }
@@ -88,9 +88,9 @@ function viewModule(main, { id, q }) {
           <button role="tab" id="tab-ws" aria-controls="pan-ws" data-tab="ws" class="only-narrow">${ic('rows', 'sm')}${t('wireshark')}</button>
         </div>
         <div id="pan-lesson" role="tabpanel" aria-labelledby="tab-lesson" class="pan lesson" tabindex="-1">
-          ${t('lessonsInSpanish') ? `<p class="note sm">${ic('lang', 'sm')}${t('lessonsInSpanish')}</p>` : ''}
-          <p class="intro">${md(m.intro)}</p>
-          ${m.lessons.map((l, i) => `<section class="lcard card" id="l-${i}" aria-labelledby="lh-${i}"><h2 id="lh-${i}"><span class="ln">${i + 1}</span>${esc(l.h)}</h2>${l.p.map(x => `<p>${md(x)}</p>`).join('')}${l.ladder !== undefined ? `<div class="ladder-slot" data-stream="${l.ladder}"></div>` : ''}${l.try ? `<div class="tries"><p class="tries-h">${ic('play', 'sm')}${t('tryIt')}</p>${l.try.map(([f, d]) => `<button class="try" type="button" data-f="${esc(f)}"><code>${esc(f)}</code><span>${esc(d)}</span></button>`).join('')}</div>` : ''}</section>`).join('')}
+          ${t('lessonsInSpanish') && !m.intro_en ? `<p class="note sm">${ic('lang', 'sm')}${t('lessonsInSpanish')}</p>` : ''}
+          <p class="intro">${md(mT(m, 'intro'))}</p>
+          ${m.lessons.map((l, i) => `<section class="lcard card" id="l-${i}" aria-labelledby="lh-${i}"><h2 id="lh-${i}"><span class="ln">${i + 1}</span>${esc(mT(l, 'h'))}</h2>${mT(l, 'p').map(x => `<p>${md(x)}</p>`).join('')}${l.ladder !== undefined ? `<div class="ladder-slot" data-stream="${l.ladder}"></div>` : ''}${l.try ? `<div class="tries"><p class="tries-h">${ic('play', 'sm')}${t('tryIt')}</p>${l.try.map(([f, d, de]) => `<button class="try" type="button" data-f="${esc(f)}"><code>${esc(f)}</code><span>${esc((LANG === 'en' && de) || d)}</span></button>`).join('')}</div>` : ''}</section>`).join('')}
           <button class="btn primary" data-go-tasks type="button">${ic('target')}${L('Ir a los retos', 'Go to the challenges')}</button>
         </div>
         <div id="pan-tasks" role="tabpanel" aria-labelledby="tab-tasks" class="pan tasks" tabindex="-1">
@@ -138,7 +138,7 @@ function viewModule(main, { id, q }) {
   const succeed = (task, card) => {
     const xp = S.solve(task.id);
     card.dataset.state = 'done'; card.classList.add('just');
-    fb(card, 'ok', `${ic('ok')}<span>${md(task.ok)}</span>`);
+    fb(card, 'ok', `${ic('ok')}<span>${md(mT(task, 'ok'))}</span>`);
     $('.txp', card).innerHTML = `${ic('check', 'sm')}+${xp} XP`;
     $$('input, .task-act button', card).forEach(el => { el.disabled = true; });
     toast(`<strong>+${xp} XP</strong> · ${t('solved')}`, 'ok', 'sparkles');
@@ -152,10 +152,10 @@ function viewModule(main, { id, q }) {
     const task = m.tasks.find(x => x.id === card.dataset.id);
     const hintBtn = $('[data-hint]', card);
     const renderHints = () => {
-      const n = S.hintsUsed(task.id);
-      $('.task-hints', card).innerHTML = task.hints.slice(0, n).map((h, i) => `<p class="hint">${ic('hint', 'sm')}<span><strong>${t('hint')} ${i + 1}:</strong> ${md(h)}</span></p>`).join('');
-      hintBtn.hidden = n >= task.hints.length || S.isDone(task.id);
-      hintBtn.querySelector('span').textContent = `${t('hint')} ${n + 1}/${task.hints.length}`;
+      const n = S.hintsUsed(task.id), hints = mT(task, 'hints');
+      $('.task-hints', card).innerHTML = hints.slice(0, n).map((h, i) => `<p class="hint">${ic('hint', 'sm')}<span><strong>${t('hint')} ${i + 1}:</strong> ${md(h)}</span></p>`).join('');
+      hintBtn.hidden = n >= hints.length || S.isDone(task.id);
+      hintBtn.querySelector('span').textContent = `${t('hint')} ${n + 1}/${hints.length}`;
       if (!S.isDone(task.id)) $('.txp', card).textContent = `+${XP_BY_HINTS[Math.min(3, n)]} XP`;
     };
     hintBtn.onclick = () => { S.useHint(task.id); renderHints(); const last = $$('.hint', card).pop(); if (last) last.classList.add('new'); };
@@ -203,13 +203,13 @@ function taskCard(x, i) {
   const act = x.type === 'filter' ? `<p class="sm">${t('yourFilter')}: <span data-curf></span></p><button class="btn sm primary" data-check type="button">${ic('check', 'sm')}${t('check')}</button>`
     : x.type === 'packet' ? `<p class="sm">${t('selected')}: <span data-cursel></span></p><button class="btn sm primary" data-check type="button">${ic('check', 'sm')}${t('check')}</button>`
       : x.type === 'text' ? `<div class="ans"><label class="vh" for="a-${x.id}">${t('answer')}</label><input id="a-${x.id}" class="tinput mono" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${t('answer')}…"><button class="btn sm primary" data-check type="button">${ic('check', 'sm')}${t('check')}</button></div>`
-        : `<div class="opts" role="radiogroup" aria-labelledby="q-${x.id}">${x.opts.map((o, j) => `<button class="opt" type="button" role="radio" aria-checked="false" data-opt="${j}"><span class="ob" aria-hidden="true"></span>${esc(o)}</button>`).join('')}</div>`;
+        : `<div class="opts" role="radiogroup" aria-labelledby="q-${x.id}">${mT(x, 'opts').map((o, j) => `<button class="opt" type="button" role="radio" aria-checked="false" data-opt="${j}"><span class="ob" aria-hidden="true"></span>${esc(o)}</button>`).join('')}</div>`;
   const xp = done ? S.get().done[x.id].xp : XP_BY_HINTS[Math.min(3, S.hintsUsed(x.id))];
   return `<article class="task card" id="task-${x.id}" data-id="${x.id}" data-state="${done ? 'done' : 'todo'}" aria-labelledby="q-${x.id}">
     <div class="task-h"><span class="tnum" aria-hidden="true"><span class="tn-n">${i + 1}</span><span class="tn-ok">${ic('check', 'sm')}</span></span><span class="ttype">${ic(ti, 'sm')}${L(...tl)}</span><span class="txp">${done ? `${ic('check', 'sm')}+${xp} XP` : `+${xp} XP`}</span></div>
-    <p class="tq" id="q-${x.id}"><span class="vh">${L('Reto', 'Challenge')} ${i + 1}${done ? L(', resuelto', ', solved') : ''}: </span>${md(x.q)}</p>
+    <p class="tq" id="q-${x.id}"><span class="vh">${L('Reto', 'Challenge')} ${i + 1}${done ? L(', resuelto', ', solved') : ''}: </span>${md(mT(x, 'q'))}</p>
     <div class="task-act">${act}</div>
-    <div class="task-fb ${done ? 'ok' : ''}" aria-live="polite">${done ? `${ic('ok')}<span>${md(x.ok)}</span>` : ''}</div>
+    <div class="task-fb ${done ? 'ok' : ''}" aria-live="polite">${done ? `${ic('ok')}<span>${md(mT(x, 'ok'))}</span>` : ''}</div>
     <div class="task-hints"></div>
     <div class="task-foot"><button class="btn sm ghost" data-hint type="button">${ic('hint', 'sm')}<span>${t('hint')}</span></button></div>
   </article>`;

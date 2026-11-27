@@ -115,6 +115,7 @@ class Workspace {
           <button class="tbtn" data-expert type="button" title="${t('expert')} (E)">${ic('alert')}<span>${L('Experto', 'Expert')}</span></button>
           <button class="tbtn" data-objects type="button" title="${L('Archivo › Exportar objetos › HTTP', 'File › Export Objects › HTTP')}">${ic('file')}<span>${t('objects')}</span></button>
           <button class="tbtn" data-creds type="button" title="${L('Herramientas › Credenciales', 'Tools › Credentials')}">${ic('lock')}<span>${t('creds')}</span></button>
+          <button class="tbtn" data-voip type="button" title="${L('Telefonía › Llamadas VoIP, Flujo SIP y Flujos RTP', 'Telephony › VoIP Calls, SIP Flow and RTP Streams')} (V)">${ic('phone')}<span>${t('voip')}</span></button>
           <button class="tbtn" data-find type="button" title="${t('findPkt')} (Ctrl F) · ${t('gotoPkt')} (Ctrl G)">${ic('search')}<span>${t('search')}</span></button>
           <button class="tbtn" data-color type="button" aria-pressed="true">${ic('sparkles')}<span>${t('colorize')}</span></button>
           ${imp ? `<button class="tbtn" data-open type="button">${ic('upload')}<span>${t('open')}</span></button><input type="file" class="vh" data-file accept=".pcap,.pcapng,.cap,application/vnd.tcpdump.pcap" tabindex="-1" aria-hidden="true">` : ''}
@@ -151,6 +152,7 @@ class Workspace {
     $('[data-expert]', r).onclick = () => openExpert(this);
     $('[data-objects]', r).onclick = () => openObjects(this);
     $('[data-creds]', r).onclick = () => openCreds(this);
+    $('[data-voip]', r).onclick = () => openVoip(this);
     $('[data-find]', r).onclick = () => openFind(this);
     const tf = $('[data-tfmt]', r); tf.value = this.tfmt = S.get().settings.tfmt || 'rel';
     tf.onchange = () => { this.tfmt = tf.value; S.set('tfmt', tf.value); this.renderRows(true); };

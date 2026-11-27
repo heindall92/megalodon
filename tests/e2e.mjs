@@ -445,7 +445,83 @@ await t('móvil: sin lateral, barra de pestañas abajo y hoja «Más» con perfi
   await p.close2();
 });
 
-await t('curso completo: los 58 retos se resuelven desde la interfaz y se ganan las 8 insignias', async () => {
+await t('telefonía: llamadas VoIP, flujo SIP que lleva al paquete, flujos RTP con 7 perdidos, reproducción y WAV sin red', async () => {
+  const p = await page(browser, { hash: '#/lab?cap=m9' });
+  await p.waitForSelector('.prow[data-no="1"]');
+  assert(/REGISTER sip:voip\.local/.test(await p.textContent('.prow[data-no="1"]')), 'la captura del módulo 9 se carga');
+  await p.click('[data-voip]'); await p.waitForSelector('#dlg[open] #vo-p table');
+  const rows = await p.$$eval('#vo-p tbody tr', r => r.map(x => x.textContent));
+  assert(rows.length === 2 && /COMPLETADA/.test(rows[0]) && /RECHAZADA/.test(rows[1]), `llamadas: ${rows.join(' | ')}`);
+  assert(/7f3b2e90c4d1a856@10\.20\.0\.21/.test(rows[0]), 'Call-ID visible');
+  // Flujo de la llamada de Alicia: siete mensajes SIP, dos flujos RTP y cinco teclas
+  await p.click('#vo-p [data-flow="0"]'); await p.waitForSelector('#vo-p .vflow svg');
+  const labels = await p.$$eval('#vo-p .step .sl', s => s.map(x => x.textContent));
+  assert(labels.filter(l => /^(INVITE|ACK|BYE|\d{3} )/.test(l)).length === 7, `flechas SIP: ${labels.join(', ')}`);
+  assert(labels.filter(l => /^DTMF/.test(l)).map(l => l.slice(-1)).join('') === '4721#', 'DTMF en el flujo');
+  await p.click('#vo-p .step[data-no="8"]');
+  await p.waitForFunction(() => !document.querySelector('#dlg').open);
+  await p.waitForSelector('.prow[data-no="8"][aria-selected="true"]');
+  // Flujos RTP con la tecla V
+  await p.locator('.plist').focus(); await p.keyboard.press('v'); await p.waitForSelector('#dlg[open]');
+  await p.click('#vo-rtp'); await p.waitForSelector('#vo-p tbody tr');
+  const st = await p.$$eval('#vo-p tbody tr', r => r.map(x => x.textContent));
+  assert(st.length === 2, `${st.length} flujos`);
+  const down = st.find(x => x.startsWith("10.20.0.5:10000"));
+  assert(down && /7 \(2,33 %\)/.test(down) && /Problemas/.test(down), `flujo de la centralita: ${down}`);
+  assert(st.some(x => /4721#/.test(x)), 'columna DTMF');
+  await p.click('#vo-p [data-play="0"]');
+  await p.waitForSelector('#vo-p [data-play="0"][aria-pressed="true"]');
+  await p.waitForFunction(() => !document.querySelector('.vwave').hidden && document.querySelectorAll('.vwave .wv').length === 300);
+  await p.waitForFunction(() => /^[1-9]/.test(document.querySelector('[data-wt]').textContent), null, { timeout: 4000 });   // la reproducción avanza
+  await p.click('#vo-p [data-play="0"]');
+  await p.waitForSelector('#vo-p [data-play="0"][aria-pressed="false"]');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#vo-p [data-wav="0"]')]);
+  assert(/^rtp-10\.20\.0\.5-10000-a-10\.20\.0\.21-16384\.wav$/.test(dl.suggestedFilename()), dl.suggestedFilename());
+  await p.click('#vo-p [data-f="0"]');
+  await p.waitForFunction(() => document.querySelector('.finput').value === 'rtp.ssrc == 0x1b7f04d3');
+  assert(/293/.test(await p.textContent('[data-count]')), 'el filtro deja 293 paquetes');
+  // en otra captura, el diálogo lo explica en vez de quedarse vacío
+  await p.selectOption('#lab-cap', 'm1'); await p.click('[data-voip]'); await p.waitForSelector('#dlg[open]');
+  assert(/módulo 9/.test(await p.textContent('#vo-p')), 'aviso sin VoIP');
+  await p.keyboard.press('Escape');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+await t('módulo 9 en inglés: lecciones, retos y pistas traducidos; Telefonía en inglés', async () => {
+  const p = await page(browser, { hash: '#/m/m9' });
+  await p.click('[data-lang="en"]'); await p.waitForFunction(() => document.documentElement.lang === 'en');
+  assert(/SIP: the signalling/.test(await p.textContent('#pan-lesson')), 'lección en inglés');
+  assert(!(await p.$('#pan-lesson .note')), 'sin el aviso «lessons in Spanish»');
+  await p.click('#tab-tasks');
+  assert(/Show only the/.test(await p.textContent('#task-m9-invite')), 'reto en inglés');
+  await p.click('#task-m9-invite [data-hint]');
+  assert(/The method field/.test(await p.textContent('#task-m9-invite .task-hints')), 'pista en inglés');
+  assert(/Try passwords offline/.test(await p.textContent('#task-m9-crack')), 'opciones en inglés');
+  await p.click('[data-voip]'); await p.waitForSelector('#dlg[open] #vo-p table');
+  assert(/COMPLETED/.test(await p.textContent('#vo-p')) && /VoIP Calls/.test(await p.textContent('#dlg')), 'Telefonía en inglés');
+  await p.keyboard.press('Escape');
+  await p.click('[data-lang="es"]');
+  assert(!p.errors.length, p.errors.join(' | '));
+  await p.close2();
+});
+
+for (const theme of ['dark', 'light']) await t(`axe 0 infracciones en Telefonía · ${theme === 'dark' ? 'oscuro' : 'claro'}`, async () => {
+  const p = await page(browser, { hash: '#/lab?cap=m9', theme, axe: true });
+  try {
+    for (const tab of ['calls', 'flow', 'rtp']) {
+      await p.click('[data-voip]'); await p.waitForSelector('#dlg[open]');
+      await p.click(`#vo-${tab}`); await p.waitForTimeout(300);
+      if (tab === 'rtp') { await p.click('#vo-p [data-play="1"]'); await p.waitForTimeout(200); await p.click('#vo-p [data-play="1"]'); }
+      await axe(p, `Telefonía ${tab}`);
+      await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+    }
+  } finally { await p.close2(); }
+  const m = await page(browser, { hash: '#/m/m9', theme, axe: true, viewport: { width: 390, height: 844 } });
+  try { await m.waitForTimeout(300); await axe(m, 'módulo 9 en móvil'); } finally { await m.close2(); }
+});
+
+await t('curso completo: los 68 retos se resuelven desde la interfaz y se ganan las 9 insignias', async () => {
   const p = await page(browser, { hash: '#/modulos' });
   const mods = await p.evaluate(() => MODULES.map(m => ({ id: m.id, tasks: m.tasks.map(x => ({ id: x.id, type: x.type, ref: x.ref, match: x.match, ans: x.ans })) })));
   let solved = 0;
@@ -468,9 +544,9 @@ await t('curso completo: los 58 retos se resuelven desde la interfaz y se ganan 
       }
     }
   }
-  assert(solved === 58, `${solved} retos`);
+  assert(solved === 68, `${solved} retos`);
   const st = await p.evaluate(() => ({ badges: Object.keys(S.get().badges).length, xp: S.xp() }));
-  assert(st.badges === 8, `insignias ${st.badges}`);
+  assert(st.badges === 9, `insignias ${st.badges}`);
   assert(st.xp > 0, 'XP');
   assert(!p.errors.length, p.errors.join(' | '));
   await p.close2();

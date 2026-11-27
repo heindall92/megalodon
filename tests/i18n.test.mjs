@@ -51,3 +51,22 @@ test('el árbol de detalle en inglés no deja etiquetas en español en ningún p
   assert.ok(n > 5000, `solo ${n} nodos`);
   assert.deepEqual([...bad].slice(0, 40), []);
 });
+
+test('los módulos bilingües (con intro_en) traen en inglés cada lección, reto, pista, opción y botón Pruébalo', () => {
+  const ES = /[áéíóúñ¿¡]|\b(el|la|los|las|del|una|que|para|con|pista|paquete)\b/i;
+  const bi = E.MODULES.filter(m => m.intro_en);
+  assert.ok(bi.some(m => m.id === 'm9'), 'el módulo 9 es bilingüe');
+  for (const m of bi) {
+    assert.ok(!ES.test(m.intro_en.replace(/`[^`]*`/g, '')), `${m.id}.intro_en`);
+    for (const [i, l] of m.lessons.entries()) {
+      assert.ok(l.h_en && l.p_en && l.p_en.length === l.p.length, `${m.id} lección ${i + 1}`);
+      for (const x of [l.h_en, ...l.p_en]) assert.ok(!ES.test(x.replace(/`[^`]*`|\*\*[^*]*\*\*/g, '')), `${m.id} lección ${i + 1}: ${x.slice(0, 60)}`);
+      for (const tr of l.try || []) assert.ok(tr[2] && !ES.test(tr[2]), `${m.id} Pruébalo «${tr[0]}» sin inglés`);
+    }
+    for (const x of m.tasks) {
+      assert.ok(x.q_en && x.ok_en && x.hints_en && x.hints_en.length === x.hints.length, `${x.id}: falta inglés`);
+      if (x.type === 'choice') assert.ok(x.opts_en && x.opts_en.length === x.opts.length, `${x.id}: opciones`);
+      for (const s of [x.q_en, x.ok_en, ...x.hints_en, ...(x.opts_en || [])]) assert.ok(!ES.test(s.replace(/`[^`]*`|«[^»]*»/g, '')), `${x.id}: ${s.slice(0, 60)}`);
+    }
+  }
+});

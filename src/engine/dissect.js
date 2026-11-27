@@ -20,6 +20,21 @@ const TLS_HS = { 1: 'Client Hello', 2: 'Server Hello', 4: 'New Session Ticket', 
 const SMB_CMD = { 0: 'Negotiate Protocol', 1: 'Session Setup', 2: 'Session Logoff', 3: 'Tree Connect', 4: 'Tree Disconnect', 5: 'Create', 6: 'Close', 8: 'Read', 9: 'Write', 16: 'GetInfo' };
 const NT_ST = { 0: 'STATUS_SUCCESS', 0xc0000016: 'STATUS_MORE_PROCESSING_REQUIRED', 0xc000006d: 'STATUS_LOGON_FAILURE', 0xc0000022: 'STATUS_ACCESS_DENIED' };
 const HTTP_RE = /^(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|CONNECT|TRACE) \S+ HTTP\/\d\.\d$/;
+const SIP_RE = /^(?:(?:REGISTER|INVITE|ACK|BYE|CANCEL|OPTIONS|INFO|UPDATE|PRACK|SUBSCRIBE|NOTIFY|REFER|MESSAGE|PUBLISH) \S+ SIP\/2\.0|SIP\/2\.0 \d{3} )/;
+/* Tipos de carga RTP estáticos (RFC 3551) con el nombre que usa Wireshark */
+const RTP_PT = { 0: 'ITU-T G.711 PCMU', 3: 'GSM 06.10', 4: 'ITU-T G.723', 8: 'ITU-T G.711 PCMA', 9: 'ITU-T G.722', 13: 'Comfort noise (CN)', 18: 'ITU-T G.729' };
+const DTMF_EV = ['DTMF Zero 0', 'DTMF One 1', 'DTMF Two 2', 'DTMF Three 3', 'DTMF Four 4', 'DTMF Five 5', 'DTMF Six 6', 'DTMF Seven 7', 'DTMF Eight 8', 'DTMF Nine 9', 'DTMF Star *', 'DTMF Pound #', 'DTMF A', 'DTMF B', 'DTMF C', 'DTMF D', 'DTMF Flash'];
+const DTMF_CH = '0123456789*#ABCD!';
+const RTCP_PT = { 200: 'Sender Report', 201: 'Receiver Report', 202: 'Source description', 203: 'Goodbye', 204: 'Application specific' };
+const sipUser = uri => { const m = /sips?:([^@;>]+)@/.exec(uri || ''); return m ? m[1] : ''; };
+const sipAddr = v => { const m = /<([^>]+)>/.exec(v) || /^\s*(sips?:[^;\s]+)/.exec(v); return m ? m[1] : v.trim(); };
+/* Parámetros de una cabecera de autenticación: Digest k="v", k=v. Como Wireshark, el valor se guarda tal cual, con sus
+   comillas: en el filtro se escribe sip.auth.realm == "\"voip.local\"" o, más cómodo, sip.auth.realm contains "voip.local". */
+function sipAuthParams(v) {
+  const sp = v.indexOf(' '), out = { scheme: sp < 0 ? v : v.slice(0, sp) }, re = /([\w-]+)\s*=\s*("[^"]*"|[^,\s]+)/g;
+  let m; while ((m = re.exec(v.slice(sp + 1)))) out[m[1].toLowerCase()] = m[2];
+  return out;
+}
 
 /* DER (ASN.1) genérico para Kerberos */
 function derNodes(b, s, e) {
@@ -54,6 +69,8 @@ function dnsReadName(b, s, o, end) {
 function dissectAll(raw, opts = {}) {
   const rel = opts.relative !== false;
   const tcpConv = new Map(), udpConv = new Map(), tlsVer = new Map(), httpPending = new Map();
+  /* Como Wireshark: cada SDP anuncia IP:puerto de audio; desde ese momento el UDP a (o desde) ese puerto es RTP y el siguiente, RTCP */
+  const rtpMap = new Map(), sdpOffers = new Map();
   const t0 = raw.length ? raw[0].t : 0;
   const pkts = raw.map((r, i) => dissectOne(r, i, raw[i - 1]));
   // segunda pasada: la versión TLS se conoce al ver el Server Hello; Wireshark la aplica a todo el flujo
@@ -150,6 +167,11 @@ function dissectAll(raw, opts = {}) {
       const p = o + 8;
       if ((sp === 53 || dp === 53) && end - p >= 12) dns(p, end);
       else if ((sp === 67 || dp === 67 || sp === 68 || dp === 68) && end - p >= 240) dhcp(p, end);
+      else if ((sp === 5060 || dp === 5060) && end - p >= 12 && SIP_RE.test(ascii(b, p, Math.min(end, p + 200)))) sipProto(p, end);
+      else if (end - p >= 8 && b[p] >> 6 === 2) {
+        const m = rtpMap.get(`${dip}:${dp}`) || rtpMap.get(`${sip}:${sp}`);
+        if (m && m.rtcp) rtcpProto(p, end, m); else if (m && end - p >= 12) rtpProto(p, end, m);
+      }
     }
 
     function tcp(o, end, sip, dip) {
@@ -479,6 +501,195 @@ function dissectAll(raw, opts = {}) {
         const ee = derFirst(derCtx(derFirst(derCtx(seq, 6)), 0)); if (ee) node(m, `etype de enc-part: ${ETYPE[derInt(b, ee)] || ''} (${derInt(b, ee)})`, ee.s, ee.ce - ee.s, 'kerberos.etype', derInt(b, ee));
       }
       P.info = KRB[mt] || 'Kerberos';
+    }
+
+    /* SIP sobre UDP: línea de petición o de estado, cabeceras y cuerpo SDP. Etiquetas y campos de packet-sip.c */
+    function sipProto(o, end) {
+      const lines = []; let p = o, bodyAt = end;
+      while (p < end) {
+        let q = p; while (q + 1 < end && !(b[q] === 13 && b[q + 1] === 10)) q++;
+        if (q + 1 >= end) { lines.push([p, end]); p = end; break; }
+        if (q === p) { bodyAt = q + 2; break; }
+        lines.push([p, q]); p = q + 2;
+      }
+      layer('sip', o, end); P.proto = 'SIP';
+      const [l0s, l0e] = lines[0], first = text(b, l0s, l0e), isReq = !first.startsWith('SIP/2.0');
+      const method = isReq ? first.split(' ')[0] : '', code = isReq ? 0 : +first.slice(8, 11), phrase = isReq ? '' : first.slice(12);
+      const n = node(null, `Session Initiation Protocol (${isReq ? method : code})`, o, end - o);
+      if (isReq) {
+        const uri = first.split(' ')[1];
+        const rl = node(n, `Request-Line: ${first}`, l0s, l0e - l0s + 2, 'sip.Request-Line', first);
+        node(rl, `Method: ${method}`, l0s, method.length, 'sip.Method', method);
+        const ru = node(rl, `Request-URI: ${uri}`, l0s + method.length + 1, uri.length, 'sip.r-uri', uri);
+        if (sipUser(uri)) node(ru, `Request-URI User Part: ${sipUser(uri)}`, l0s + method.length + 1, uri.length, 'sip.r-uri.user', sipUser(uri));
+      } else {
+        const sl = node(n, `Status-Line: ${first}`, l0s, l0e - l0s + 2, 'sip.Status-Line', first);
+        node(sl, `Status-Code: ${code}`, l0s + 8, 3, 'sip.Status-Code', code);
+      }
+      const hs = lines.length > 1 ? lines[1][0] : bodyAt, mh = node(n, 'Message Header', hs, Math.max(0, bodyAt - hs));
+      const H = { 'via': 'sip.Via', 'from': 'sip.From', 'to': 'sip.To', 'call-id': 'sip.Call-ID', 'cseq': 'sip.CSeq', 'contact': 'sip.Contact', 'max-forwards': 'sip.Max-Forwards', 'user-agent': 'sip.User-Agent', 'server': 'sip.Server', 'expires': 'sip.Expires', 'allow': 'sip.Allow', 'content-type': 'sip.Content-Type', 'content-length': 'sip.Content-Length', 'www-authenticate': 'sip.WWW-Authenticate', 'authorization': 'sip.Authorization', 'proxy-authenticate': 'sip.Proxy-Authenticate', 'proxy-authorization': 'sip.Proxy-Authorization' };
+      const NUM = new Set(['sip.Max-Forwards', 'sip.Expires', 'sip.Content-Length']);
+      let callId = '', cseqM = '', ctype = '', fromU = '', toU = '', contacts = 0;
+      for (const [s, e] of lines.slice(1)) {
+        const line = text(b, s, e), i = line.indexOf(':'); if (i < 0) continue;
+        const k = line.slice(0, i).trim().toLowerCase(), v = line.slice(i + 1).trim(), f = H[k];
+        const hn = node(mh, line, s, e - s + 2, f, f ? (NUM.has(f) ? +v : v) : undefined);
+        if (k === 'from' || k === 'to') {
+          const w = k, addr = sipAddr(v), u = sipUser(addr), tag = (/;tag=([^;\s]+)/.exec(v) || [])[1];
+          node(hn, `SIP ${w} address: ${addr}`, s, e - s, `sip.${w}.addr`, addr);
+          if (u) node(hn, `SIP ${w} address User Part: ${u}`, s, e - s, `sip.${w}.user`, u);
+          if (tag) node(hn, `SIP ${w} tag: ${tag}`, s, e - s, `sip.${w}.tag`, tag);
+          if (w === 'from') fromU = u; else toU = u;
+        } else if (k === 'call-id') callId = v;
+        else if (k === 'contact') contacts += v.split(/,(?=\s*(?:"|<|sips?:))/).length;
+        else if (k === 'cseq') {
+          const [sq, cm] = v.split(/\s+/); cseqM = cm || '';
+          node(hn, `Sequence Number: ${sq}`, s, e - s, 'sip.CSeq.seq', +sq); node(hn, `Method: ${cm}`, s, e - s, 'sip.CSeq.method', cm);
+        } else if (k === 'via') {
+          const m = /^SIP\/2\.0\/(\w+)\s+([^;:\s]+)(?::(\d+))?/.exec(v), br = (/;branch=([^;\s]+)/.exec(v) || [])[1];
+          if (m) { node(hn, `Transport: ${m[1]}`, s, e - s, 'sip.Via.transport', m[1]); node(hn, `Sent-by Address: ${m[2]}`, s, e - s, 'sip.Via.sent-by.address', m[2]); if (m[3]) node(hn, `Sent-by port: ${m[3]}`, s, e - s, 'sip.Via.sent-by.port', +m[3]); }
+          if (br) node(hn, `Branch: ${br}`, s, e - s, 'sip.Via.branch', br);
+        } else if (k === 'content-type') ctype = v.split(';')[0].trim().toLowerCase();
+        else if (/authenticate$|authorization$/.test(k)) {
+          const a = sipAuthParams(v);
+          node(hn, `Authentication Scheme: ${a.scheme}`, s, e - s, 'sip.auth.scheme', a.scheme);
+          const AU = [['username', 'Username', 'sip.auth.username'], ['realm', 'Realm', 'sip.auth.realm'], ['nonce', 'Nonce Value', 'sip.auth.nonce'], ['uri', 'Authentication URI', 'sip.auth.uri'],
+            ['response', 'Digest Authentication Response', 'sip.auth.digest.response'], ['algorithm', 'Algorithm', 'sip.auth.algorithm'], ['qop', 'QOP', 'sip.auth.qop'], ['cnonce', 'CNonce Value', 'sip.auth.cnonce'], ['nc', 'Nonce Count', 'sip.auth.nc']];
+          for (const [pk, lab, fld] of AU) if (a[pk] !== undefined) node(hn, `${lab}: ${a[pk]}`, s, e - s, fld, a[pk]);
+        }
+      }
+      let sdp = null;
+      if (bodyAt < end && ctype === 'application/sdp') { sdp = sdpProto(n, bodyAt, end, callId, isReq); P.proto = 'SIP/SDP'; }
+      P.sip = { req: isReq, method, code, phrase, callId, cseqM, from: fromU, to: toU, first, sdp };
+      /* Columna Info de packet-sip.c: el método de CSeq solo en las 2xx y, en los REGISTER, cuántos Contact se registran */
+      const binds = cseqM === 'REGISTER' && contacts && (isReq || (code >= 200 && code < 300)) ? `  (${contacts} binding${contacts > 1 ? 's' : ''})` : '';
+      P.info = (isReq ? `Request: ${first.replace(/ SIP\/2\.0$/, '')}` : `Status: ${code} ${phrase}${code >= 200 && code < 300 && cseqM ? ` (${cseqM})` : ''}`) + binds + ' | ';
+    }
+
+    /* SDP: líneas tipo=valor; c= y m= dejan apuntado dónde irá el RTP de esta llamada */
+    function sdpProto(sipNode, o, end, callId, isOffer) {
+      layer('sdp', o, end);
+      const body = node(sipNode, 'Message Body', o, end - o), n = node(body, 'Session Description Protocol', o, end - o);
+      const names = { v: 'Session Description Protocol Version (v)', o: 'Owner/Creator, Session Id (o)', s: 'Session Name (s)', c: 'Connection Information (c)', t: 'Time Description, active time (t)', m: 'Media Description, name and address (m)', a: 'Media Attribute (a)' };
+      let p = o, ip = '', port = 0; const pts = {};
+      while (p < end) {
+        let q = p; while (q < end && b[q] !== 13 && b[q] !== 10) q++;
+        const line = text(b, p, q), ty = line[0], v = line.slice(2);
+        if (line[1] === '=') {
+          const ln = node(n, `${names[ty] || `(${ty})`}: ${v}`, p, q - p);
+          if (ty === 'v') set('sdp.version', +v);
+          else if (ty === 'o') { const [u, sid] = v.split(' '); node(ln, `Owner Username: ${u}`, p + 2, u.length, 'sdp.owner.username', u); node(ln, `Session ID: ${sid}`, p + 2, v.length, 'sdp.owner.sessionid', sid); }
+          else if (ty === 'c') {
+            const [nt, at, addr] = v.split(' '); ip = addr;
+            node(ln, `Connection Network Type: ${nt}`, p + 2, nt.length, 'sdp.connection_info.network_type', nt);
+            node(ln, `Connection Address Type: ${at}`, p + 3 + nt.length, at.length, 'sdp.connection_info.address_type', at);
+            node(ln, `Connection Address: ${addr}`, q - addr.length, addr.length, 'sdp.connection_info.address', addr);
+          } else if (ty === 'm') {
+            const [media, prt, proto, ...fmts] = v.split(' '); port = +prt;
+            node(ln, `Media Type: ${media}`, p + 2, media.length, 'sdp.media.media', media);
+            node(ln, `Media Port: ${prt}`, p + 3 + media.length, prt.length, 'sdp.media.port', +prt);
+            node(ln, `Media Protocol: ${proto}`, p + 4 + media.length + prt.length, proto.length, 'sdp.media.proto', proto);
+            for (const f of fmts) node(ln, `Media Format: ${RTP_PT[f] || `DynamicRTP-Type-${f}`}`, p, q - p, 'sdp.media.format', RTP_PT[f] || `DynamicRTP-Type-${f}`);
+          } else if (ty === 'a') {
+            const ci = v.indexOf(':'), fld = ci < 0 ? v : v.slice(0, ci), val = ci < 0 ? '' : v.slice(ci + 1);
+            node(ln, `Media Attribute Fieldname: ${fld}`, p + 2, fld.length, 'sdp.media_attribute.field', fld);
+            if (fld === 'rtpmap') {
+              const [pt, enc] = val.split(' '), [mime, rate] = (enc || '').split('/');
+              pts[+pt] = { name: mime, rate: +rate || 8000 };
+              node(ln, `Media Format: ${pt}`, p + 9, pt.length, 'sdp.media.format', pt);
+              node(ln, `MIME Type: ${mime}`, p + 10 + pt.length, mime.length, 'sdp.mime.type', mime);
+              node(ln, `Sample Rate: ${rate}`, q - (rate || '').length, (rate || '').length, 'sdp.sample_rate', rate || '');
+            } else if (val) node(ln, `Media Attribute Value: ${val}`, p + 3 + fld.length, val.length, 'sdp.media_attribute.value', val);
+          }
+        }
+        p = q; while (p < end && (b[p] === 13 || b[p] === 10)) p++;
+      }
+      if (!ip || !port) return null;
+      for (const [k, v] of Object.entries(RTP_PT)) if (!pts[k]) pts[k] = { name: v, rate: 8000 };
+      /* Como Wireshark, los dos sentidos quedan «setup by SDP» en la trama de la oferta (el INVITE), no en la de la respuesta */
+      if (isOffer) sdpOffers.set(callId, P.no);
+      const info = { setup: (!isOffer && sdpOffers.get(callId)) || P.no, callId, pts };
+      rtpMap.set(`${ip}:${port}`, info); rtpMap.set(`${ip}:${port + 1}`, { ...info, rtcp: true });
+      return { ip, port };
+    }
+
+    /* RTP (RFC 3550) y, si el tipo dinámico es telephone-event, el evento DTMF (RFC 4733) */
+    function rtpProto(o, end, m) {
+      const v = b[o] >> 6, pad = (b[o] >> 5) & 1, ext = (b[o] >> 4) & 1, cc = b[o] & 15, mk = b[o + 1] >> 7, pt = b[o + 1] & 0x7f;
+      const seq = be16(b, o + 2), ts = be32(b, o + 4), ssrc = be32(b, o + 8), hl = 12 + cc * 4;
+      const map = m.pts[pt], ptName = pt < 96 ? (RTP_PT[pt] || `Unassigned (${pt})`) : map ? map.name : `DynamicRTP-Type-${pt}`;
+      layer('rtp', o, o + hl); P.proto = 'RTP';
+      const n = node(null, 'Real-Time Transport Protocol', o, end - o);
+      const su = node(n, `[Stream setup by SDP (frame ${m.setup})]`, o, 0);
+      node(su, `[Setup frame: ${m.setup}]`, o, 0, 'rtp.setup-frame', m.setup); node(su, '[Setup Method: SDP]', o, 0, 'rtp.setup-method', 'SDP');
+      node(n, `${v.toString(2)}.. .... = Version: RFC 1889 Version (${v})`, o, 1, 'rtp.version', v);
+      node(n, `..${pad}. .... = Padding: ${pad ? 'True' : 'False'}`, o, 1, 'rtp.padding', pad);
+      node(n, `...${ext} .... = Extension: ${ext ? 'True' : 'False'}`, o, 1, 'rtp.ext', ext);
+      node(n, `.... ${cc.toString(2).padStart(4, '0')} = Contributing source identifiers count: ${cc}`, o, 1, 'rtp.cc', cc);
+      node(n, `${mk}... .... = Marker: ${mk ? 'True' : 'False'}`, o + 1, 1, 'rtp.marker', mk);
+      node(n, `Payload type: ${ptName} (${pt})`, o + 1, 1, 'rtp.p_type', pt);
+      node(n, `Sequence number: ${seq}`, o + 2, 2, 'rtp.seq', seq);
+      node(n, `Timestamp: ${ts}`, o + 4, 4, 'rtp.timestamp', ts);
+      node(n, `Synchronization Source identifier: 0x${hx(ssrc, 8)} (${ssrc})`, o + 8, 4, 'rtp.ssrc', ssrc);
+      P.rtp = { ssrc, seq, ts, pt, marker: mk, setup: m.setup, callId: m.callId, rate: map ? map.rate : 8000, codec: ptName, off: o + hl, ev: null };
+      const d = o + hl;
+      if (map && /^telephone-event$/i.test(map.name) && end - d >= 4) {
+        const ev = b[d], E = b[d + 1] >> 7, vol = b[d + 1] & 0x3f, dur = be16(b, d + 2);
+        layer('rtpevent', d, end); P.proto = 'RTP EVENT';
+        const en = node(null, 'RFC 2833 RTP Event', d, end - d);
+        node(en, `Event ID: ${DTMF_EV[ev] || 'Unknown'} (${ev})`, d, 1, 'rtpevent.event_id', ev);
+        node(en, `${E}... .... = End of Event: ${E ? 'True' : 'False'}`, d + 1, 1, 'rtpevent.end_of_event', E);
+        node(en, `.0.. .... = Reserved: False`, d + 1, 1);
+        node(en, `..${vol.toString(2).padStart(6, '0').replace(/^(..)/, '$1 ')} = Volume: ${vol}`, d + 1, 1, 'rtpevent.volume', vol);
+        node(en, `Event Duration: ${dur}`, d + 2, 2, 'rtpevent.duration', dur);
+        P.rtp.ev = { id: ev, end: E, dur };
+        P.info = `Payload type=RTP Event, ${DTMF_EV[ev] || `Event ${ev}`}${E ? ' (end)' : ''}`;
+      } else {
+        if (end > d) node(n, `Payload: ${Array.from(b.subarray(d, Math.min(end, d + 16)), x => hx(x)).join('')}${end - d > 16 ? '…' : ''}`, d, end - d);
+        P.info = `PT=${ptName}, SSRC=0x${hx(ssrc, 8).toUpperCase()}, Seq=${seq}, Time=${ts}${mk ? ', Mark' : ''}`;
+      }
+    }
+
+    /* RTCP compuesto: SR y RR con sus bloques de recepción (pérdida, jitter); el resto se nombra y se salta */
+    function rtcpProto(o, end, m) {
+      layer('rtcp', o, end); P.proto = 'RTCP';
+      const kinds = []; let p = o;
+      while (p + 8 <= end) {
+        const rc = b[p] & 31, pt = b[p + 1], len = be16(b, p + 2), e = Math.min(end, p + (len + 1) * 4), nm = RTCP_PT[pt] || `Unknown (${pt})`;
+        const n = node(null, `Real-time Transport Control Protocol (${nm})`, p, e - p);
+        if (p === o) { const su = node(n, `[Stream setup by SDP (frame ${m.setup})]`, p, 0); node(su, `[Setup frame: ${m.setup}]`, p, 0, 'rtcp.setup-frame', m.setup); node(su, '[Setup Method: SDP]', p, 0, 'rtcp.setup-method', 'SDP'); }
+        node(n, `${(b[p] >> 6).toString(2)}.. .... = Version: RFC 1889 Version (${b[p] >> 6})`, p, 1, 'rtcp.version', b[p] >> 6);
+        node(n, `..${(b[p] >> 5) & 1}. .... = Padding: ${(b[p] >> 5) & 1 ? 'True' : 'False'}`, p, 1, 'rtcp.padding', (b[p] >> 5) & 1);
+        node(n, `...${rc.toString(2).padStart(5, '0').replace(/^(.)/, '$1 ')} = Reception report count: ${rc}`, p, 1, 'rtcp.rc', rc);
+        node(n, `Packet type: ${nm} (${pt})`, p + 1, 1, 'rtcp.pt', pt);
+        node(n, `Length: ${len} (${(len + 1) * 4} bytes)`, p + 2, 2, 'rtcp.length', len);
+        let q = p + 4;
+        if (pt === 200 || pt === 201) {
+          const ss = be32(b, q); node(n, `Sender SSRC: 0x${hx(ss, 8)} (${ss})`, q, 4, 'rtcp.senderssrc', ss); q += 4;
+          if (pt === 200 && q + 20 <= e) {
+            node(n, `Timestamp, MSW: ${be32(b, q)} (0x${hx(be32(b, q), 8)})`, q, 4, 'rtcp.timestamp.ntp.msw', be32(b, q));
+            node(n, `Timestamp, LSW: ${be32(b, q + 4)} (0x${hx(be32(b, q + 4), 8)})`, q + 4, 4, 'rtcp.timestamp.ntp.lsw', be32(b, q + 4));
+            node(n, `RTP timestamp: ${be32(b, q + 8)}`, q + 8, 4, 'rtcp.timestamp.rtp', be32(b, q + 8));
+            node(n, `Sender's packet count: ${be32(b, q + 12)}`, q + 12, 4, 'rtcp.sender.packetcount', be32(b, q + 12));
+            node(n, `Sender's octet count: ${be32(b, q + 16)}`, q + 16, 4, 'rtcp.sender.octetcount', be32(b, q + 16));
+            q += 20;
+          }
+          for (let i = 0; i < rc && q + 24 <= e; i++, q += 24) {
+            const id = be32(b, q), fr = b[q + 4], cum = (b[q + 5] << 16) | (b[q + 6] << 8) | b[q + 7], lsr = be32(b, q + 16), dlsr = be32(b, q + 20);
+            const sn = node(n, `Source ${i + 1}`, q, 24);
+            node(sn, `Identifier: 0x${hx(id, 8)} (${id})`, q, 4, 'rtcp.ssrc.identifier', id);
+            const sc = node(sn, 'SSRC contents', q + 4, 4);
+            node(sc, `Fraction lost: ${fr} / 256`, q + 4, 1, 'rtcp.ssrc.fraction', fr);
+            node(sc, `Cumulative number of packets lost: ${cum}`, q + 5, 3, 'rtcp.ssrc.cum_nr', cum);
+            node(sn, `Extended highest sequence number received: ${be32(b, q + 8)}`, q + 8, 4, 'rtcp.ssrc.ext_high', be32(b, q + 8));
+            node(sn, `Interarrival jitter: ${be32(b, q + 12)}`, q + 12, 4, 'rtcp.ssrc.jitter', be32(b, q + 12));
+            node(sn, `Last SR timestamp: ${lsr} (0x${hx(lsr, 8)})`, q + 16, 4, 'rtcp.ssrc.lsr', lsr);
+            node(sn, `Delay since last SR timestamp: ${dlsr} (${Math.round(dlsr / 65.536)} milliseconds)`, q + 20, 4, 'rtcp.ssrc.dlsr', dlsr);
+          }
+        }
+        kinds.push(nm); p = e;
+      }
+      P.info = kinds.map(k => `${k}   `).join('');
     }
   }
 }

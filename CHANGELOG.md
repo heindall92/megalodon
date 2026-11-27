@@ -2,6 +2,32 @@
 
 Formato [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico.
 
+## [1.5.0] - 2026-11-27
+
+### Añadido
+- **Módulo 9 «VoIP: SIP, RTP y grabación»** (extra, 35 min), con lecciones, retos, pistas y opciones en español e inglés:
+  - captura sintética y determinista `m9-voip` (625 paquetes, red 10.20.0.0/24 y dominio `voip.local`): REGISTER con 401 y Digest MD5 real, INVITE → 100 → 180 → 200 → ACK, seis segundos de RTP G.711 µ-law en los dos sentidos con 7 paquetes perdidos y una ráfaga de jitter hacia el teléfono, RTCP, el PIN `4721#` por DTMF y BYE; después, un escáner SIP (`friendly-scanner`) con OPTIONS, tres contraseñas para la 1002 y un INVITE internacional rechazado;
+  - cinco lecciones (SIP, Digest, SDP, RTP y RTCP, escucha y DTMF) con 14 «Pruébalo»;
+  - diez retos: INVITE, realm, Call-ID, códec, flujo RTP de la centralita, perdidos, informe RTCP, PIN, User-Agent del escáner y ataque al Digest.
+- **Disectores** de SIP sobre UDP (línea de petición o estado, Via, From, To, Call-ID, CSeq, Contact, User-Agent, Server, Expires y Digest), SDP (`v=`, `o=`, `c=`, `m=`, `a=rtpmap` y demás atributos), RTP, RTCP (Sender y Receiver Report, con fracción perdida, perdidos acumulados, jitter, LSR y DLSR) y eventos telefónicos RFC 4733. El RTP se reconoce por el SDP, como en Wireshark: el UDP al IP:puerto anunciado es RTP, el del puerto siguiente es RTCP y los dos sentidos apuntan a la oferta (`rtp.setup-frame`).
+- **99 campos de filtro** nuevos (`sip.*`, `sdp.*`, `rtp.*`, `rtcp.*`, `rtpevent.*`) con los nombres y tipos de Wireshark 4.x. Como en Wireshark, los parámetros Digest guardan sus comillas (`sip.auth.realm contains "voip.local"`).
+- **Telefonía** (botón de la barra y tecla `V`), en `src/engine/voip.js` (sin DOM) y `src/app/47-voip.js`:
+  - llamadas VoIP: inicio, fin, quién llama, de, a, paquetes, estado (completada, rechazada…), comentario y Call-ID;
+  - flujo SIP: diagrama de secuencia de una llamada o de toda la captura, con el RTP y las teclas DTMF; cada flecha lleva a su paquete;
+  - flujos RTP: perdidos, delta máximo (con salto al paquete), jitter máximo y medio, teclas DTMF y estado, con el algoritmo de `rtppacket_analyse()` de Wireshark;
+  - reproductor: G.711 µ-law y A-law decodificado a PCM y reproducido con Web Audio API (sin red, sin `<audio>` y sin cambiar la CSP), con forma de onda y cursor, un sentido o los dos mezclados; lo perdido suena a silencio y las teclas, a su par de tonos;
+  - exportación a WAV PCM de 16 bits.
+- **Referencia de tshark** (`tests/tshark/m9.json`, generada con `node scripts/tshark-ref.mjs m9` y tshark 4.6.8): Protocolo e Info de las 625 tramas, las tramas que deja pasar cada filtro del módulo y de la chuleta, y la tabla RTP Streams. Las pruebas comprueban que el motor da exactamente lo mismo.
+- Chuleta «VoIP: SIP y RTP», 12 términos del glosario (Call-ID, Digest, DTMF, G.711, Jitter, RTCP, RTP, SDP, SIP, SIPVicious, SRTP y SSRC), iconos Lucide `phone`, `volume-2`, `square` y `audio-lines`, y el atajo `V`.
+- Lecciones y retos admiten versión inglesa (`h_en`, `p_en`, `q_en`, `hints_en`, `ok_en`, `opts_en` y una tercera columna en «Pruébalo»); el aviso «Lessons and challenges are written in Spanish» ya no sale en los módulos bilingües.
+- Pruebas: 10 del motor (MD5 y Digest frente a `node:crypto` y la RFC 2617, G.711, SIP/SDP, asociación RTP↔SDP, análisis RTP frente a tshark, DTMF, Telefonía, RTCP RR y escáner), 1 de idioma (paridad ES/EN de los módulos bilingües) y 4 e2e (Telefonía con reproducción y WAV, módulo 9 en inglés y axe en claro, oscuro y móvil).
+
+### Cambiado
+- El curso pasa a 9 módulos, 37 lecciones, 68 retos, 74 «Pruébalo», 1203 paquetes, 235 campos y 53 términos del glosario.
+
+### Corregido
+- **El mapa de actividad del perfil perdía el día de hoy** donde el cambio de hora es a medianoche (Chile, Paraguay…): ese día empieza a la 01:00 y el bucle, que sumaba días a una fecha, terminaba antes de «hoy a las 00:00». Ahora cuenta los días por índice. La e2e del perfil fallaba en esas zonas horarias.
+
 ## [1.4.1] - 2026-11-25
 
 ### Corregido

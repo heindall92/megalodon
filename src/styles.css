@@ -24,6 +24,7 @@
   /* reglas de color de paquetes (texto ≥ 7:1 sobre cada fondo) */
   --pk-tcp: #241f3d; --pk-http: #17321f; --pk-udp: #13293d; --pk-arp: #352a17; --pk-synfin: #2d3138; --pk-smb: #33321a; --pk-icmp: #3a1f3a;
   --pk-rst: #5e1015; --pk-rst-ink: #ffe0b8; --pk-bad: #000000; --pk-bad-ink: #ff8f86;
+  --voip: #c7a6ff;
 }
 [data-theme='light'] {
   color-scheme: light;
@@ -40,6 +41,7 @@
   --cli: #8c1a14; --cli-bg: #fcecea; --srv: #123d86; --srv-bg: #e9f0fc;
   --pk-tcp: #e7e6ff; --pk-http: #e4ffc7; --pk-udp: #daeeff; --pk-arp: #faf0d7; --pk-synfin: #d9d9d9; --pk-smb: #feffd0; --pk-icmp: #fce0ff;
   --pk-rst: #a40000; --pk-rst-ink: #fffc9c; --pk-bad: #12272e; --pk-bad-ink: #ff9d9d;
+  --voip: #5b2ca0;
 }
 html.theming, html.theming *, html.theming *::before, html.theming *::after { transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out), fill 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out) !important; }
 
@@ -956,3 +958,19 @@ select.tinput { appearance: none; padding-right: 36px; background-image: linear-
 .more-list .more-acct .av { flex: none; }
 .about section > .sec-h.sub { margin-top: 56px; }
 @media (max-width: 760px) { .about section > .sec-h.sub { margin-top: 40px; } }
+
+/* Telefonía: flujo SIP, reproductor RTP y forma de onda */
+.ladder.vflow { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.vflow-sc { overflow-x: auto; border-radius: 10px; min-width: 0; max-width: 100%; }
+.ladder.vflow svg { width: auto; max-width: none; margin-inline: auto; }
+.ladder .step.rtp .ar, .ladder .step.dtmf .ar { stroke: var(--voip); } .ladder .step.rtp .hd, .ladder .step.dtmf .hd { fill: var(--voip); }
+.ladder .step.dtmf .ar { stroke-dasharray: 4 3; }
+.vwave { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.vwave svg { width: 100%; height: 80px; display: block; }
+.vwave .wv { fill: var(--voip); }
+.vwave .wph { stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.row.nowrap { flex-wrap: nowrap; }
+.ladder .hit { fill: transparent; } .ladder .step:focus-visible .hit, .ladder .step.on .hit { fill: var(--accent-soft); }
+.vwave[hidden] { display: none; }
+#vo-p > * { min-width: 0; }
+.vpick { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; } .vpick select { min-width: 0; max-width: 100%; }

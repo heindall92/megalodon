@@ -12,11 +12,11 @@ const rd = p => readFileSync(join(ROOT, p), 'utf8');
 export const ORDER = [
   'src/app/00-iconos.js',
   'src/engine/net.js', 'src/engine/scenarios.js', 'src/engine/fields.js', 'src/engine/dissect.js',
-  'src/engine/filter.js', 'src/engine/stats.js', 'src/engine/analyze.js',
+  'src/engine/filter.js', 'src/engine/stats.js', 'src/engine/analyze.js', 'src/engine/voip.js',
   'src/content/modules.js', 'src/content/reference.js',
   '@hero',
   'src/app/05-i18n.js', 'src/app/10-state.js', 'src/app/20-ui.js', 'src/app/30-workspace.js',
-  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/50-views.js', 'src/app/60-perfil.js',
+  'src/app/40-dialogs.js', 'src/app/45-ladder.js', 'src/app/47-voip.js', 'src/app/50-views.js', 'src/app/60-perfil.js',
   'src/app/80-fx.js', 'src/app/85-search.js', 'src/app/90-shell.js',
 ];
 
